@@ -1,0 +1,4 @@
+-r base.txt
+
+# Production monitoring
+sentry-sdk>=1.39.0
