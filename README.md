@@ -6,6 +6,7 @@ A modern Django application built with Clean Architecture, Domain-Driven Design 
 
 - **Clean Architecture**: Separation of concerns with clear layers
 - **Custom User Model**: UUID-based primary keys
+- **Global Timezone Support**: Automatic timezone detection for users worldwide
 - **PostgreSQL Database**: Robust relational database
 - **Redis Caching**: Fast caching and session storage
 - **TailwindCSS**: Modern, responsive UI
@@ -61,7 +62,10 @@ python manage.py migrate
 # Create superuser
 python manage.py createsuperuser
 
-# Run development server
+# Run development server with health checks (recommended)
+python run.py
+
+# Or run traditional Django server
 python manage.py runserver
 ```
 
@@ -124,6 +128,22 @@ pytest -m unit            # Unit tests only
 pytest -m integration     # Integration tests only
 ```
 
+## Development Commands
+
+```bash
+# Run server with health checks (recommended)
+python run.py                    # Default: 127.0.0.1:8000
+python run.py --host 0.0.0.0     # Bind to all interfaces
+python run.py --port 8080        # Custom port
+python run.py -h 0.0.0.0 -p 3000 # Custom host and port
+
+# Traditional Django commands
+python manage.py runserver       # Run without health checks
+python manage.py shell           # Django shell
+python manage.py makemigrations  # Create migrations
+python manage.py migrate         # Apply migrations
+```
+
 ## Code Quality
 
 ```bash
@@ -161,6 +181,7 @@ practice_portal/
 - [docs/architecture.md](docs/architecture.md) - Architecture details
 - [docs/api-reference.md](docs/api-reference.md) - API documentation
 - [docs/database-schema.md](docs/database-schema.md) - Database schema
+- [docs/TIMEZONE.md](docs/TIMEZONE.md) - Timezone handling guide
 
 ## Environment Variables
 

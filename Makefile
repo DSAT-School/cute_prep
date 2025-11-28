@@ -1,10 +1,11 @@
-.PHONY: help install setup migrate makemigrations createsuperuser shell test coverage quality format lint clean run celery
+.PHONY: help install setup migrate makemigrations createsuperuser shell test coverage quality format lint clean run dev celery
 
 help:
 	@echo "Available commands:"
 	@echo "  make install        - Install all dependencies"
 	@echo "  make setup          - Setup development environment"
-	@echo "  make run            - Run development server"
+	@echo "  make dev            - Run development server with health checks (recommended)"
+	@echo "  make run            - Run development server (traditional)"
 	@echo "  make celery         - Run Celery worker"
 	@echo "  make migrate        - Run database migrations"
 	@echo "  make makemigrations - Create new migrations"
@@ -23,6 +24,9 @@ install:
 
 setup:
 	@bash scripts/setup.sh
+
+dev:
+	python run.py
 
 run:
 	python manage.py runserver

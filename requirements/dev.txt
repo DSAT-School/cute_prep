@@ -1,20 +1,20 @@
 -r base.txt
 
 # Testing
-pytest>=7.4.0
-pytest-django>=4.5.0
-pytest-cov>=4.1.0
-factory-boy>=3.3.0
-faker>=20.0.0
+pytest
+pytest-django
+pytest-cov
+factory-boy
+faker
 
 # Code Quality
-black>=23.12.0
-isort>=5.13.0
-flake8>=6.1.0
-mypy>=1.7.0
-django-stubs>=4.2.0
-djangorestframework-stubs>=3.14.0
+black
+isort
+flake8
+mypy
+django-stubs
+djangorestframework-stubs
 
 # Development Tools
-django-debug-toolbar>=4.2.0
-ipython>=8.18.0
+django-debug-toolbar
+ipython

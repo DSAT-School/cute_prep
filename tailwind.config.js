@@ -8,21 +8,43 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+        // DSAT SCHOOL Brand Colors
+        primary: '#9967b9',      // Primary Purple
+        secondary: '#fdcc4c',    // Secondary Yellow
+        dark: '#262632',         // Dark Gray
+        // Color variations for different use cases
+        'brand-purple': {
+          DEFAULT: '#9967b9',
+          light: '#b389cb',
+          dark: '#7e4fa7',
+        },
+        'brand-yellow': {
+          DEFAULT: '#fdcc4c',
+          light: '#fdd970',
+          dark: '#e6b831',
+        },
+        'brand-dark': {
+          DEFAULT: '#262632',
+          light: '#3a3a4a',
+          dark: '#1a1a24',
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Montserrat', 'system-ui', 'sans-serif'],
+        heading: ['Montserrat', 'sans-serif'],
+        title: ['Built Titling', 'Montserrat', 'sans-serif'],
+      },
+      fontWeight: {
+        'extra-bold': '800',
+        'semi-bold': '600',
+      },
+      borderRadius: {
+        'brand': '0.5rem',      // Standard brand border radius
+        'brand-lg': '1rem',     // Large brand border radius
+      },
+      borderWidth: {
+        'brand': '1px',         // Standard brand border
+        'brand-thick': '2px',   // Thick brand border
       },
     },
   },
