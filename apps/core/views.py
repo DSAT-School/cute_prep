@@ -1,8 +1,11 @@
 """Views for core application."""
+import json
 from typing import Any
 
 from django.db import connection
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -11,6 +14,7 @@ from rest_framework.response import Response
 
 from .models import User
 from .serializers import UserCreateSerializer, UserSerializer
+from .utils.timezone import validate_timezone
 
 
 def health_check(request: Request) -> JsonResponse:
@@ -172,3 +176,51 @@ class UserViewSet(viewsets.ModelViewSet):
             Response with no content
         """
         return super().destroy(request, *args, **kwargs)
+
+
+@require_POST
+@csrf_exempt
+def set_timezone(request: Request) -> JsonResponse:
+    """
+    Set user's detected timezone in session.
+    
+    Called by client-side JavaScript to store the browser-detected timezone.
+    This timezone will be used by TimezoneMiddleware for datetime display.
+    
+    Args:
+        request: HTTP request object with JSON body containing 'timezone'
+        
+    Returns:
+        JSON response with success status
+    """
+    try:
+        data = json.loads(request.body)
+        timezone = data.get('timezone', 'UTC')
+        
+        # Validate timezone
+        if not validate_timezone(timezone):
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Invalid timezone'
+            }, status=400)
+        
+        # Store in session
+        request.session['detected_timezone'] = timezone
+        
+        # If user is authenticated, optionally update their profile
+        if hasattr(request, 'user') and request.user.is_authenticated:
+            if hasattr(request.user, 'timezone'):
+                # Only update if user hasn't explicitly set a timezone
+                if request.user.timezone == 'UTC':
+                    request.user.timezone = timezone
+                    request.user.save(update_fields=['timezone'])
+        
+        return JsonResponse({
+            'status': 'success',
+            'timezone': timezone
+        })
+    except (json.JSONDecodeError, KeyError, ValueError) as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=400)

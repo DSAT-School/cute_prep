@@ -55,6 +55,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "apps.core.middleware.TimezoneMiddleware",  # User timezone detection
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -70,6 +71,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.core.context_processors.user_timezone",  # Add user timezone to templates
             ],
         },
     },
@@ -126,9 +128,16 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 LANGUAGE_CODE = "en-us"
+
+# Time Zone Settings
+# Store all datetimes in UTC in database (best practice)
 TIME_ZONE = "UTC"
 USE_I18N = True
-USE_TZ = True
+USE_TZ = True  # CRITICAL: Always use timezone-aware datetimes
+
+# User timezone detection from request headers, IP, or user preference
+# Times will be displayed in user's local timezone
+USER_TIME_ZONE_ENABLED = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "/static/"

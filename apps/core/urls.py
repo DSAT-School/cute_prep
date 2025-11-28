@@ -2,7 +2,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import UserViewSet, health_check
+from .views import UserViewSet, health_check, set_timezone
 
 app_name = "core"
 
@@ -11,5 +11,6 @@ router.register(r"users", UserViewSet, basename="user")
 
 urlpatterns = [
     path("health/", health_check, name="health-check"),
+    path("set-timezone/", set_timezone, name="set-timezone"),
     path("", include(router.urls)),
 ]

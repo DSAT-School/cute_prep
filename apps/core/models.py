@@ -47,6 +47,7 @@ class User(AbstractUser, TimeStampedModel):
     
     Attributes:
         email: User's email address (required and unique)
+        timezone: User's preferred timezone (detected or set by user)
         is_active: Boolean indicating if the user account is active
         is_staff: Boolean indicating if user can access admin site
         is_superuser: Boolean indicating if user has all permissions
@@ -56,6 +57,13 @@ class User(AbstractUser, TimeStampedModel):
         _("email address"),
         unique=True,
         help_text=_("User's email address")
+    )
+    
+    timezone = models.CharField(
+        _("timezone"),
+        max_length=63,
+        default="UTC",
+        help_text=_("User's preferred timezone (e.g., 'America/New_York', 'Europe/London', 'Asia/Tokyo')")
     )
     
     # Override id from TimeStampedModel to avoid conflicts

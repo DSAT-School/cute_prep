@@ -37,6 +37,27 @@
     {% include 'components/footer.html' %}
     
     <!-- JavaScript -->
+    <script>
+        // Detect user's timezone and send to server
+        {% if TIMEZONE_ENABLED %}
+        (function() {
+            const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            
+            // Store in sessionStorage for this session
+            sessionStorage.setItem('userTimezone', detectedTimezone);
+            
+            // Send timezone to server via AJAX to store in session
+            fetch('{% url "core:set-timezone" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ timezone: detectedTimezone })
+            }).catch(err => console.error('Failed to set timezone:', err));
+        })();
+        {% endif %}
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

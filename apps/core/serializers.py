@@ -23,6 +23,7 @@ class UserSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "full_name",
+            "timezone",
             "is_active",
             "created_at",
             "updated_at",
