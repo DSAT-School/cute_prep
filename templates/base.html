@@ -5,13 +5,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>{% block title %}Practice Portal{% endblock %}</title>
+    <title>{% block title %}DSAT SCHOOL - Practice Portal{% endblock %}</title>
     
-    <!-- TailwindCSS -->
-    <link rel="stylesheet" href="{% static 'dist/output.css' %}">
+    <!-- TailwindCSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#9967b9',
+                        'secondary': '#fdcc4c',
+                        'dark': '#262632'
+                    },
+                    fontFamily: {
+                        'sans': ['Montserrat', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts - Montserrat -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Alpine.js for interactive components -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <style>
+        body { font-family: 'Montserrat', sans-serif; }
+    </style>
     
     <!-- Additional CSS -->
     {% block extra_css %}{% endblock %}

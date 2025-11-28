@@ -241,7 +241,7 @@ class CustomLoginView(LoginView):
     redirect_authenticated_user = True
     
     def get_success_url(self):
-        return reverse_lazy("core:dashboard")
+        return reverse_lazy("dashboard")
 
 
 class CustomSignupView(CreateView):
@@ -250,7 +250,7 @@ class CustomSignupView(CreateView):
     """
     template_name = "auth/signup.html"
     form_class = CustomSignupForm
-    success_url = reverse_lazy("core:dashboard")
+    success_url = reverse_lazy("dashboard")
     
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -260,7 +260,7 @@ class CustomSignupView(CreateView):
     
     def get(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            return redirect("core:dashboard")
+            return redirect("dashboard")
         return super().get(request, *args, **kwargs)
 
 

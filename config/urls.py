@@ -9,9 +9,10 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import TemplateView
 
-from apps.core.views import CustomLoginView, CustomLogoutView, CustomSignupView
+from apps.core.views import CustomLoginView, CustomLogoutView, CustomSignupView, dashboard_view
 
 urlpatterns = [
+    # Landing and Home Pages
     path("", TemplateView.as_view(template_name="landing.html"), name="landing"),
     path("home/", TemplateView.as_view(template_name="home.html"), name="home"),
     
@@ -21,7 +22,13 @@ urlpatterns = [
     path("logout/", CustomLogoutView.as_view(), name="logout"),
     path("accounts/", include("allauth.urls")),
     
+    # SSR Pages (Server-Side Rendered)
+    path("dashboard/", dashboard_view, name="dashboard"),
+    
+    # Admin
     path("admin/", admin.site.urls),
+    
+    # API Endpoints
     path("api/", include("apps.core.urls")),
 ]
 
