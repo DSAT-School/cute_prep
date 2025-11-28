@@ -38,6 +38,10 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "rest_framework",
     "corsheaders",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
 ]
 
 LOCAL_APPS = [
@@ -55,6 +59,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",  # Django allauth
     "apps.core.middleware.TimezoneMiddleware",  # User timezone detection
 ]
 
@@ -103,9 +108,15 @@ CACHES = {
     }
 }
 
-# Session cache
+# Session Configuration
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
+SESSION_COOKIE_AGE = 1209600  # 2 weeks
+SESSION_COOKIE_SECURE = True  # Send cookie over HTTPS only
+SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access
+SESSION_COOKIE_SAMESITE = "Lax"  # CSRF protection
+SESSION_SAVE_EVERY_REQUEST = True  # Update session on every request
+SESSION_COOKIE_NAME = "dsatschool_sessionid"
 
 # Custom User Model
 AUTH_USER_MODEL = "core.User"
@@ -217,3 +228,29 @@ LOGGING = {
         },
     },
 }
+
+# Django Allauth Configuration
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+SITE_ID = 1
+
+# Allauth settings (updated for new version)
+ACCOUNT_LOGIN_METHODS = ["email"]
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
+ACCOUNT_EMAIL_VERIFICATION = "optional"
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_SESSION_REMEMBER = True
+
+# Social account settings
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
+SOCIALACCOUNT_QUERY_EMAIL = True
+
+# Redirect URLs
+LOGIN_REDIRECT_URL = "/"
+ACCOUNT_LOGOUT_REDIRECT_URL = "/"
+LOGIN_URL = "/login/"

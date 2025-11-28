@@ -1,0 +1,627 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSAT SCHOOL - Master the Digital SAT with AI</title>
+    <meta name="description" content="Achieve your dream SAT score with DSAT SCHOOL's AI-powered practice platform.">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#9967b9',
+                        'brand-purple': '#9967b9',
+                        'secondary': '#fdcc4c',
+                        'brand-yellow': '#fdcc4c',
+                        'dark': '#262632',
+                        'brand-dark': '#262632'
+                    },
+                    fontFamily: {
+                        'sans': ['Montserrat', 'sans-serif']
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.6s ease-in',
+                        'fade-in-up': 'fadeInUp 0.6s ease-out',
+                        'fade-in-down': 'fadeInDown 0.6s ease-out',
+                        'slide-in-left': 'slideInLeft 0.6s ease-out',
+                        'slide-in-right': 'slideInRight 0.6s ease-out',
+                        'scale-in': 'scaleIn 0.5s ease-out',
+                        'bounce-in': 'bounceIn 0.8s ease-out',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(30px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        fadeInDown: {
+                            '0%': { opacity: '0', transform: 'translateY(-30px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        slideInLeft: {
+                            '0%': { opacity: '0', transform: 'translateX(-50px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' }
+                        },
+                        slideInRight: {
+                            '0%': { opacity: '0', transform: 'translateX(50px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' }
+                        },
+                        scaleIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.9)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' }
+                        },
+                        bounceIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.3)' },
+                            '50%': { opacity: '1', transform: 'scale(1.05)' },
+                            '70%': { transform: 'scale(0.9)' },
+                            '100%': { transform: 'scale(1)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-20px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { font-family: 'Montserrat', sans-serif; }
+        
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        
+        .animate-on-scroll.animated {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .hover-lift {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .mobile-menu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        
+        .mobile-menu.open {
+            max-height: 400px;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full bg-white/95 backdrop-blur-sm shadow-sm z-50 animate-fade-in-down">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-2">
+                    <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                        <span class="text-white text-xl font-bold">SAT</span>
+                    </div>
+                    <span class="text-xl sm:text-2xl font-extrabold text-primary">DSAT SCHOOL</span>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-4 lg:space-x-8">
+                    <a href="#features" class="text-gray-700 hover:text-primary transition-colors duration-200">Pricing</a>
+                    <a href="#testimonials" class="text-gray-700 hover:text-primary transition-colors duration-200">Reviews</a>
+                    <a href="#ai-features" class="text-gray-700 hover:text-primary transition-colors duration-200">Features</a>
+                    <a href="#faq" class="text-gray-700 hover:text-primary transition-colors duration-200">FAQ</a>
+                    <a href="/login/" class="text-gray-700 hover:text-primary transition-colors duration-200">Login</a>
+                    <a href="/signup/" class="bg-secondary text-white px-6 py-2 rounded-lg hover:opacity-90 hover:scale-105 transition-all duration-200 font-semibold">
+                        Get Started
+                    </a>
+                </div>
+                
+                <!-- Mobile menu button -->
+                <button id="mobile-menu-btn" class="md:hidden text-gray-700 hover:text-primary transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Mobile menu -->
+            <div id="mobile-menu" class="mobile-menu md:hidden">
+                <div class="px-2 pt-2 pb-3 space-y-1">
+                    <a href="#features" class="block px-3 py-2 text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-colors">Pricing</a>
+                    <a href="#testimonials" class="block px-3 py-2 text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-colors">Reviews</a>
+                    <a href="#ai-features" class="block px-3 py-2 text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-colors">Features</a>
+                    <a href="#faq" class="block px-3 py-2 text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-colors">FAQ</a>
+                    <a href="/admin/" class="block px-3 py-2 text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md transition-colors">Login</a>
+                    <a href="/api/" class="block px-3 py-2 bg-secondary text-white rounded-md hover:opacity-90 transition-opacity font-semibold text-center">Get Started</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-24 pb-12 sm:pb-20 bg-gradient-to-br from-primary to-purple-700 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-2 gap-8 lg:gap-12 items-center">
+                <div class="text-white animate-slide-in-left">
+                    <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-6">
+                        Achieve a life-<br>
+                        changing test score
+                    </h1>
+                    <p class="text-lg sm:text-xl text-white/90 mb-8">
+                        Supercharge your SAT prep with adaptive AI and expert guidance.
+                    </p>
+                    <a href="/api/" class="inline-block bg-secondary text-dark px-6 sm:px-8 py-3 sm:py-4 rounded-lg hover:scale-105 hover:shadow-lg transition-all duration-300 font-bold text-base sm:text-lg">
+                        Get Started
+                    </a>
+                </div>
+                <div class="relative animate-slide-in-right">
+                    <div class="bg-white rounded-2xl shadow-2xl p-4 sm:p-6 lg:p-8 hover-lift">
+                        <div class="text-center mb-6">
+                            <div class="bg-gray-100 rounded-lg p-4 sm:p-6 mb-4 animate-fade-in">
+                                <div class="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 text-left">A practice question for Geometry & SAT Prep 2.0</div>
+                                <div class="space-y-2 sm:space-y-3">
+                                    <div class="flex items-center space-x-2 hover:bg-gray-50 p-2 rounded transition-colors cursor-pointer">
+                                        <input type="radio" class="text-primary">
+                                        <label class="text-xs sm:text-sm cursor-pointer">A) No triangles (number = 0)</label>
+                                    </div>
+                                    <div class="flex items-center space-x-2 hover:bg-gray-50 p-2 rounded transition-colors cursor-pointer bg-purple-50">
+                                        <input type="radio" class="text-primary" checked>
+                                        <label class="text-xs sm:text-sm cursor-pointer font-semibold">B) One triangle (number = 1)</label>
+                                    </div>
+                                    <div class="flex items-center space-x-2 hover:bg-gray-50 p-2 rounded transition-colors cursor-pointer">
+                                        <input type="radio" class="text-primary">
+                                        <label class="text-xs sm:text-sm cursor-pointer">C) One triangle (number = 2)</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs sm:text-sm text-gray-500">Question 1 of 5</span>
+                                <div class="flex space-x-2">
+                                    <button class="text-xs sm:text-sm text-primary hover:underline transition-all">Skip</button>
+                                    <button class="bg-secondary text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded text-xs sm:text-sm font-semibold hover:scale-105 transition-transform">Submit</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="absolute -top-3 sm:-top-4 -right-3 sm:-right-4 bg-secondary rounded-full p-1.5 sm:p-2 animate-bounce-in">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full flex items-center justify-center shadow-lg">
+                                <span class="text-xl sm:text-2xl">✨</span>
+                            </div>
+                        </div>
+                        <div class="absolute -bottom-4 sm:-bottom-6 -left-4 sm:-left-6 animate-float">
+                            <div class="bg-primary text-white p-3 sm:p-4 rounded-lg shadow-xl">
+                                <div class="w-16 h-16 sm:w-20 sm:h-20 bg-secondary rounded-full mx-auto mb-2 flex items-center justify-center">
+                                    <span class="text-2xl sm:text-3xl font-bold text-white">AI</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Score Chart Section -->
+    <section class="py-12 sm:py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-2 gap-8 lg:gap-12 items-center">
+                <div class="animate-on-scroll order-2 md:order-1">
+                    <div class="bg-gray-50 rounded-2xl p-6 sm:p-8 hover-lift">
+                        <h3 class="text-base sm:text-lg font-semibold mb-4 sm:mb-6">Your Score Improvements with DSAT</h3>
+                        <div class="space-y-4">
+                            <!-- Chart visualization -->
+                            <div class="flex items-end justify-between space-x-2 sm:space-x-4 h-48 sm:h-64">
+                                <div class="flex flex-col items-center chart-bar">
+                                    <div class="bg-gray-300 w-8 sm:w-12 h-12 sm:h-16 rounded-t mb-2 transform hover:scale-105 transition-transform duration-300"></div>
+                                    <span class="text-xs sm:text-sm text-gray-600">Week 1</span>
+                                </div>
+                                <div class="flex flex-col items-center chart-bar" style="animation-delay: 0.1s">
+                                    <div class="bg-blue-400 w-8 sm:w-12 h-20 sm:h-24 rounded-t mb-2 transform hover:scale-105 transition-transform duration-300"></div>
+                                    <span class="text-xs sm:text-sm text-gray-600">Week 2</span>
+                                </div>
+                                <div class="flex flex-col items-center chart-bar" style="animation-delay: 0.2s">
+                                    <div class="bg-primary w-8 sm:w-12 h-28 sm:h-32 rounded-t mb-2 transform hover:scale-105 transition-transform duration-300"></div>
+                                    <span class="text-xs sm:text-sm text-gray-600">Week 3</span>
+                                </div>
+                                <div class="flex flex-col items-center chart-bar" style="animation-delay: 0.3s">
+                                    <div class="bg-secondary w-8 sm:w-12 h-32 sm:h-40 rounded-t mb-2 transform hover:scale-105 transition-transform duration-300"></div>
+                                    <span class="text-xs sm:text-sm text-gray-600">Week 4</span>
+                                </div>
+                                <div class="flex flex-col items-center chart-bar" style="animation-delay: 0.4s">
+                                    <div class="bg-green-500 w-8 sm:w-12 h-40 sm:h-48 rounded-t mb-2 transform hover:scale-105 transition-transform duration-300"></div>
+                                    <span class="text-xs sm:text-sm text-gray-600">Week 5</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="animate-on-scroll order-1 md:order-2">
+                    <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4 sm:mb-6">
+                        Maximize score gains per minute
+                    </h2>
+                    <p class="text-base sm:text-lg text-gray-600 mb-4 sm:mb-6">
+                        DSAT analyzes the topics and questions that will give you biggest score jumps. Fueled with our AI, you will practice on what gets you the biggest return on your time investment. Just like this!
+                    </p>
+                    <a href="#" class="text-primary font-semibold hover:underline inline-flex items-center group">
+                        Learn more about DSAT 
+                        <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Personalized Training Section -->
+    <section class="py-12 sm:py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-2 gap-8 lg:gap-12 items-center">
+                <div class="animate-on-scroll">
+                    <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4 sm:mb-6">
+                        A personalized training plan that fits your life
+                    </h2>
+                    <p class="text-base sm:text-lg text-gray-600 mb-6 sm:mb-8">
+                        DSAT helps you fit study into different life goals, study habits and schedule. We design a study plan just for you, practice where you are weak, and remind you to hit your daily prep goals.
+                    </p>
+                    <a href="#" class="text-primary font-semibold hover:underline inline-flex items-center group">
+                        Learn more about DSAT 
+                        <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </a>
+                </div>
+                <div class="animate-on-scroll">
+                    <div class="bg-primary rounded-2xl p-4 sm:p-6 text-white hover-lift">
+                        <div class="bg-dark rounded-lg p-4 mb-6 animate-fade-in">
+                            <h3 class="font-bold mb-4 text-sm sm:text-base">SAT Study Plan</h3>
+                            <div class="space-y-3">
+                                <div class="bg-primary rounded p-3 transform hover:scale-105 transition-transform duration-300">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs sm:text-sm">Math Focus</span>
+                                        <span class="text-xs bg-secondary px-2 py-1 rounded">Today</span>
+                                    </div>
+                                </div>
+                                <div class="bg-gray-700 rounded p-3 transform hover:scale-105 transition-transform duration-300">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs sm:text-sm">Reading Comprehension</span>
+                                        <span class="text-xs">Tomorrow</span>
+                                    </div>
+                                </div>
+                                <div class="bg-gray-700 rounded p-3 transform hover:scale-105 transition-transform duration-300">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs sm:text-sm">Writing & Language</span>
+                                        <span class="text-xs">Friday</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="w-full bg-secondary text-dark py-3 rounded-lg font-bold hover:scale-105 transition-transform duration-200 text-sm sm:text-base">Continue Practice</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Confidence Section -->
+    <section class="py-12 sm:py-20 bg-blue-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-2 gap-8 lg:gap-12 items-center">
+                <div class="animate-on-scroll">
+                    <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4 sm:mb-6">
+                        Confidence on test day
+                    </h2>
+                    <p class="text-base sm:text-lg text-gray-600 mb-4 sm:mb-6">
+                        DSAT's practice tests simulate the real Digital SAT experience. You'll gain confidence with full practice sessions before your test day.
+                    </p>
+                    <div class="space-y-3">
+                        <div class="flex items-center space-x-3 animate-fade-in" style="animation-delay: 0.1s">
+                            <div class="w-6 h-6 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+                                <span class="text-white text-sm">✓</span>
+                            </div>
+                            <span class="text-sm sm:text-base text-gray-700">100% real practice questions on SAT practice tests</span>
+                        </div>
+                        <div class="flex items-center space-x-3 animate-fade-in" style="animation-delay: 0.2s">
+                            <div class="w-6 h-6 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+                                <span class="text-white text-sm">✓</span>
+                            </div>
+                            <span class="text-sm sm:text-base text-gray-700">Simulate real test day experience</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="animate-on-scroll">
+                    <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-lg hover-lift">
+                        <div class="text-center">
+                            <h3 class="text-base sm:text-lg font-semibold mb-4">Your Score Report</h3>
+                            <div class="text-5xl sm:text-6xl font-bold text-gray-900 mb-2 animate-scale-in">1510</div>
+                            <p class="text-sm sm:text-base text-gray-600 mb-6">You scored higher than 99% of test takers</p>
+                            
+                            <div class="grid grid-cols-2 gap-4 mb-6">
+                                <div class="text-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <div class="text-xl sm:text-2xl font-bold text-gray-900">770</div>
+                                    <div class="text-xs sm:text-sm text-gray-600">Math</div>
+                                </div>
+                                <div class="text-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <div class="text-xl sm:text-2xl font-bold text-gray-900">740</div>
+                                    <div class="text-xs sm:text-sm text-gray-600">Reading & Writing</div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-green-100 rounded-lg p-4 hover:bg-green-200 transition-colors">
+                                <div class="text-3xl sm:text-4xl font-bold text-green-600 mb-1">91%</div>
+                                <div class="text-xs sm:text-sm text-green-700">Correct</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI Features Section -->
+    <section id="ai-features" class="py-12 sm:py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4 animate-on-scroll">AI-powered SAT & ACT test prep</h2>
+            
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-8 mt-8 sm:mt-12">
+                <div class="text-center animate-on-scroll">
+                    <div class="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3 hover:scale-110 transition-transform duration-300">
+                        <span class="text-xl sm:text-2xl">📊</span>
+                    </div>
+                    <h3 class="font-semibold text-xs sm:text-sm">Adaptive learning powered by AI</h3>
+                </div>
+                
+                <div class="text-center animate-on-scroll" style="animation-delay: 0.1s">
+                    <div class="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3 hover:scale-110 transition-transform duration-300">
+                        <span class="text-xl sm:text-2xl">💡</span>
+                    </div>
+                    <h3 class="font-semibold text-xs sm:text-sm">Get instant tips and answer explanations</h3>
+                </div>
+                
+                <div class="text-center animate-on-scroll" style="animation-delay: 0.2s">
+                    <div class="w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3 hover:scale-110 transition-transform duration-300">
+                        <span class="text-xl sm:text-2xl">📱</span>
+                    </div>
+                    <h3 class="font-semibold text-xs sm:text-sm">Study on your computer and smartphone</h3>
+                </div>
+                
+                <div class="text-center animate-on-scroll" style="animation-delay: 0.3s">
+                    <div class="w-12 h-12 sm:w-16 sm:h-16 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-3 hover:scale-110 transition-transform duration-300">
+                        <span class="text-xl sm:text-2xl">📝</span>
+                    </div>
+                    <h3 class="font-semibold text-xs sm:text-sm">Real practice questions with detailed analysis</h3>
+                </div>
+                
+                <div class="text-center animate-on-scroll" style="animation-delay: 0.4s">
+                    <div class="w-12 h-12 sm:w-16 sm:h-16 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-3 hover:scale-110 transition-transform duration-300">
+                        <span class="text-xl sm:text-2xl">📈</span>
+                    </div>
+                    <h3 class="font-semibold text-xs sm:text-sm">Personalized insights for smarter studying</h3>
+                </div>
+                
+                <div class="text-center animate-on-scroll" style="animation-delay: 0.5s">
+                    <div class="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3 hover:scale-110 transition-transform duration-300">
+                        <span class="text-xl sm:text-2xl">🎯</span>
+                    </div>
+                    <h3 class="font-semibold text-xs sm:text-sm">Goal setting and progress tracking</h3>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="py-20 bg-dark text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-4xl font-extrabold mb-4">Join 40,000+ students</h2>
+            <p class="text-xl text-white/80 mb-12">Hundreds of five star reviews from students who love studying with us</p>
+            
+            <button class="bg-secondary text-dark px-8 py-3 rounded-lg font-bold mb-12">Read More Course Review</button>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-secondary text-dark p-6 rounded-lg">
+                    <p class="mb-4 font-semibold">"I absolutely loved the instant feedback. Those test me sections were the best part of the entire thing. I learned so much from each exercise and I will definitely be returning."</p>
+                    <div class="font-bold">— Maya, High School Senior</div>
+                </div>
+                
+                <div class="bg-green-400 text-dark p-6 rounded-lg">
+                    <p class="mb-4 font-semibold">"I felt that DSAT was awesome and it helped me both the practice tests and for the practice work. The test structure for me improved so much!"</p>
+                    <div class="font-bold">— David, ACT 32 Student</div>
+                </div>
+                
+                <div class="bg-yellow-300 text-dark p-6 rounded-lg">
+                    <p class="mb-4 font-semibold">"Utterly well worth it! My son studied for his SAT using DSAT and his score went from 1150 to 1420 between March to the August. He loved every bit of it."</p>
+                    <div class="font-bold">— Patricia, Parent</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-12 sm:py-20 bg-blue-50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="bg-white rounded-2xl p-6 sm:p-12 shadow-lg hover-lift animate-on-scroll">
+                <div class="w-20 h-20 sm:w-24 sm:h-24 bg-primary rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce-in">
+                    <span class="text-3xl sm:text-4xl text-white font-bold">SAT</span>
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">Try DSAT School for free</h2>
+                <p class="text-base sm:text-lg text-gray-600 mb-6 sm:mb-8">No credit card required, high quality questions and answers and techniques</p>
+                <a href="/api/" class="bg-secondary text-dark px-6 sm:px-8 py-3 sm:py-4 rounded-lg hover:scale-105 transition-transform duration-200 font-bold text-base sm:text-lg inline-block">
+                    Get Started
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="py-12 sm:py-20 bg-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 text-center mb-8 sm:mb-12 animate-on-scroll">FAQs</h2>
+            
+            <div class="space-y-4 sm:space-y-6">
+                <div class="border-b border-gray-200 pb-4 sm:pb-6 faq-item cursor-pointer hover:bg-gray-50 p-3 sm:p-4 rounded-lg transition-colors animate-on-scroll">
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-2">What is DSAT?</h3>
+                    <p class="text-sm sm:text-base text-gray-600">DSAT School is an AI-powered platform that helps students prepare for the Digital SAT with personalized study plans and adaptive learning technology.</p>
+                </div>
+                
+                <div class="border-b border-gray-200 pb-4 sm:pb-6 faq-item cursor-pointer hover:bg-gray-50 p-3 sm:p-4 rounded-lg transition-colors animate-on-scroll" style="animation-delay: 0.1s">
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-2">How does DSAT Study work?</h3>
+                    <p class="text-sm sm:text-base text-gray-600">Our AI analyzes your performance and creates personalized study plans that focus on your weak areas for maximum score improvement.</p>
+                </div>
+                
+                <div class="border-b border-gray-200 pb-4 sm:pb-6 faq-item cursor-pointer hover:bg-gray-50 p-3 sm:p-4 rounded-lg transition-colors animate-on-scroll" style="animation-delay: 0.2s">
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-2">Do you offer a free trial/money back guarantee?</h3>
+                    <p class="text-sm sm:text-base text-gray-600">Yes! We offer a 14-day free trial with no credit card required, plus a 30-day money back guarantee.</p>
+                </div>
+                
+                <div class="border-b border-gray-200 pb-4 sm:pb-6 faq-item cursor-pointer hover:bg-gray-50 p-3 sm:p-4 rounded-lg transition-colors animate-on-scroll" style="animation-delay: 0.3s">
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-2">How much does it cost per month on average?</h3>
+                    <p class="text-sm sm:text-base text-gray-600">Our plans start at $29/month for basic access, with premium features available at $49/month.</p>
+                </div>
+                
+                <div class="border-b border-gray-200 pb-4 sm:pb-6 faq-item cursor-pointer hover:bg-gray-50 p-3 sm:p-4 rounded-lg transition-colors animate-on-scroll" style="animation-delay: 0.4s">
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-2">What content areas do you cover and how rigorous?</h3>
+                    <p class="text-sm sm:text-base text-gray-600">We cover all Digital SAT sections: Math, Reading & Writing, with over 10,000 practice questions aligned to the official test format.</p>
+                </div>
+                
+                <div class="pb-4 sm:pb-6 faq-item cursor-pointer hover:bg-gray-50 p-3 sm:p-4 rounded-lg transition-colors animate-on-scroll" style="animation-delay: 0.5s">
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-2">Do you have a mobile app?</h3>
+                    <p class="text-sm sm:text-base text-gray-600">Yes, DSAT School works seamlessly on both desktop and mobile devices through your web browser.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-8 sm:py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-6 sm:gap-8 mb-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background-color: #9967b9;">
+                            <span class="text-white text-sm font-bold">SAT</span>
+                        </div>
+                        <span class="text-xl font-extrabold">DSAT SCHOOL</span>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="font-bold mb-4">About</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition">Our Story</a></li>
+                        <li><a href="#" class="hover:text-white transition">Careers</a></li>
+                        <li><a href="#" class="hover:text-white transition">Press</a></li>
+                        <li><a href="#" class="hover:text-white transition">Contact</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="font-bold mb-4">Community</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition">Student Success Stories</a></li>
+                        <li><a href="#" class="hover:text-white transition">Tutor Community</a></li>
+                        <li><a href="#" class="hover:text-white transition">Study Groups</a></li>
+                        <li><a href="#" class="hover:text-white transition">Blog</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="font-bold mb-4">Support</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition">Help Center</a></li>
+                        <li><a href="#" class="hover:text-white transition">Contact Support</a></li>
+                        <li><a href="/api/health/" class="hover:text-white transition">System Status</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="font-bold mb-4">Legal & Privacy</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-white transition">Terms of Service</a></li>
+                        <li><a href="#" class="hover:text-white transition">Cookie Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-700 pt-8 text-center text-gray-400">
+                <p>&copy; 2025 DSAT SCHOOL. All rights reserved. Built with passion for SAT success.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        if (mobileMenuBtn && mobileMenu) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('open');
+            });
+        }
+
+        // Intersection Observer for scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animated');
+                }
+            });
+        }, observerOptions);
+
+        // Observe all elements with animate-on-scroll class
+        document.querySelectorAll('.animate-on-scroll').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Animate chart bars on scroll
+        const chartObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const bars = entry.target.querySelectorAll('.chart-bar');
+                    bars.forEach((bar, index) => {
+                        setTimeout(() => {
+                            bar.style.animation = 'fadeInUp 0.6s ease-out forwards';
+                        }, index * 100);
+                    });
+                }
+            });
+        }, observerOptions);
+
+        const chartSection = document.querySelector('.chart-bar');
+        if (chartSection && chartSection.closest('section')) {
+            chartObserver.observe(chartSection.closest('section'));
+        }
+    </script>
+</body>
+</html>

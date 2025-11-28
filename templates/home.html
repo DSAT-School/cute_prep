@@ -1,25 +1,36 @@
 {% extends 'base.html' %}
 
-{% block title %}Home - Practice Portal{% endblock %}
+{% block title %}Dashboard - DSAT SCHOOL{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-12">
     <!-- Hero Section -->
     <div class="text-center mb-16">
         <h1 class="text-5xl font-bold text-gray-900 mb-4">
-            Welcome to Practice Portal
+            Welcome{% if user.is_authenticated %}, {{ user.username }}{% endif %}!
         </h1>
         <p class="text-xl text-gray-600 mb-8">
-            A modern Django application built with Clean Architecture and best practices
+            Ready to master the Digital SAT with AI-powered practice
         </p>
+        {% if user.is_authenticated %}
         <div class="space-x-4">
-            <a href="/register" class="btn btn-primary text-lg">
-                Get Started
+            <a href="#" class="bg-primary text-white px-8 py-3 rounded-lg hover:opacity-90 transition font-semibold text-lg">
+                Start Practice
             </a>
-            <a href="/about" class="btn btn-secondary text-lg">
-                Learn More
+            <a href="/logout/" class="border-2 border-primary text-primary px-8 py-3 rounded-lg hover:bg-primary hover:text-white transition font-semibold text-lg">
+                Logout
             </a>
         </div>
+        {% else %}
+        <div class="space-x-4">
+            <a href="/signup/" class="bg-primary text-white px-8 py-3 rounded-lg hover:opacity-90 transition font-semibold text-lg">
+                Get Started
+            </a>
+            <a href="/login/" class="border-2 border-primary text-primary px-8 py-3 rounded-lg hover:bg-primary hover:text-white transition font-semibold text-lg">
+                Login
+            </a>
+        </div>
+        {% endif %}
     </div>
     
     <!-- Features Section -->

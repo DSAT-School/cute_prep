@@ -7,8 +7,20 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic import TemplateView
+
+from apps.core.views import CustomLoginView, CustomLogoutView, CustomSignupView
 
 urlpatterns = [
+    path("", TemplateView.as_view(template_name="landing.html"), name="landing"),
+    path("home/", TemplateView.as_view(template_name="home.html"), name="home"),
+    
+    # Authentication URLs
+    path("login/", CustomLoginView.as_view(), name="login"),
+    path("signup/", CustomSignupView.as_view(), name="signup"),
+    path("logout/", CustomLogoutView.as_view(), name="logout"),
+    path("accounts/", include("allauth.urls")),
+    
     path("admin/", admin.site.urls),
     path("api/", include("apps.core.urls")),
 ]

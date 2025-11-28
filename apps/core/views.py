@@ -2,16 +2,22 @@
 import json
 from typing import Any
 
+from django.contrib.auth import login
+from django.contrib.auth.views import LoginView, LogoutView
 from django.db import connection
 from django.http import JsonResponse
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.views.generic import CreateView
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from .forms import CustomLoginForm, CustomSignupForm
 from .models import User
 from .serializers import UserCreateSerializer, UserSerializer
 from .utils.timezone import validate_timezone
@@ -219,8 +225,70 @@ def set_timezone(request: Request) -> JsonResponse:
             'status': 'success',
             'timezone': timezone
         })
-    except (json.JSONDecodeError, KeyError, ValueError) as e:
+    except Exception as e:
         return JsonResponse({
             'status': 'error',
             'message': str(e)
         }, status=400)
+
+
+class CustomLoginView(LoginView):
+    """
+    Custom login view with email/username support.
+    """
+    template_name = "auth/login.html"
+    form_class = CustomLoginForm
+    redirect_authenticated_user = True
+    
+    def get_success_url(self):
+        return reverse_lazy("core:dashboard")
+
+
+class CustomSignupView(CreateView):
+    """
+    Custom registration view.
+    """
+    template_name = "auth/signup.html"
+    form_class = CustomSignupForm
+    success_url = reverse_lazy("core:dashboard")
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        # Log the user in after successful registration
+        login(self.request, self.object)
+        return response
+    
+    def get(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect("core:dashboard")
+        return super().get(request, *args, **kwargs)
+
+
+class CustomLogoutView(LogoutView):
+    """
+    Custom logout view.
+    """
+    next_page = "landing"
+
+
+def dashboard_view(request):
+    """
+    Dashboard view for authenticated users.
+    
+    Args:
+        request: HTTP request object
+        
+    Returns:
+        Rendered dashboard template
+    """
+    from django.contrib.auth.decorators import login_required
+    from django.shortcuts import render
+    
+    @login_required
+    def _dashboard(request):
+        context = {
+            'user': request.user,
+        }
+        return render(request, 'dashboard.html', context)
+    
+    return _dashboard(request)
