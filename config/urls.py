@@ -9,7 +9,13 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import TemplateView
 
-from apps.core.views import CustomLoginView, CustomLogoutView, CustomSignupView, dashboard_view
+from apps.core.views import (
+    CustomLoginView,
+    CustomLogoutView,
+    CustomSignupView,
+    dashboard_view,
+    profile_view,
+)
 
 urlpatterns = [
     # Landing and Home Pages
@@ -24,6 +30,7 @@ urlpatterns = [
     
     # SSR Pages (Server-Side Rendered)
     path("dashboard/", dashboard_view, name="dashboard"),
+    path("profile/", profile_view, name="profile"),
     
     # Admin
     path("admin/", admin.site.urls),

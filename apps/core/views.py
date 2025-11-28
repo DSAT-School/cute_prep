@@ -292,3 +292,96 @@ def dashboard_view(request):
         return render(request, 'dashboard.html', context)
     
     return _dashboard(request)
+
+
+def profile_view(request):
+    """
+    Profile management view for authenticated users.
+    
+    Handles:
+    - Profile information display and update
+    - Password change for existing users
+    - Password creation for OAuth users
+    
+    Args:
+        request: HTTP request object
+        
+    Returns:
+        Rendered profile template with forms
+    """
+    from django.contrib import messages
+    from django.contrib.auth import update_session_auth_hash
+    from django.contrib.auth.decorators import login_required
+    from django.shortcuts import render
+    
+    from .forms import (
+        CustomPasswordChangeForm,
+        CustomSetPasswordForm,
+        ProfileUpdateForm,
+    )
+    
+    @login_required
+    def _profile(request):
+        user = request.user
+        
+        # Check if user has a usable password (not OAuth-only user)
+        has_password = user.has_usable_password()
+        
+        # Initialize forms
+        profile_form = ProfileUpdateForm(instance=user)
+        password_form = None
+        
+        if has_password:
+            password_form = CustomPasswordChangeForm(user=user)
+        else:
+            password_form = CustomSetPasswordForm(user=user)
+        
+        # Handle form submissions
+        if request.method == 'POST':
+            form_type = request.POST.get('form_type')
+            
+            if form_type == 'profile':
+                profile_form = ProfileUpdateForm(request.POST, instance=user, user=user)
+                if profile_form.is_valid():
+                    profile_form.save()
+                    messages.success(request, 'Profile updated successfully!')
+                    return redirect('profile')
+                else:
+                    messages.error(request, 'Please correct the errors below.')
+            
+            elif form_type == 'password':
+                if has_password:
+                    password_form = CustomPasswordChangeForm(user=user, data=request.POST)
+                else:
+                    password_form = CustomSetPasswordForm(user=user, data=request.POST)
+                
+                if password_form.is_valid():
+                    user = password_form.save()
+                    # Keep user logged in after password change
+                    update_session_auth_hash(request, user)
+                    
+                    if has_password:
+                        messages.success(request, 'Password changed successfully!')
+                    else:
+                        messages.success(request, 'Password created successfully! You can now use it to log in.')
+                    return redirect('profile')
+                else:
+                    messages.error(request, 'Please correct the errors below.')
+        
+        # Check if user signed up via OAuth
+        oauth_provider = None
+        if hasattr(user, 'socialaccount_set'):
+            social_accounts = user.socialaccount_set.all()
+            if social_accounts.exists():
+                oauth_provider = social_accounts.first().provider
+        
+        context = {
+            'user': user,
+            'profile_form': profile_form,
+            'password_form': password_form,
+            'has_password': has_password,
+            'oauth_provider': oauth_provider,
+        }
+        return render(request, 'profile.html', context)
+    
+    return _profile(request)
