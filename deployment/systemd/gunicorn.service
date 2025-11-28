@@ -1,0 +1,28 @@
+[Unit]
+Description=Practice Portal Gunicorn daemon
+Requires=practice-portal.socket
+After=network.target postgresql.service redis.service
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+RuntimeDirectory=gunicorn
+WorkingDirectory=/opt/practice_portal
+Environment="PATH=/opt/practice_portal/venv/bin"
+EnvironmentFile=/opt/practice_portal/.env
+ExecStart=/opt/practice_portal/venv/bin/gunicorn \
+          --workers ${GUNICORN_WORKERS} \
+          --timeout ${GUNICORN_TIMEOUT} \
+          --bind unix:/run/gunicorn/practice_portal.sock \
+          --access-logfile /var/log/practice_portal/access.log \
+          --error-logfile /var/log/practice_portal/error.log \
+          --log-level info \
+          config.wsgi:application
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,22 @@
+[Unit]
+Description=Practice Portal Celery Beat Scheduler
+After=network.target redis.service
+
+[Service]
+Type=forking
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/practice_portal
+Environment="PATH=/opt/practice_portal/venv/bin"
+EnvironmentFile=/opt/practice_portal/.env
+ExecStart=/opt/practice_portal/venv/bin/celery -A config beat \
+          --loglevel=info \
+          --logfile=/var/log/practice_portal/celery-beat.log \
+          --pidfile=/var/run/celery/beat.pid \
+          --detach
+ExecStop=/bin/kill -s TERM $MAINPID
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
