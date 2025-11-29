@@ -267,8 +267,10 @@ class CustomSignupView(CreateView):
 class CustomLogoutView(LogoutView):
     """
     Custom logout view.
+    Allows both GET and POST methods for compatibility.
     """
     next_page = "landing"
+    http_method_names = ['get', 'post', 'options']
 
 
 def dashboard_view(request):
