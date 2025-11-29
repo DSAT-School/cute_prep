@@ -115,8 +115,9 @@ class ProfileUpdateForm(forms.ModelForm):
     )
     email = forms.EmailField(
         widget=forms.EmailInput(attrs={
-            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all',
+            'class': 'w-full px-4 py-3 rounded-lg border border-gray-300 bg-gray-100 cursor-not-allowed',
             'placeholder': 'Email Address',
+            'readonly': 'readonly',
         })
     )
 
@@ -127,18 +128,14 @@ class ProfileUpdateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+        # Make email field readonly
+        self.fields['email'].disabled = True
 
     def clean_username(self):
         username = self.cleaned_data.get('username')
         if User.objects.filter(username=username).exclude(pk=self.instance.pk).exists():
             raise ValidationError('This username is already taken.')
         return username
-
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-        if User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
-            raise ValidationError('This email is already registered.')
-        return email
 
 
 class CustomPasswordChangeForm(PasswordChangeForm):

@@ -3,7 +3,7 @@ import json
 from typing import Any
 
 from django.contrib import messages
-from django.contrib.auth import login
+from django.contrib.auth import login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.messages import get_messages
@@ -20,7 +20,13 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from .forms import CustomLoginForm, CustomSignupForm
+from .forms import (
+    CustomLoginForm,
+    CustomPasswordChangeForm,
+    CustomSetPasswordForm,
+    CustomSignupForm,
+    ProfileUpdateForm,
+)
 from .models import User
 from .serializers import UserCreateSerializer, UserSerializer
 from .utils.timezone import validate_timezone
@@ -308,17 +314,6 @@ def profile_view(request):
     Returns:
         Rendered profile template with forms
     """
-    from django.contrib import messages
-    from django.contrib.auth import update_session_auth_hash
-    from django.contrib.auth.decorators import login_required
-    from django.shortcuts import render
-    
-    from .forms import (
-        CustomPasswordChangeForm,
-        CustomSetPasswordForm,
-        ProfileUpdateForm,
-    )
-    
     @login_required
     def _profile(request):
         user = request.user
@@ -355,9 +350,14 @@ def profile_view(request):
                     password_form = CustomSetPasswordForm(user=user, data=request.POST)
                 
                 if password_form.is_valid():
-                    user = password_form.save()
-                    # Keep user logged in after password change
-                    update_session_auth_hash(request, user)
+                    saved_user = password_form.save()
+                    
+                    # Keep user logged in after password change/creation
+                    # This updates the session to prevent logout
+                    update_session_auth_hash(request, saved_user)
+                    
+                    # Re-login the user to ensure session is fresh
+                    login(request, saved_user, backend='django.contrib.auth.backends.ModelBackend')
                     
                     if has_password:
                         messages.success(request, 'Password changed successfully!')
