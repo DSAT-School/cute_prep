@@ -2,11 +2,14 @@
 import json
 from typing import Any
 
+from django.contrib import messages
 from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.messages import get_messages
 from django.db import connection
 from django.http import JsonResponse
-from django.shortcuts import redirect
+from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -273,6 +276,7 @@ class CustomLogoutView(LogoutView):
     http_method_names = ['get', 'post', 'options']
 
 
+@login_required
 def dashboard_view(request):
     """
     Dashboard view for authenticated users.
@@ -283,17 +287,10 @@ def dashboard_view(request):
     Returns:
         Rendered dashboard template
     """
-    from django.contrib.auth.decorators import login_required
-    from django.shortcuts import render
-    
-    @login_required
-    def _dashboard(request):
-        context = {
-            'user': request.user,
-        }
-        return render(request, 'dashboard.html', context)
-    
-    return _dashboard(request)
+    context = {
+        'user': request.user,
+    }
+    return render(request, 'dashboard.html', context)
 
 
 def profile_view(request):

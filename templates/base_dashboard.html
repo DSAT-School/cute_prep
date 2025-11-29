@@ -33,79 +33,127 @@
     
     <style>
         body { font-family: 'Montserrat', sans-serif; }
+        
+        /* Notification styles */
+        .notification-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 9999;
+            width: 400px;
+            max-width: calc(100vw - 2rem);
+        }
+        
+        .notification {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            margin-bottom: 0.75rem;
+            padding: 1rem;
+            border-left: 4px solid;
+            animation: slideIn 0.3s ease-out;
+            display: flex;
+            align-items: start;
+            gap: 0.75rem;
+        }
+        
+        .notification.success { border-left-color: #10b981; }
+        .notification.error { border-left-color: #ef4444; }
+        .notification.warning { border-left-color: #f59e0b; }
+        .notification.info { border-left-color: #3b82f6; }
+        
+        .notification.hiding {
+            animation: slideOut 0.2s ease-in forwards;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+        
+        .notification-icon {
+            flex-shrink: 0;
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+        
+        .notification-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #1f2937;
+            margin: 0;
+        }
+        
+        .notification-message {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin: 0.25rem 0 0 0;
+        }
+        
+        .notification-close {
+            flex-shrink: 0;
+            background: none;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            padding: 0;
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+        
+        .notification-close:hover {
+            color: #4b5563;
+        }
+        
+        .notification-progress {
+            margin-top: 0.75rem;
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .notification-progress-bar {
+            height: 100%;
+            transition: width 100ms linear;
+        }
+        
+        .notification.success .notification-progress-bar { background: #10b981; }
+        .notification.error .notification-progress-bar { background: #ef4444; }
+        .notification.warning .notification-progress-bar { background: #f59e0b; }
+        .notification.info .notification-progress-bar { background: #3b82f6; }
     </style>
     
     <!-- Additional CSS -->
     {% block extra_css %}{% endblock %}
 </head>
 <body class="bg-gray-50">
-    <!-- Toast Notification Container -->
-    <div x-data="toastManager()" @toast.window="addToast($event.detail)" class="fixed top-4 right-4 z-[9999] space-y-3 max-w-sm w-full pointer-events-none">
-        <template x-for="toast in toasts" :key="toast.id">
-            <div x-show="toast.visible"
-                 x-transition:enter="transform transition ease-out duration-300"
-                 x-transition:enter-start="translate-x-full opacity-0"
-                 x-transition:enter-end="translate-x-0 opacity-100"
-                 x-transition:leave="transform transition ease-in duration-200"
-                 x-transition:leave-start="translate-x-0 opacity-100"
-                 x-transition:leave-end="translate-x-full opacity-0"
-                 class="pointer-events-auto bg-white rounded-lg shadow-2xl border-l-4 overflow-hidden max-w-sm w-full"
-                 :class="{
-                     'border-green-500': toast.type === 'success',
-                     'border-red-500': toast.type === 'error',
-                     'border-yellow-500': toast.type === 'warning',
-                     'border-blue-500': toast.type === 'info'
-                 }">
-                <div class="p-4">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <!-- Success Icon -->
-                            <svg x-show="toast.type === 'success'" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <!-- Error Icon -->
-                            <svg x-show="toast.type === 'error'" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <!-- Warning Icon -->
-                            <svg x-show="toast.type === 'warning'" class="h-6 w-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                            </svg>
-                            <!-- Info Icon -->
-                            <svg x-show="toast.type === 'info'" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                        <div class="ml-3 w-0 flex-1">
-                            <p class="text-sm font-semibold text-gray-900" x-text="toast.title"></p>
-                            <p class="mt-1 text-sm text-gray-600" x-text="toast.message" x-show="toast.message"></p>
-                        </div>
-                        <div class="ml-4 flex-shrink-0 flex">
-                            <button @click="removeToast(toast.id)" class="inline-flex text-gray-400 hover:text-gray-600 focus:outline-none transition-colors">
-                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <!-- Progress bar -->
-                    <div x-show="toast.autoClose" class="mt-3 bg-gray-200 rounded-full h-1 overflow-hidden">
-                        <div class="h-full transition-all ease-linear"
-                             :class="{
-                                 'bg-green-500': toast.type === 'success',
-                                 'bg-red-500': toast.type === 'error',
-                                 'bg-yellow-500': toast.type === 'warning',
-                                 'bg-blue-500': toast.type === 'info'
-                             }"
-                             :style="`width: ${toast.progress}%; transition-duration: 100ms;`">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </template>
-    </div>
+    <!-- Notification Container -->
+    <div id="notificationContainer" class="notification-container"></div>
 
-    <div class="flex h-screen overflow-hidden" x-data="{ sidebarOpen: true, mobileMenuOpen: false }">
+    <div class="flex h-screen overflow-hidden" x-data="sidebarManager()">
         <!-- Mobile Header -->
         <div class="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-30 px-4 py-3 flex items-center justify-between">
             <a href="/" class="flex items-center">
@@ -126,12 +174,25 @@
 
         <!-- Sidebar -->
         <aside :class="sidebarOpen ? 'w-64' : 'w-20'" class="bg-white border-r border-gray-200 flex flex-col transition-all duration-300 relative hidden md:flex">
-            <!-- Collapse/Expand Button (Outside Sidebar - Desktop Only) -->
-            <button @click="sidebarOpen = !sidebarOpen" class="absolute -right-3 top-6 bg-white border border-gray-200 rounded-full p-1.5 shadow-md hover:shadow-lg transition-all z-10 hidden md:block">
-                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="sidebarOpen ? 'M15 19l-7-7 7-7' : 'M9 5l7 7-7 7'"/>
-                </svg>
-            </button>
+            <!-- Toggle & Lock Buttons (Outside Sidebar - Desktop Only) -->
+            <div class="absolute -right-3 top-6 flex flex-col space-y-2 z-10 hidden md:flex">
+                <!-- Lock/Unlock Button -->
+                <button @click="toggleLock()" :title="sidebarLocked ? 'Unlock sidebar' : 'Lock sidebar'" class="bg-white border border-gray-200 rounded-full p-1.5 shadow-md hover:shadow-lg transition-all" :class="sidebarLocked ? 'bg-primary bg-opacity-10 border-primary' : ''">
+                    <svg x-show="!sidebarLocked" class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+                    </svg>
+                    <svg x-show="sidebarLocked" class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                </button>
+                
+                <!-- Collapse/Expand Button -->
+                <button @click="toggleSidebar()" x-show="!sidebarLocked" title="Toggle sidebar" class="bg-white border border-gray-200 rounded-full p-1.5 shadow-md hover:shadow-lg transition-all">
+                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="sidebarOpen ? 'M15 19l-7-7 7-7' : 'M9 5l7 7-7 7'"/>
+                    </svg>
+                </button>
+            </div>
             
             <!-- Logo -->
             <div class="p-6 border-b border-gray-200">
@@ -458,21 +519,190 @@
             }
         }
 
-        // Helper function to trigger toast from anywhere
-        window.showToast = function(config) {
-            window.dispatchEvent(new CustomEvent('toast', { detail: config }));
+        // Simple Notification System
+        const NotificationManager = {
+            container: null,
+            notifications: [],
+            
+            init() {
+                this.container = document.getElementById('notificationContainer');
+                console.log('Notification manager initialized');
+            },
+            
+            show(config) {
+                console.log('Showing notification:', config);
+                const id = Date.now() + Math.random();
+                const type = config.type || 'info';
+                const title = config.title || this.getDefaultTitle(type);
+                const message = config.message || '';
+                const duration = config.duration || 5000;
+                const autoClose = config.autoClose !== false;
+                
+                const notification = this.createNotification(id, type, title, message, duration, autoClose);
+                this.container.appendChild(notification);
+                this.notifications.push({ id, element: notification });
+                
+                console.log('Notification added to DOM');
+                
+                if (autoClose) {
+                    this.startAutoClose(id, notification, duration);
+                }
+            },
+            
+            createNotification(id, type, title, message, duration, autoClose) {
+                const div = document.createElement('div');
+                div.className = `notification ${type}`;
+                div.setAttribute('data-id', id);
+                
+                const icons = {
+                    success: '<svg class="notification-icon" fill="none" viewBox="0 0 24 24" stroke="#10b981"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+                    error: '<svg class="notification-icon" fill="none" viewBox="0 0 24 24" stroke="#ef4444"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+                    warning: '<svg class="notification-icon" fill="none" viewBox="0 0 24 24" stroke="#f59e0b"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>',
+                    info: '<svg class="notification-icon" fill="none" viewBox="0 0 24 24" stroke="#3b82f6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+                };
+                
+                let html = icons[type];
+                html += '<div class="notification-content">';
+                html += `<p class="notification-title">${this.escapeHtml(title)}</p>`;
+                if (message) {
+                    html += `<p class="notification-message">${this.escapeHtml(message)}</p>`;
+                }
+                html += '</div>';
+                html += '<button class="notification-close" onclick="NotificationManager.close(' + id + ')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>';
+                
+                if (autoClose) {
+                    html += '<div class="notification-progress"><div class="notification-progress-bar" id="progress-' + id + '" style="width: 100%"></div></div>';
+                }
+                
+                div.innerHTML = html;
+                return div;
+            },
+            
+            startAutoClose(id, element, duration) {
+                const progressBar = document.getElementById('progress-' + id);
+                const interval = 100;
+                const steps = duration / interval;
+                let currentStep = 0;
+                
+                const timer = setInterval(() => {
+                    currentStep++;
+                    const progress = 100 - (currentStep / steps * 100);
+                    if (progressBar) {
+                        progressBar.style.width = progress + '%';
+                    }
+                    
+                    if (currentStep >= steps) {
+                        clearInterval(timer);
+                        this.close(id);
+                    }
+                }, interval);
+            },
+            
+            close(id) {
+                const notification = this.notifications.find(n => n.id === id);
+                if (notification) {
+                    notification.element.classList.add('hiding');
+                    setTimeout(() => {
+                        if (notification.element.parentNode) {
+                            notification.element.parentNode.removeChild(notification.element);
+                        }
+                        this.notifications = this.notifications.filter(n => n.id !== id);
+                    }, 200);
+                }
+            },
+            
+            getDefaultTitle(type) {
+                const titles = {
+                    success: 'Success!',
+                    error: 'Error!',
+                    warning: 'Warning!',
+                    info: 'Information'
+                };
+                return titles[type] || 'Notification';
+            },
+            
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        };
+        
+        // Initialize on page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => NotificationManager.init());
+        } else {
+            NotificationManager.init();
+        }
+        
+        // Global function for easy access
+        window.showNotification = function(config) {
+            NotificationManager.show(config);
         };
 
-        // Auto-show Django messages as toasts on page load
+        // Sidebar Manager with persistent state and lock feature
+        function sidebarManager() {
+            return {
+                sidebarOpen: true,
+                sidebarLocked: false,
+                mobileMenuOpen: false,
+                
+                init() {
+                    // Load saved preferences from localStorage
+                    const savedState = localStorage.getItem('sidebarOpen');
+                    const savedLock = localStorage.getItem('sidebarLocked');
+                    
+                    if (savedState !== null) {
+                        this.sidebarOpen = savedState === 'true';
+                    }
+                    
+                    if (savedLock !== null) {
+                        this.sidebarLocked = savedLock === 'true';
+                    }
+                },
+                
+                toggleSidebar() {
+                    if (!this.sidebarLocked) {
+                        this.sidebarOpen = !this.sidebarOpen;
+                        this.saveSidebarState();
+                    }
+                },
+                
+                toggleLock() {
+                    this.sidebarLocked = !this.sidebarLocked;
+                    localStorage.setItem('sidebarLocked', this.sidebarLocked);
+                    
+                    // Show toast notification
+                    if (window.showToast) {
+                        showToast({
+                            type: 'info',
+                            title: this.sidebarLocked ? 'Sidebar Locked' : 'Sidebar Unlocked',
+                            message: this.sidebarLocked ? 'Sidebar state will remain fixed' : 'You can now toggle the sidebar',
+                            duration: 3000
+                        });
+                    }
+                },
+                
+                saveSidebarState() {
+                    localStorage.setItem('sidebarOpen', this.sidebarOpen);
+                }
+            }
+        }
+
+        // Auto-show Django messages as notifications on page load
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, showing messages...');
             {% if messages %}
                 {% for message in messages %}
-                    showToast({
+                    console.log('Showing notification:', '{{ message.tags }}', '{{ message|escapejs }}');
+                    showNotification({
                         type: '{% if message.tags == "error" %}error{% elif message.tags == "success" %}success{% elif message.tags == "warning" %}warning{% else %}info{% endif %}',
                         title: '{% if message.tags == "error" %}Error{% elif message.tags == "success" %}Success{% elif message.tags == "warning" %}Warning{% else %}Info{% endif %}',
                         message: '{{ message|escapejs }}'
                     });
                 {% endfor %}
+            {% else %}
+                console.log('No messages found');
             {% endif %}
         });
     </script>
