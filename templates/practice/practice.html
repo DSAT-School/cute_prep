@@ -7,9 +7,9 @@
 <style>
     /* Practice Interface Styles */
     .practice-container {
-        max-width: 1200px;
+        max-width: 1920px;
         margin: 0 auto;
-        padding: 1rem;
+        padding: 1.5rem 3rem;
     }
 
     .practice-header {
@@ -27,6 +27,30 @@
         font-size: 1.25rem;
         font-weight: 600;
         color: #262632;
+    }
+
+    .skill-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.375rem 0.75rem;
+        background: #f3e8ff;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #7c3aed;
+    }
+
+    .domain-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.375rem 0.75rem;
+        background: #dbeafe;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #1e40af;
     }
 
     .hide-timer-btn {
@@ -69,9 +93,22 @@
         background: white;
         border: 1px solid #e5e7eb;
         border-radius: 8px;
-        padding: 1.5rem;
-        height: calc(100vh - 250px);
+        padding: 2rem;
+        height: calc(100vh - 220px);
         overflow-y: auto;
+        font-size: 0.95rem;
+        line-height: 1.7;
+    }
+
+    .stimulus-panel p,
+    .question-panel p {
+        margin-bottom: 1rem;
+    }
+
+    .stimulus-panel strong,
+    .question-panel strong {
+        font-weight: 600;
+        color: #1f2937;
     }
 
     .question-number {
@@ -327,6 +364,16 @@
         <div class="flex items-center gap-4">
             <div class="timer" id="timer">31:14</div>
             <button class="hide-timer-btn" onclick="toggleTimer()">Hide</button>
+            <div class="flex items-center gap-2 ml-4" id="topic-badges">
+                <span class="domain-badge">
+                    <span id="domain-code">{{ first_question.domain_code }}</span>
+                    <span id="domain-name">{{ first_question.domain_name }}</span>
+                </span>
+                <span class="skill-badge">
+                    <span id="skill-code">{{ first_question.skill_code }}</span>
+                    <span id="skill-name">{{ first_question.skill_name }}</span>
+                </span>
+            </div>
         </div>
         <button class="annotate-btn" onclick="toggleAnnotate()">
             <span>✏️</span> Annotate
@@ -337,7 +384,7 @@
     <!-- Practice Content -->
     <div class="practice-content">
         <!-- Stimulus/Passage Panel -->
-        <div class="stimulus-panel" id="stimulus-panel">
+        <div class="stimulus-panel font-lato" id="stimulus-panel">
             <div id="stimulus-content">
                 {% if first_question.stimulus %}
                     {{ first_question.stimulus|safe }}
@@ -348,7 +395,7 @@
         </div>
 
         <!-- Question Panel -->
-        <div class="question-panel" id="question-panel">
+        <div class="question-panel font-lato" id="question-panel">
             <div class="flex items-center justify-between">
                 <span class="question-number" id="question-number">1</span>
                 <label class="mark-review">
@@ -376,7 +423,7 @@
             </div>
 
             <!-- Explanation Panel (hidden initially) -->
-            <div class="explanation-panel" id="explanation-panel">
+            <div class="explanation-panel font-lato" id="explanation-panel">
                 <div class="explanation-title">Explanation</div>
                 <div class="explanation-text" id="explanation-text"></div>
             </div>
@@ -391,6 +438,9 @@
         <div class="navigation-buttons">
             <button class="nav-btn back" id="back-btn" onclick="previousQuestion()" disabled>
                 Back
+            </button>
+            <button class="nav-btn" id="check-answer-btn" onclick="checkAnswer()" style="background: #10b981; color: white;" disabled>
+                Check Answer
             </button>
             <button class="nav-btn next" id="next-btn" onclick="nextQuestion()">
                 Next
@@ -414,6 +464,10 @@ let selectedAnswer = null;
 let userAnswers = {};
 let markedForReview = new Set();
 let strikethroughOptions = {};
+
+// Session tracking
+const sessionId = '{{ session_id }}';
+let questionStartTime = Date.now();
 
 // Timer
 let timerSeconds = 31 * 60 + 14; // 31:14
@@ -472,6 +526,97 @@ function selectAnswer(answer) {
     // Save answer
     const currentQuestionId = questionIds[currentIndex];
     userAnswers[currentQuestionId] = answer;
+    
+    // Enable Check Answer button
+    document.getElementById('check-answer-btn').disabled = false;
+}
+
+// Check answer with backend validation
+async function checkAnswer() {
+    if (!selectedAnswer) {
+        alert('Please select an answer first!');
+        return;
+    }
+    
+    const currentQuestionId = questionIds[currentIndex];
+    const checkBtn = document.getElementById('check-answer-btn');
+    
+    // Calculate time taken for this question
+    const timeTaken = Math.floor((Date.now() - questionStartTime) / 1000);
+    
+    // Disable button during check
+    checkBtn.disabled = true;
+    checkBtn.textContent = 'Checking...';
+    
+    try {
+        const response = await fetch(`/practice/api/check-answer/${currentQuestionId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                answer: selectedAnswer,
+                session_id: sessionId,
+                time_taken: timeTaken
+            })
+        });
+        
+        const data = await response.json();
+        
+        // Update UI based on correctness
+        document.querySelectorAll('.answer-option').forEach(option => {
+            const optionAnswer = option.dataset.answer;
+            
+            if (data.is_correct && optionAnswer === selectedAnswer) {
+                option.classList.add('correct');
+            } else if (!data.is_correct && optionAnswer === selectedAnswer) {
+                option.classList.add('incorrect');
+            }
+            
+            // Show correct answer if user was wrong
+            if (!data.is_correct && optionAnswer === data.correct_answer) {
+                option.classList.add('correct');
+            }
+        });
+        
+        // Show explanation
+        if (data.explanation) {
+            document.getElementById('explanation-text').innerHTML = data.explanation;
+            document.getElementById('explanation-panel').classList.add('show');
+            
+            // Render MathJax in explanation
+            if (window.MathJax) {
+                MathJax.typesetPromise([document.getElementById('explanation-text')]);
+            }
+        }
+        
+        // Change button text
+        checkBtn.textContent = data.is_correct ? '✓ Correct!' : '✗ Incorrect';
+        checkBtn.style.background = data.is_correct ? '#10b981' : '#ef4444';
+        
+    } catch (error) {
+        console.error('Error checking answer:', error);
+        alert('Failed to check answer. Please try again.');
+        checkBtn.disabled = false;
+        checkBtn.textContent = 'Check Answer';
+    }
+}
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 
 function toggleStrikethrough(e, button) {
@@ -504,6 +649,11 @@ async function loadQuestion(index) {
     currentIndex = index;
     const questionId = questionIds[index];
     
+    // Update URL with question ID
+    const url = new URL(window.location);
+    url.searchParams.set('question', questionId);
+    window.history.pushState({}, '', url);
+    
     // Show loading
     document.getElementById('stimulus-content').innerHTML = '<div class="loading">Loading...</div>';
     document.getElementById('question-stem').innerHTML = '<div class="loading">Loading...</div>';
@@ -512,6 +662,12 @@ async function loadQuestion(index) {
     try {
         const response = await fetch(`/practice/api/question/${questionId}/`);
         const question = await response.json();
+        
+        // Update domain and skill badges
+        document.getElementById('domain-code').textContent = question.domain_code;
+        document.getElementById('domain-name').textContent = question.domain_name;
+        document.getElementById('skill-code').textContent = question.skill_code;
+        document.getElementById('skill-name').textContent = question.skill_name;
         
         // Update stimulus
         document.getElementById('stimulus-content').innerHTML = question.stimulus || 
@@ -537,6 +693,15 @@ async function loadQuestion(index) {
         
         document.getElementById('answer-options').innerHTML = optionsHtml;
         
+        // Render MathJax for mathematical expressions
+        if (window.MathJax) {
+            MathJax.typesetPromise([
+                document.getElementById('stimulus-content'),
+                document.getElementById('question-stem'),
+                document.getElementById('answer-options')
+            ]).catch((err) => console.log('MathJax error:', err));
+        }
+        
         // Update question number
         document.getElementById('question-number').textContent = index + 1;
         document.getElementById('current-index').textContent = index + 1;
@@ -547,6 +712,17 @@ async function loadQuestion(index) {
         // Update navigation buttons
         document.getElementById('back-btn').disabled = index === 0;
         document.getElementById('next-btn').disabled = index === questionIds.length - 1;
+        
+        // Reset Check Answer button
+        const checkBtn = document.getElementById('check-answer-btn');
+        checkBtn.disabled = !userAnswers[questionId];
+        checkBtn.textContent = 'Check Answer';
+        checkBtn.style.background = '#10b981';
+        
+        // Remove correct/incorrect classes from all options
+        document.querySelectorAll('.answer-option').forEach(option => {
+            option.classList.remove('correct', 'incorrect');
+        });
         
         // Hide explanation
         document.getElementById('explanation-panel').classList.remove('show');
@@ -572,6 +748,28 @@ function nextQuestion() {
     }
 }
 
+async function showExplanation() {
+    const questionId = questionIds[currentIndex];
+    
+    try {
+        const response = await fetch(`/practice/api/question/${questionId}/`);
+        const question = await response.json();
+        
+        const explanationPanel = document.getElementById('explanation-panel');
+        const explanationText = document.getElementById('explanation-text');
+        
+        explanationText.innerHTML = question.explanation || 'No explanation available.';
+        explanationPanel.classList.add('show');
+        
+        // Render MathJax for explanation
+        if (window.MathJax) {
+            MathJax.typesetPromise([explanationText]).catch((err) => console.log('MathJax error:', err));
+        }
+    } catch (error) {
+        console.error('Error loading explanation:', error);
+    }
+}
+
 // Mark for review
 document.addEventListener('DOMContentLoaded', function() {
     const markCheckbox = document.getElementById('mark-for-review');
@@ -588,6 +786,26 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Start timer
     startTimer();
+    
+    // Check if there's a question ID in the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const questionIdParam = urlParams.get('question');
+    let initialIndex = 0;
+    
+    if (questionIdParam) {
+        const foundIndex = questionIds.findIndex(id => id === questionIdParam);
+        if (foundIndex !== -1) {
+            initialIndex = foundIndex;
+        }
+    }
+    
+    // Load the initial question
+    loadQuestion(initialIndex);
+    
+    // Render MathJax on initial page load
+    if (window.MathJax) {
+        MathJax.typesetPromise().catch((err) => console.log('MathJax initial render error:', err));
+    }
 });
 
 // Keyboard navigation
@@ -598,6 +816,19 @@ document.addEventListener('keydown', function(e) {
         nextQuestion();
     } else if (e.key >= 'A' && e.key <= 'D') {
         selectAnswer(e.key.toUpperCase());
+    }
+});
+
+// Handle browser back/forward buttons
+window.addEventListener('popstate', function(e) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const questionIdParam = urlParams.get('question');
+    
+    if (questionIdParam) {
+        const foundIndex = questionIds.findIndex(id => id === questionIdParam);
+        if (foundIndex !== -1) {
+            loadQuestion(foundIndex);
+        }
     }
 });
 </script>

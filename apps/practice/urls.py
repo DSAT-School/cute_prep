@@ -15,5 +15,6 @@ urlpatterns = [
     
     # API endpoints for AJAX
     path('api/question/<uuid:question_id>/', views.get_question, name='get_question'),
+    path('api/check-answer/<uuid:question_id>/', views.check_answer, name='check_answer'),
     path('api/submit-answer/', views.submit_answer, name='submit_answer'),
 ]

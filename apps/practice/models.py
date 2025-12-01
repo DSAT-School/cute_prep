@@ -5,6 +5,7 @@ Simplified single-model approach for SAT question bank.
 All question data stored in one model for simplicity and maintainability.
 """
 import uuid
+from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -141,3 +142,189 @@ class Question(models.Model):
 
     def __str__(self):
         return f"{self.identifier_id} - {self.domain_code}/{self.skill_code}"
+
+
+class PracticeSession(models.Model):
+    """
+    Practice session tracking.
+    
+    Tracks when a user starts a practice session with specific filters.
+    """
+    
+    SESSION_STATUS_CHOICES = [
+        ('active', _('Active')),
+        ('completed', _('Completed')),
+        ('abandoned', _('Abandoned')),
+    ]
+    
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        help_text=_("Unique session identifier")
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='practice_sessions',
+        help_text=_("User taking the practice")
+    )
+    
+    # Session metadata
+    session_key = models.CharField(
+        max_length=100,
+        unique=True,
+        db_index=True,
+        help_text=_("Unique session key")
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=SESSION_STATUS_CHOICES,
+        default='active',
+        db_index=True,
+        help_text=_("Session status")
+    )
+    
+    # Filter parameters
+    domain_code = models.CharField(
+        max_length=20,
+        blank=True,
+        help_text=_("Filtered domain code")
+    )
+    skill_code = models.CharField(
+        max_length=20,
+        blank=True,
+        help_text=_("Filtered skill code")
+    )
+    provider_code = models.CharField(
+        max_length=20,
+        blank=True,
+        help_text=_("Filtered provider code")
+    )
+    
+    # Session stats
+    total_questions = models.IntegerField(
+        default=0,
+        help_text=_("Total questions in this session")
+    )
+    questions_answered = models.IntegerField(
+        default=0,
+        help_text=_("Number of questions answered")
+    )
+    correct_answers = models.IntegerField(
+        default=0,
+        help_text=_("Number of correct answers")
+    )
+    total_time_seconds = models.IntegerField(
+        default=0,
+        help_text=_("Total time spent in seconds")
+    )
+    
+    # Timestamps
+    started_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text=_("When session started")
+    )
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_("When session was completed")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        help_text=_("Last updated timestamp")
+    )
+    
+    class Meta:
+        db_table = 'practice_sessions'
+        verbose_name = _("Practice Session")
+        verbose_name_plural = _("Practice Sessions")
+        ordering = ['-started_at']
+        indexes = [
+            models.Index(fields=['user', 'status']),
+            models.Index(fields=['session_key']),
+            models.Index(fields=['started_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.email} - Session {self.session_key[:8]}"
+    
+    @property
+    def accuracy_rate(self):
+        """Calculate accuracy rate."""
+        if self.questions_answered == 0:
+            return 0
+        return (self.correct_answers / self.questions_answered) * 100
+
+
+class UserAnswer(models.Model):
+    """
+    User's answer to a specific question in a practice session.
+    
+    Tracks individual answers with timing and correctness.
+    """
+    
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        help_text=_("Unique identifier")
+    )
+    session = models.ForeignKey(
+        PracticeSession,
+        on_delete=models.CASCADE,
+        related_name='answers',
+        help_text=_("Practice session")
+    )
+    question = models.ForeignKey(
+        Question,
+        on_delete=models.CASCADE,
+        related_name='user_answers',
+        help_text=_("Question that was answered")
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='practice_answers',
+        help_text=_("User who answered")
+    )
+    
+    # Answer data
+    user_answer = models.CharField(
+        max_length=500,
+        help_text=_("Answer provided by user")
+    )
+    correct_answer = models.CharField(
+        max_length=500,
+        help_text=_("Correct answer")
+    )
+    is_correct = models.BooleanField(
+        help_text=_("Whether answer was correct")
+    )
+    
+    # Timing
+    time_taken_seconds = models.IntegerField(
+        default=0,
+        help_text=_("Time taken to answer in seconds")
+    )
+    
+    # Metadata
+    answered_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text=_("When the answer was submitted")
+    )
+    
+    class Meta:
+        db_table = 'practice_user_answers'
+        verbose_name = _("User Answer")
+        verbose_name_plural = _("User Answers")
+        ordering = ['-answered_at']
+        indexes = [
+            models.Index(fields=['session', 'question']),
+            models.Index(fields=['user', 'is_correct']),
+            models.Index(fields=['answered_at']),
+        ]
+        unique_together = [['session', 'question']]
+    
+    def __str__(self):
+        return f"{self.user.email} - {self.question.identifier_id} ({'✓' if self.is_correct else '✗'})"

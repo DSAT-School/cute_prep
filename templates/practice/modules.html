@@ -7,7 +7,7 @@
 <div class="min-h-screen bg-gray-50">
     <!-- Header -->
     <div class="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div class="max-w-7xl mx-auto px-4 py-4">
+        <div class="max-w-[1920px] mx-auto px-8 py-4">
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-xl font-bold text-gray-900">Practice</h1>
@@ -30,7 +30,7 @@
 
     <!-- Filter Panel (Hidden by default) -->
     <div id="filterPanel" class="hidden bg-white border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 py-4">
+        <div class="max-w-[1920px] mx-auto px-8 py-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <!-- Provider Filter -->
                 <div>
@@ -38,7 +38,7 @@
                     <div class="space-y-2">
                         {% for provider in providers %}
                         <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" class="filter-provider rounded border-gray-300 text-primary focus:ring-primary" value="{{ provider.provider_code }}">
+                            <input type="checkbox" class="filter-provider rounded border-gray-300 text-primary focus:ring-primary" value="{{ provider.provider_code }}" {% if provider.provider_code in selected_providers %}checked{% endif %}>
                             <span class="text-sm text-gray-700">{{ provider.provider_name }}</span>
                             <span class="text-xs text-gray-500">({{ provider.question_count }})</span>
                         </label>
@@ -88,19 +88,19 @@
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 py-6">
+    <div class="max-w-[1920px] mx-auto px-8 py-6">
         <!-- Category Tabs -->
         <div class="flex items-center gap-2 mb-6">
-            <button class="category-tab active px-4 py-2 text-sm font-semibold rounded-lg bg-primary text-white" data-category="reading">
+            <button class="category-tab {% if subject == 'reading' %}active bg-primary text-white{% else %}bg-white text-gray-700 border border-gray-300{% endif %} px-4 py-2 text-sm font-semibold rounded-lg hover:bg-gray-50" data-category="reading">
                 Reading & Writing
             </button>
-            <button class="category-tab px-4 py-2 text-sm font-semibold rounded-lg bg-white text-gray-700 border border-gray-300 hover:bg-gray-50" data-category="math">
+            <button class="category-tab {% if subject == 'math' %}active bg-primary text-white{% else %}bg-white text-gray-700 border border-gray-300{% endif %} px-4 py-2 text-sm font-semibold rounded-lg hover:bg-gray-50" data-category="math">
                 Math
             </button>
         </div>
 
         <!-- Domains Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for domain in domains %}
             <div class="domain-card bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
                 <!-- Domain Header -->
@@ -152,6 +152,36 @@
 </div>
 
 <script>
+// Initialize filters from URL
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Set subject tab
+    const subject = urlParams.get('subject') || 'reading';
+    setActiveTab(subject);
+    
+    // Set provider checkboxes
+    const providers = urlParams.getAll('provider');
+    providers.forEach(code => {
+        const checkbox = document.querySelector(`.filter-provider[value="${code}"]`);
+        if (checkbox) checkbox.checked = true;
+    });
+    
+    // Set status checkboxes
+    const statuses = urlParams.getAll('status');
+    statuses.forEach(status => {
+        const checkbox = document.querySelector(`.filter-status[value="${status}"]`);
+        if (checkbox) checkbox.checked = true;
+    });
+    
+    // Set difficulty checkboxes
+    const difficulties = urlParams.getAll('difficulty');
+    difficulties.forEach(diff => {
+        const checkbox = document.querySelector(`.filter-difficulty[value="${diff}"]`);
+        if (checkbox) checkbox.checked = true;
+    });
+});
+
 // Filter panel toggle
 document.getElementById('filterBtn').addEventListener('click', function() {
     const panel = document.getElementById('filterPanel');
@@ -161,16 +191,56 @@ document.getElementById('filterBtn').addEventListener('click', function() {
 // Category tabs
 document.querySelectorAll('.category-tab').forEach(tab => {
     tab.addEventListener('click', function() {
-        document.querySelectorAll('.category-tab').forEach(t => {
-            t.classList.remove('active', 'bg-primary', 'text-white');
-            t.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-300');
-        });
-        this.classList.add('active', 'bg-primary', 'text-white');
-        this.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-300');
-        
-        // TODO: Filter domains by category
+        const category = this.dataset.category;
+        setActiveTab(category);
+        applyFilters();
     });
 });
+
+function setActiveTab(category) {
+    document.querySelectorAll('.category-tab').forEach(t => {
+        const isActive = t.dataset.category === category;
+        if (isActive) {
+            t.classList.add('active', 'bg-primary', 'text-white');
+            t.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-300');
+        } else {
+            t.classList.remove('active', 'bg-primary', 'text-white');
+            t.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-300');
+        }
+    });
+}
+
+// Apply filters when checkboxes change
+document.querySelectorAll('.filter-provider, .filter-status, .filter-difficulty').forEach(checkbox => {
+    checkbox.addEventListener('change', applyFilters);
+});
+
+function applyFilters() {
+    const urlParams = new URLSearchParams();
+    
+    // Get active subject
+    const activeTab = document.querySelector('.category-tab.active');
+    const subject = activeTab ? activeTab.dataset.category : 'reading';
+    urlParams.set('subject', subject);
+    
+    // Get selected providers
+    document.querySelectorAll('.filter-provider:checked').forEach(checkbox => {
+        urlParams.append('provider', checkbox.value);
+    });
+    
+    // Get selected statuses
+    document.querySelectorAll('.filter-status:checked').forEach(checkbox => {
+        urlParams.append('status', checkbox.value);
+    });
+    
+    // Get selected difficulties
+    document.querySelectorAll('.filter-difficulty:checked').forEach(checkbox => {
+        urlParams.append('difficulty', checkbox.value);
+    });
+    
+    // Reload page with new filters
+    window.location.href = `?${urlParams.toString()}`;
+}
 
 // Start practice functions
 function startPractice(domainCode) {
