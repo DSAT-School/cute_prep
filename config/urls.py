@@ -32,6 +32,9 @@ urlpatterns = [
     path("dashboard/", dashboard_view, name="dashboard"),
     path("profile/", profile_view, name="profile"),
     
+    # Practice App
+    path("practice/", include("apps.practice.urls")),
+    
     # Admin
     path("admin/", admin.site.urls),
     

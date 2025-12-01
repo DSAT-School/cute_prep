@@ -1,0 +1,604 @@
+{% extends "base_dashboard.html" %}
+{% load static %}
+
+{% block title %}Practice - DSAT SCHOOL{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Practice Interface Styles */
+    .practice-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1rem;
+    }
+
+    .practice-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .timer {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #262632;
+    }
+
+    .hide-timer-btn {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+        background: white;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .hide-timer-btn:hover {
+        background: #f3f4f6;
+    }
+
+    .annotate-btn {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+        background: white;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .annotate-btn:hover {
+        background: #f3f4f6;
+    }
+
+    .practice-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .stimulus-panel,
+    .question-panel {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1.5rem;
+        height: calc(100vh - 250px);
+        overflow-y: auto;
+    }
+
+    .question-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        background: #262632;
+        color: white;
+        font-weight: 600;
+        font-size: 0.875rem;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+    }
+
+    .mark-review {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 1rem;
+        cursor: pointer;
+    }
+
+    .mark-review input[type="checkbox"] {
+        width: 1rem;
+        height: 1rem;
+        cursor: pointer;
+    }
+
+    .question-text {
+        font-size: 0.875rem;
+        line-height: 1.6;
+        color: #1f2937;
+        margin-bottom: 1.5rem;
+    }
+
+    .answer-options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .answer-option {
+        display: flex;
+        align-items: center;
+        padding: 0.875rem 1rem;
+        background: #f9fafb;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .answer-option:hover {
+        background: #f3f4f6;
+        border-color: #9967b9;
+    }
+
+    .answer-option.selected {
+        background: #f3e8ff;
+        border-color: #9967b9;
+    }
+
+    .answer-option.correct {
+        background: #d1fae5;
+        border-color: #10b981;
+    }
+
+    .answer-option.incorrect {
+        background: #fee2e2;
+        border-color: #ef4444;
+    }
+
+    .option-label {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: #262632;
+        margin-right: 0.75rem;
+        min-width: 1.5rem;
+    }
+
+    .option-text {
+        font-size: 0.875rem;
+        color: #374151;
+        flex: 1;
+    }
+
+    .strikethrough-btn {
+        width: 1.5rem;
+        height: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+
+    .strikethrough-btn:hover {
+        background: #f3f4f6;
+    }
+
+    .strikethrough-btn.active {
+        background: #fee2e2;
+        border-color: #ef4444;
+        color: #dc2626;
+    }
+
+    .practice-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+    }
+
+    .question-counter {
+        padding: 0.5rem 1rem;
+        background: #262632;
+        color: white;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .navigation-buttons {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .nav-btn {
+        padding: 0.625rem 1.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+    }
+
+    .nav-btn.back {
+        background: #e5e7eb;
+        color: #374151;
+    }
+
+    .nav-btn.back:hover {
+        background: #d1d5db;
+    }
+
+    .nav-btn.next {
+        background: #3b82f6;
+        color: white;
+    }
+
+    .nav-btn.next:hover {
+        background: #2563eb;
+    }
+
+    .nav-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .explanation-panel {
+        background: #fef3c7;
+        border: 1px solid #fbbf24;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+        display: none;
+    }
+
+    .explanation-panel.show {
+        display: block;
+    }
+
+    .explanation-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #92400e;
+        margin-bottom: 0.5rem;
+    }
+
+    .explanation-text {
+        font-size: 0.875rem;
+        line-height: 1.6;
+        color: #78350f;
+    }
+
+    /* Scrollbar styling */
+    .stimulus-panel::-webkit-scrollbar,
+    .question-panel::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .stimulus-panel::-webkit-scrollbar-track,
+    .question-panel::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    .stimulus-panel::-webkit-scrollbar-thumb,
+    .question-panel::-webkit-scrollbar-thumb {
+        background: #9967b9;
+        border-radius: 4px;
+    }
+
+    .stimulus-panel::-webkit-scrollbar-thumb:hover,
+    .question-panel::-webkit-scrollbar-thumb:hover {
+        background: #7c4d9a;
+    }
+
+    /* Loading state */
+    .loading {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+
+    .empty-state h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #262632;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="practice-container">
+    <!-- Header with Timer and Controls -->
+    <div class="practice-header">
+        <div class="flex items-center gap-4">
+            <div class="timer" id="timer">31:14</div>
+            <button class="hide-timer-btn" onclick="toggleTimer()">Hide</button>
+        </div>
+        <button class="annotate-btn" onclick="toggleAnnotate()">
+            <span>✏️</span> Annotate
+        </button>
+    </div>
+
+    {% if total_questions > 0 %}
+    <!-- Practice Content -->
+    <div class="practice-content">
+        <!-- Stimulus/Passage Panel -->
+        <div class="stimulus-panel" id="stimulus-panel">
+            <div id="stimulus-content">
+                {% if first_question.stimulus %}
+                    {{ first_question.stimulus|safe }}
+                {% else %}
+                    <p class="text-sm text-gray-500">No additional context for this question.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Question Panel -->
+        <div class="question-panel" id="question-panel">
+            <div class="flex items-center justify-between">
+                <span class="question-number" id="question-number">1</span>
+                <label class="mark-review">
+                    <input type="checkbox" id="mark-for-review">
+                    <span>Mark for Review</span>
+                </label>
+            </div>
+
+            <div class="question-text" id="question-stem">
+                {{ first_question.stem|safe }}
+            </div>
+
+            <div class="answer-options" id="answer-options">
+                {% if first_question.mcq_option_list %}
+                    {% for key, value in first_question.mcq_option_list.items %}
+                    <div class="answer-option" data-answer="{{ key }}" onclick="selectAnswer('{{ key }}')">
+                        <span class="option-label">{{ key }}:</span>
+                        <span class="option-text">{{ value|safe }}</span>
+                        <button class="strikethrough-btn" onclick="toggleStrikethrough(event, this)">
+                            <span>⊘</span>
+                        </button>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <!-- Explanation Panel (hidden initially) -->
+            <div class="explanation-panel" id="explanation-panel">
+                <div class="explanation-title">Explanation</div>
+                <div class="explanation-text" id="explanation-text"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer with Navigation -->
+    <div class="practice-footer">
+        <div class="question-counter" id="question-counter">
+            Question <span id="current-index">1</span> of <span id="total-count">{{ total_questions }}</span>
+        </div>
+        <div class="navigation-buttons">
+            <button class="nav-btn back" id="back-btn" onclick="previousQuestion()" disabled>
+                Back
+            </button>
+            <button class="nav-btn next" id="next-btn" onclick="nextQuestion()">
+                Next
+            </button>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <h3>No Questions Available</h3>
+        <p>There are no questions matching your current filters. Try adjusting your selection.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Global state
+const questionIds = {{ question_ids|safe }};
+let currentIndex = 0;
+let selectedAnswer = null;
+let userAnswers = {};
+let markedForReview = new Set();
+let strikethroughOptions = {};
+
+// Timer
+let timerSeconds = 31 * 60 + 14; // 31:14
+let timerInterval = null;
+let timerVisible = true;
+
+function startTimer() {
+    timerInterval = setInterval(() => {
+        timerSeconds--;
+        
+        if (timerSeconds <= 0) {
+            clearInterval(timerInterval);
+            timerSeconds = 0;
+        }
+        
+        updateTimerDisplay();
+    }, 1000);
+}
+
+function updateTimerDisplay() {
+    const minutes = Math.floor(timerSeconds / 60);
+    const seconds = timerSeconds % 60;
+    const display = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    document.getElementById('timer').textContent = display;
+}
+
+function toggleTimer() {
+    timerVisible = !timerVisible;
+    const timerElement = document.getElementById('timer');
+    const btn = event.target;
+    
+    if (timerVisible) {
+        timerElement.style.display = 'block';
+        btn.textContent = 'Hide';
+    } else {
+        timerElement.style.display = 'none';
+        btn.textContent = 'Show Timer';
+    }
+}
+
+function toggleAnnotate() {
+    alert('Annotation feature coming soon!');
+}
+
+// Question navigation
+function selectAnswer(answer) {
+    selectedAnswer = answer;
+    
+    // Update UI
+    document.querySelectorAll('.answer-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    
+    event.currentTarget.classList.add('selected');
+    
+    // Save answer
+    const currentQuestionId = questionIds[currentIndex];
+    userAnswers[currentQuestionId] = answer;
+}
+
+function toggleStrikethrough(e, button) {
+    e.stopPropagation();
+    
+    const option = button.closest('.answer-option');
+    const answer = option.dataset.answer;
+    const currentQuestionId = questionIds[currentIndex];
+    
+    if (!strikethroughOptions[currentQuestionId]) {
+        strikethroughOptions[currentQuestionId] = new Set();
+    }
+    
+    if (strikethroughOptions[currentQuestionId].has(answer)) {
+        strikethroughOptions[currentQuestionId].delete(answer);
+        option.style.opacity = '1';
+        option.style.textDecoration = 'none';
+        button.classList.remove('active');
+    } else {
+        strikethroughOptions[currentQuestionId].add(answer);
+        option.style.opacity = '0.5';
+        option.style.textDecoration = 'line-through';
+        button.classList.add('active');
+    }
+}
+
+async function loadQuestion(index) {
+    if (index < 0 || index >= questionIds.length) return;
+    
+    currentIndex = index;
+    const questionId = questionIds[index];
+    
+    // Show loading
+    document.getElementById('stimulus-content').innerHTML = '<div class="loading">Loading...</div>';
+    document.getElementById('question-stem').innerHTML = '<div class="loading">Loading...</div>';
+    document.getElementById('answer-options').innerHTML = '<div class="loading">Loading...</div>';
+    
+    try {
+        const response = await fetch(`/practice/api/question/${questionId}/`);
+        const question = await response.json();
+        
+        // Update stimulus
+        document.getElementById('stimulus-content').innerHTML = question.stimulus || 
+            '<p class="text-sm text-gray-500">No additional context for this question.</p>';
+        
+        // Update question stem
+        document.getElementById('question-stem').innerHTML = question.stem;
+        
+        // Update answer options
+        const optionsHtml = Object.entries(question.mcq_options || {}).map(([key, value]) => `
+            <div class="answer-option ${userAnswers[questionId] === key ? 'selected' : ''}" 
+                 data-answer="${key}" 
+                 onclick="selectAnswer('${key}')"
+                 style="${strikethroughOptions[questionId]?.has(key) ? 'opacity: 0.5; text-decoration: line-through;' : ''}">
+                <span class="option-label">${key}:</span>
+                <span class="option-text">${value}</span>
+                <button class="strikethrough-btn ${strikethroughOptions[questionId]?.has(key) ? 'active' : ''}" 
+                        onclick="toggleStrikethrough(event, this)">
+                    <span>⊘</span>
+                </button>
+            </div>
+        `).join('');
+        
+        document.getElementById('answer-options').innerHTML = optionsHtml;
+        
+        // Update question number
+        document.getElementById('question-number').textContent = index + 1;
+        document.getElementById('current-index').textContent = index + 1;
+        
+        // Update mark for review
+        document.getElementById('mark-for-review').checked = markedForReview.has(questionId);
+        
+        // Update navigation buttons
+        document.getElementById('back-btn').disabled = index === 0;
+        document.getElementById('next-btn').disabled = index === questionIds.length - 1;
+        
+        // Hide explanation
+        document.getElementById('explanation-panel').classList.remove('show');
+        
+        // Restore selected answer
+        selectedAnswer = userAnswers[questionId] || null;
+        
+    } catch (error) {
+        console.error('Error loading question:', error);
+        alert('Error loading question. Please try again.');
+    }
+}
+
+function previousQuestion() {
+    if (currentIndex > 0) {
+        loadQuestion(currentIndex - 1);
+    }
+}
+
+function nextQuestion() {
+    if (currentIndex < questionIds.length - 1) {
+        loadQuestion(currentIndex + 1);
+    }
+}
+
+// Mark for review
+document.addEventListener('DOMContentLoaded', function() {
+    const markCheckbox = document.getElementById('mark-for-review');
+    if (markCheckbox) {
+        markCheckbox.addEventListener('change', function() {
+            const currentQuestionId = questionIds[currentIndex];
+            if (this.checked) {
+                markedForReview.add(currentQuestionId);
+            } else {
+                markedForReview.delete(currentQuestionId);
+            }
+        });
+    }
+    
+    // Start timer
+    startTimer();
+});
+
+// Keyboard navigation
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowLeft') {
+        previousQuestion();
+    } else if (e.key === 'ArrowRight') {
+        nextQuestion();
+    } else if (e.key >= 'A' && e.key <= 'D') {
+        selectAnswer(e.key.toUpperCase());
+    }
+});
+</script>
+{% endblock %}

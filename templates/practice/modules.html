@@ -1,0 +1,192 @@
+{% extends "base_dashboard.html" %}
+{% load practice_filters %}
+
+{% block title %}Practice Modules - DSAT SCHOOL{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900">Practice</h1>
+                    <p class="text-sm text-gray-500 mt-1">Choose your practice module</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="filterBtn" class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                        </svg>
+                        Filters
+                    </button>
+                    <a href="{% url 'practice:practice' %}" class="px-4 py-2 text-sm font-semibold text-white bg-primary rounded-lg hover:bg-purple-700">
+                        Start Random Practice
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Panel (Hidden by default) -->
+    <div id="filterPanel" class="hidden bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Provider Filter -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-2">Provider</label>
+                    <div class="space-y-2">
+                        {% for provider in providers %}
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" class="filter-provider rounded border-gray-300 text-primary focus:ring-primary" value="{{ provider.provider_code }}">
+                            <span class="text-sm text-gray-700">{{ provider.provider_name }}</span>
+                            <span class="text-xs text-gray-500">({{ provider.question_count }})</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Status Filter -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-2">Status</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" class="filter-status rounded border-gray-300 text-green-600 focus:ring-green-500" value="not_mastered">
+                            <span class="text-sm text-gray-700">Not Mastered</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" class="filter-status rounded border-gray-300 text-blue-600 focus:ring-blue-500" value="mastered">
+                            <span class="text-sm text-gray-700">Mastered</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" class="filter-status rounded border-gray-300 text-yellow-600 focus:ring-yellow-500" value="marked">
+                            <span class="text-sm text-gray-700">Marked for Review</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Difficulty Filter -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-2">Difficulty</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" class="filter-difficulty rounded border-gray-300 text-primary focus:ring-primary" value="easy">
+                            <span class="text-sm text-gray-700">Easy</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" class="filter-difficulty rounded border-gray-300 text-primary focus:ring-primary" value="medium">
+                            <span class="text-sm text-gray-700">Medium</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" class="filter-difficulty rounded border-gray-300 text-primary focus:ring-primary" value="hard">
+                            <span class="text-sm text-gray-700">Hard</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <!-- Category Tabs -->
+        <div class="flex items-center gap-2 mb-6">
+            <button class="category-tab active px-4 py-2 text-sm font-semibold rounded-lg bg-primary text-white" data-category="reading">
+                Reading & Writing
+            </button>
+            <button class="category-tab px-4 py-2 text-sm font-semibold rounded-lg bg-white text-gray-700 border border-gray-300 hover:bg-gray-50" data-category="math">
+                Math
+            </button>
+        </div>
+
+        <!-- Domains Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for domain in domains %}
+            <div class="domain-card bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                <!-- Domain Header -->
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <span class="text-lg font-bold text-primary">{{ domain.domain_code }}</span>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-gray-900">{{ domain.domain_name }}</h3>
+                            <p class="text-xs text-gray-500">{{ skills_by_domain|get_item:domain.domain_code|length }} topics available</p>
+                        </div>
+                    </div>
+                    <button class="learn-btn px-3 py-1 text-xs font-semibold text-primary border border-primary rounded-lg hover:bg-primary/5" onclick="startPractice('{{ domain.domain_code }}')">
+                        Learn
+                    </button>
+                </div>
+
+                <!-- Skills List -->
+                <div class="space-y-3">
+                    {% for skill in skills_by_domain|get_item:domain.domain_code %}
+                    <div class="skill-item p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" onclick="startSkillPractice('{{ domain.domain_code }}', '{{ skill.skill_code }}')">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <h4 class="text-sm font-semibold text-gray-900 mb-1">{{ skill.skill_name }}</h4>
+                                <p class="text-xs text-gray-500">{{ skill.question_count }} questions</p>
+                            </div>
+                            <button class="px-3 py-1 text-xs font-semibold text-white bg-primary rounded-lg hover:bg-purple-700">
+                                Continue
+                            </button>
+                        </div>
+                        <!-- Progress Bar Placeholder -->
+                        <div class="mt-2">
+                            <div class="w-full bg-gray-200 rounded-full h-1">
+                                <div class="bg-primary h-1 rounded-full" style="width: 0%"></div>
+                            </div>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-xs text-gray-500">Progress</span>
+                                <span class="text-xs text-gray-500">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Filter panel toggle
+document.getElementById('filterBtn').addEventListener('click', function() {
+    const panel = document.getElementById('filterPanel');
+    panel.classList.toggle('hidden');
+});
+
+// Category tabs
+document.querySelectorAll('.category-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.category-tab').forEach(t => {
+            t.classList.remove('active', 'bg-primary', 'text-white');
+            t.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-300');
+        });
+        this.classList.add('active', 'bg-primary', 'text-white');
+        this.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-300');
+        
+        // TODO: Filter domains by category
+    });
+});
+
+// Start practice functions
+function startPractice(domainCode) {
+    window.location.href = `/practice/?domain=${domainCode}`;
+}
+
+function startSkillPractice(domainCode, skillCode) {
+    window.location.href = `/practice/?domain=${domainCode}&skill=${skillCode}`;
+}
+</script>
+
+<style>
+.category-tab.active {
+    background-color: #9967b9 !important;
+    color: white !important;
+    border: none;
+}
+</style>
+{% endblock %}
