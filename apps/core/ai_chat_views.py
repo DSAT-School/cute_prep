@@ -11,6 +11,9 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.conf import settings
 import google.generativeai as genai
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -39,6 +42,7 @@ def ai_chat_message(request):
         user_message = data.get('message', '').strip()
         context_info = data.get('context', '')
         image_ids = data.get('images', [])
+        conversation_history = data.get('history', [])
         
         if not user_message:
             return JsonResponse({
@@ -46,9 +50,25 @@ def ai_chat_message(request):
                 'error': 'Message cannot be empty'
             }, status=400)
         
+        # Check if API key is configured
+        if not settings.GEMINI_API_KEY:
+            logger.error("GEMINI_API_KEY is not configured in settings")
+            return JsonResponse({
+                'success': False,
+                'error': 'AI service is not configured. Please contact administrator.'
+            }, status=500)
+        
         # Configure Gemini
-        genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        try:
+            genai.configure(api_key=settings.GEMINI_API_KEY)
+            # Use gemini-2.5-flash (latest stable model)
+            model = genai.GenerativeModel('gemini-2.5-flash')
+        except Exception as config_error:
+            logger.error(f"Failed to configure Gemini: {config_error}")
+            return JsonResponse({
+                'success': False,
+                'error': f'Failed to initialize AI service: {str(config_error)}'
+            }, status=500)
         
         # Build system prompt with SAT tutor context
         system_prompt = """You are Prof. Coco, an expert SAT tutor with a friendly and encouraging personality.
@@ -68,10 +88,22 @@ Keep responses clear, educational, and encouraging. Break down complex problems 
         # Build content list for multimodal input
         content = []
         
-        # Add system prompt and user message
-        full_prompt = system_prompt + "\n\nStudent question: " + user_message
+        # Add system prompt
+        full_prompt = system_prompt
+        
+        # Add conversation history for context (last 5 exchanges)
+        if conversation_history:
+            full_prompt += "\n\nPrevious conversation:"
+            for msg in conversation_history[-10:]:  # Last 10 messages (5 exchanges)
+                role = "Student" if msg.get('role') == 'user' else "Prof. Coco"
+                full_prompt += f"\n{role}: {msg.get('content', '')}"
+        
+        # Add current user message
+        full_prompt += "\n\nStudent question: " + user_message
+        
         if context_info:
             full_prompt += f"\n\nContext: {context_info}"
+        
         content.append(full_prompt)
         
         # Add images if provided
@@ -93,8 +125,15 @@ Keep responses clear, educational, and encouraging. Break down complex problems 
                                 print(f"Error loading image {full_path}: {img_error}")
         
         # Generate response from Gemini
-        response = model.generate_content(content)
-        ai_response = response.text
+        try:
+            response = model.generate_content(content)
+            ai_response = response.text
+        except Exception as gen_error:
+            logger.error(f"Gemini generation error: {gen_error}")
+            return JsonResponse({
+                'success': False,
+                'error': f'AI generation failed: {str(gen_error)}'
+            }, status=500)
         
         return JsonResponse({
             'success': True,
@@ -102,7 +141,14 @@ Keep responses clear, educational, and encouraging. Break down complex problems 
             'timestamp': 'now'
         })
         
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON decode error: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid request format'
+        }, status=400)
     except Exception as e:
+        logger.exception(f"Unexpected error in ai_chat_message: {e}")
         return JsonResponse({
             'success': False,
             'error': f'Error communicating with AI: {str(e)}'
@@ -181,25 +227,38 @@ def ai_generate_question(request):
             }, status=400)
         
         # Configure Gemini
-        genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        if not settings.GEMINI_API_KEY:
+            logger.error("GEMINI_API_KEY not configured")
+            return JsonResponse({
+                'success': False,
+                'error': 'Gemini API key not configured. Please add GEMINI_API_KEY to .env file.'
+            }, status=500)
         
-        # Build prompt for question generation
+        try:
+            genai.configure(api_key=settings.GEMINI_API_KEY)
+            # Use gemini-2.5-flash with JSON response format
+            model = genai.GenerativeModel(
+                'gemini-2.5-flash',
+                generation_config={
+                    "response_mime_type": "application/json"
+                }
+            )
+        except Exception as config_error:
+            logger.error(f"Failed to configure Gemini in generate_question: {config_error}")
+            return JsonResponse({
+                'success': False,
+                'error': f'Failed to configure Gemini: {str(config_error)}'
+            }, status=500)
+        
+        # Build prompt for question generation with JSON schema
         prompt = f"""Generate a {difficulty} SAT practice question about {topic}.
 
-Requirements:
-1. The question should be realistic and follow SAT formatting standards
-2. Provide 4 answer choices (A, B, C, D)
-3. Clearly indicate the correct answer
-4. Provide a detailed explanation of why the answer is correct
-5. Use LaTeX notation for any math expressions: \\( \\) for inline, \\[ \\] for display
-
-Return the response in the following JSON format:
+Return a JSON object with this exact structure:
 {{
     "question": "The question text here",
     "options": {{
         "A": "Option A text",
-        "B": "Option B text",
+        "B": "Option B text", 
         "C": "Option C text",
         "D": "Option D text"
     }},
@@ -207,21 +266,44 @@ Return the response in the following JSON format:
     "explanation": "Detailed explanation here"
 }}
 
-Only return valid JSON, no additional text or markdown formatting."""
+Guidelines:
+- Make the question realistic and follow SAT formatting standards
+- Provide 4 answer choices labeled A, B, C, D
+- Indicate the correct answer (A, B, C, or D)
+- Provide a clear, step-by-step explanation of why the answer is correct
+- Use proper spacing in text (e.g., "$10 each" not "$10each")
+- For currency, use $ symbol with proper spacing
+- For math expressions in JSON: 
+  * Simple math: use × for multiply, ÷ for divide, ² ³ for exponents, ≤ ≥ for inequalities, √ for square root
+  * Complex equations: use LaTeX with DOUBLE backslashes (\\\\) for proper JSON escaping
+  * Example: "\\\\(x^2 + 2x + 1\\\\)" or "\\\\[\\\\frac{{a}}{{b}}\\\\]"
+- Keep numbers and units properly formatted with spaces
+- Keep it at {difficulty} difficulty level
+- Make the explanation educational with step-by-step reasoning"""
         
         # Generate question
-        response = model.generate_content(prompt)
-        response_text = response.text.strip()
+        try:
+            response = model.generate_content(prompt)
+            response_text = response.text.strip()
+        except Exception as gen_error:
+            logger.error(f"Gemini generation error in generate_question: {gen_error}")
+            return JsonResponse({
+                'success': False,
+                'error': f'Failed to generate content from Gemini: {str(gen_error)}'
+            }, status=500)
         
-        # Try to parse JSON response
-        # Remove markdown code blocks if present
-        if response_text.startswith('```'):
-            lines = response_text.split('\n')
-            response_text = '\n'.join(lines[1:-1])
-        if response_text.startswith('json'):
-            response_text = response_text[4:].strip()
+        # Parse JSON response (should be valid JSON since we set response_mime_type)
+        response_text = response_text.strip()
         
-        generated_question = json.loads(response_text)
+        try:
+            generated_question = json.loads(response_text)
+        except json.JSONDecodeError as json_error:
+            logger.error(f"JSON parsing error in generate_question: {json_error}. Response: {response_text[:200]}")
+            return JsonResponse({
+                'success': False,
+                'error': f'Failed to parse AI response as JSON: {str(json_error)}',
+                'raw_response': response_text[:500]  # First 500 chars for debugging
+            }, status=500)
         
         return JsonResponse({
             'success': True,

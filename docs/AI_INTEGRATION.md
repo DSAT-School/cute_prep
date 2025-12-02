@@ -1,7 +1,7 @@
 # AI Integration - Ask Prof. Coco
 
 ## Overview
-The Ask Prof. Coco feature is now fully integrated with Google Gemini AI (gemini-2.5-flash model). This provides students with an intelligent AI tutor that can:
+The Ask Prof. Coco feature is now fully integrated with Google Gemini AI (gemini-1.5-flash model). This provides students with an intelligent AI tutor that can:
 
 - Answer SAT-related questions
 - Explain concepts with step-by-step solutions
@@ -190,7 +190,7 @@ The system includes comprehensive error handling:
 
 ## Performance Considerations
 
-- Model: `gemini-2.5-flash` (fast inference)
+- Model: `gemini-1.5-flash` (fast inference, stable)
 - Image size limit: 5MB per upload
 - Supports multiple images per message
 - Async processing for better UX
