@@ -658,10 +658,15 @@
         <div class="question-panel font-lato" id="question-panel">
             <div class="flex items-center justify-between">
                 <span class="question-number" id="question-number">1</span>
-                <label class="mark-review">
-                    <input type="checkbox" id="mark-for-review" onchange="toggleMarkForReview()">
-                    <span><i class="fas fa-flag"></i> Mark for Review</span>
-                </label>
+                <div class="flex items-center gap-3">
+                    <label class="mark-review">
+                        <input type="checkbox" id="mark-for-review" onchange="toggleMarkForReview()">
+                        <span><i class="fas fa-flag"></i> Mark for Review</span>
+                    </label>
+                    <button class="nav-btn" id="show-explanation-btn" onclick="toggleExplanation()" style="display: none; background: #fdcc4c; color: #262632; padding: 0.375rem 0.75rem; font-size: 0.75rem;">
+                        <i class="fas fa-lightbulb"></i> Show Explanation
+                    </button>
+                </div>
             </div>
 
             <div class="question-text" id="question-stem">
@@ -762,6 +767,17 @@
             <div class="alert-modal-buttons" id="alertButtons"></div>
         </div>
     </div>
+
+    <!-- Explanation Modal -->
+    <div class="alert-modal" id="explanationModal">
+        <div class="alert-modal-content" style="max-width: 700px; max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb;">
+                <h3 style="font-size: 1.125rem; font-weight: 700; color: #262632;"><i class="fas fa-lightbulb"></i> Explanation</h3>
+                <button class="close-modal-btn" onclick="closeExplanationModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="explanation-modal-text" style="font-size: 0.875rem; line-height: 1.6; color: #374151;"></div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -819,22 +835,42 @@ function toggleTimer() {
     const timerElement = document.getElementById('timer');
     const btn = event.target.closest('button');
     const btnText = document.getElementById('timer-btn-text');
-    const btnIcon = btn.querySelector('i');
+    const btnIcon = btn ? btn.querySelector('i') : null;
     
-    if (timerVisible) {
-        timerElement.style.display = 'block';
-        btnText.textContent = 'Hide';
-        btnIcon.className = 'fas fa-eye-slash';
-    } else {
-        timerElement.style.display = 'none';
-        btnText.textContent = 'Show';
-        btnIcon.className = 'fas fa-eye';
+    if (btnText && btnIcon) {
+        if (timerVisible) {
+            timerElement.style.display = 'block';
+            btnText.textContent = 'Hide';
+            btnIcon.className = 'fas fa-eye-slash';
+        } else {
+            timerElement.style.display = 'none';
+            btnText.textContent = 'Show';
+            btnIcon.className = 'fas fa-eye';
+        }
     }
 }
 
 function toggleAnnotate() {
     showAlert('Annotation feature coming soon!');
 }
+
+function toggleExplanation() {
+    const explanationModal = document.getElementById('explanationModal');
+    explanationModal.classList.add('show');
+}
+
+function closeExplanationModal() {
+    const explanationModal = document.getElementById('explanationModal');
+    explanationModal.classList.remove('show');
+}
+
+// Close explanation modal when clicking outside
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('explanationModal');
+    if (e.target === modal) {
+        closeExplanationModal();
+    }
+});
 
 // Alert Modal Functions
 function showAlert(message, onConfirm = null) {
@@ -970,7 +1006,14 @@ async function checkAnswer() {
     
     // Disable button during check
     checkBtn.disabled = true;
-    checkBtn.textContent = 'Checking...';
+    const checkBtnText = document.getElementById('check-btn-text');
+    const checkBtnIcon = checkBtn.querySelector('i');
+    if (checkBtnText) {
+        checkBtnText.textContent = 'Checking...';
+    }
+    if (checkBtnIcon) {
+        checkBtnIcon.className = 'fas fa-spinner fa-spin';
+    }
     
     try {
         const response = await fetch(`/practice/api/check-answer/${currentQuestionId}/`, {
@@ -1007,35 +1050,47 @@ async function checkAnswer() {
             }
         });
         
-        // Show explanation
+        // Store explanation in modal but don't show it yet
         if (data.explanation) {
-            document.getElementById('explanation-text').innerHTML = data.explanation;
-            document.getElementById('explanation-panel').classList.add('show');
+            document.getElementById('explanation-modal-text').innerHTML = data.explanation;
             
-            // Render MathJax in explanation
+            // Render MathJax in explanation modal
             if (window.MathJax) {
-                MathJax.typesetPromise([document.getElementById('explanation-text')]);
+                MathJax.typesetPromise([document.getElementById('explanation-modal-text')]);
             }
+            
+            // Show the "Show Explanation" button
+            document.getElementById('show-explanation-btn').style.display = 'inline-flex';
         }
         
         // Change button text with icon
         const checkBtnText = document.getElementById('check-btn-text');
         const checkBtnIcon = checkBtn.querySelector('i');
-        if (data.is_correct) {
-            checkBtnText.textContent = 'Correct!';
-            checkBtnIcon.className = 'fas fa-check-circle';
-            checkBtn.style.background = '#10b981';
-        } else {
-            checkBtnText.textContent = 'Incorrect';
-            checkBtnIcon.className = 'fas fa-times-circle';
-            checkBtn.style.background = '#ef4444';
+        if (checkBtnText && checkBtnIcon) {
+            if (data.is_correct) {
+                checkBtnText.textContent = 'Correct!';
+                checkBtnIcon.className = 'fas fa-check-circle';
+                checkBtn.style.background = '#10b981';
+            } else {
+                checkBtnText.textContent = 'Incorrect';
+                checkBtnIcon.className = 'fas fa-times-circle';
+                checkBtn.style.background = '#ef4444';
+            }
         }
         
     } catch (error) {
         console.error('Error checking answer:', error);
         showAlert('Failed to check answer. Please try again.');
         checkBtn.disabled = false;
-        checkBtn.textContent = 'Check Answer';
+        const checkBtnText = document.getElementById('check-btn-text');
+        const checkBtnIcon = checkBtn.querySelector('i');
+        if (checkBtnText) {
+            checkBtnText.textContent = 'Check Answer';
+        }
+        if (checkBtnIcon) {
+            checkBtnIcon.className = 'fas fa-check-circle';
+        }
+        checkBtn.style.background = '#10b981';
     }
 }
 
@@ -1151,15 +1206,17 @@ async function loadQuestion(index) {
         const nextBtnText = document.getElementById('next-btn-text');
         const nextBtnIcon = nextBtn.querySelector('i');
         
-        if (index === questionIds.length - 1) {
-            // Last question - change Next to Finish
-            nextBtnText.textContent = 'Finish';
-            nextBtnIcon.className = 'fas fa-flag-checkered';
-            nextBtn.disabled = false;
-        } else {
-            nextBtnText.textContent = 'Next';
-            nextBtnIcon.className = 'fas fa-arrow-right';
-            nextBtn.disabled = false;
+        if (nextBtnText && nextBtnIcon) {
+            if (index === questionIds.length - 1) {
+                // Last question - change Next to Finish
+                nextBtnText.textContent = 'Finish';
+                nextBtnIcon.className = 'fas fa-flag-checkered';
+                nextBtn.disabled = false;
+            } else {
+                nextBtnText.textContent = 'Next';
+                nextBtnIcon.className = 'fas fa-arrow-right';
+                nextBtn.disabled = false;
+            }
         }
         
         // Reset Check Answer button
@@ -1167,17 +1224,23 @@ async function loadQuestion(index) {
         const checkBtnText = document.getElementById('check-btn-text');
         const checkBtnIcon = checkBtn.querySelector('i');
         checkBtn.disabled = !userAnswers[questionId];
-        checkBtnText.textContent = 'Check Answer';
-        checkBtnIcon.className = 'fas fa-check-circle';
-        checkBtn.style.background = '#10b981';
+        if (checkBtnText && checkBtnIcon) {
+            checkBtnText.textContent = 'Check Answer';
+            checkBtnIcon.className = 'fas fa-check-circle';
+            checkBtn.style.background = '#10b981';
+        }
         
         // Remove correct/incorrect classes from all options
         document.querySelectorAll('.answer-option').forEach(option => {
             option.classList.remove('correct', 'incorrect');
         });
         
-        // Hide explanation
+        // Hide explanation and reset button
         document.getElementById('explanation-panel').classList.remove('show');
+        closeExplanationModal(); // Close modal if open
+        const showExplanationBtn = document.getElementById('show-explanation-btn');
+        showExplanationBtn.style.display = 'none';
+        document.getElementById('explanation-modal-text').innerHTML = ''; // Clear modal content
         
         // Reset question start time for timing
         questionStartTime = Date.now();

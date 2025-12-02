@@ -262,3 +262,8 @@ LOGIN_REDIRECT_URL = "/dashboard/"
 ACCOUNT_LOGOUT_REDIRECT_URL = "/landing/"
 SOCIALACCOUNT_LOGIN_ON_GET = True
 LOGIN_URL = "/login/"
+
+# ================================================================
+# AI / GEMINI API CONFIGURATION
+# ================================================================
+GEMINI_API_KEY = env("GEMINI_API_KEY", default="")

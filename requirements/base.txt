@@ -21,3 +21,7 @@ gunicorn
 # Utilities
 python-dateutil
 python-dotenv
+
+# AI Integration
+google-generativeai
+Pillow  # Required for image processing with Gemini

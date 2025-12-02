@@ -1,0 +1,852 @@
+{% extends "base_dashboard.html" %}
+{% load static %}
+
+{% block title %}Ask Prof. Coco - DSAT SCHOOL{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0.5rem;
+        height: calc(100vh - 80px);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-header {
+        background: linear-gradient(135deg, #9967b9 0%, #7c4d9a 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .chat-header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .chat-header p {
+        font-size: 0.875rem;
+        opacity: 0.9;
+        margin: 0;
+    }
+
+    .chat-content {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 0.5rem;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .chat-sidebar {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1rem;
+        overflow-y: auto;
+    }
+
+    .sidebar-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .sidebar-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.75rem;
+    }
+
+    .suggestion-card {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.875rem;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.875rem;
+    }
+
+    .suggestion-card:hover {
+        background: #f3f4f6;
+        border-color: #9967b9;
+        transform: translateY(-1px);
+    }
+
+    .suggestion-card i {
+        color: #9967b9;
+        margin-right: 0.5rem;
+    }
+
+    .chat-main {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.875rem;
+    }
+
+    .welcome-screen {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: #6b7280;
+    }
+
+    .welcome-screen h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #262632;
+        margin-bottom: 0.5rem;
+    }
+
+    .welcome-screen p {
+        font-size: 0.875rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        max-width: 100%;
+        margin: 0;
+    }
+
+    .quick-action-card {
+        background: #f9fafb;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+    }
+
+    .quick-action-card:hover {
+        border-color: #9967b9;
+        background: #f3e8ff;
+        transform: translateY(-2px);
+    }
+
+    .quick-action-card i {
+        font-size: 2rem;
+        color: #9967b9;
+        margin-bottom: 0.75rem;
+    }
+
+    .quick-action-card h3 {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #262632;
+        margin-bottom: 0.25rem;
+    }
+
+    .quick-action-card p {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin: 0;
+    }
+
+    .message {
+        display: flex;
+        gap: 0.75rem;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .message.user {
+        flex-direction: row-reverse;
+    }
+
+    .message-avatar {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+        flex-shrink: 0;
+    }
+
+    .message.user .message-avatar {
+        background: #9967b9;
+        color: white;
+    }
+
+    .message.ai .message-avatar {
+        background: #fdcc4c;
+        color: #262632;
+    }
+
+    .message-content {
+        max-width: 70%;
+        background: #f9fafb;
+        padding: 0.875rem 1rem;
+        border-radius: 12px;
+        font-size: 0.875rem;
+        line-height: 1.6;
+    }
+
+    .message.user .message-content {
+        background: #9967b9;
+        color: white;
+    }
+
+    .message.ai .message-content {
+        background: #f9fafb;
+        color: #262632;
+    }
+
+    .message-image {
+        max-width: 100%;
+        border-radius: 8px;
+        margin-top: 0.5rem;
+    }
+
+    .chat-input-container {
+        border-top: 1px solid #e5e7eb;
+        padding: 0.75rem 1rem;
+        background: #f9fafb;
+    }
+
+    .image-preview-container {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .image-preview {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 2px solid #e5e7eb;
+    }
+
+    .image-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .image-preview-remove {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        background: rgba(239, 68, 68, 0.9);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.75rem;
+    }
+
+    .chat-input-wrapper {
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-end;
+    }
+
+    .chat-input {
+        flex: 1;
+        border: 2px solid #e5e7eb;
+        border-radius: 24px;
+        padding: 0.625rem 1rem;
+        font-size: 0.875rem;
+        resize: none;
+        max-height: 100px;
+        min-height: 40px;
+        font-family: inherit;
+    }
+
+    .chat-input:focus {
+        outline: none;
+        border-color: #9967b9;
+    }
+
+    .chat-input-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .chat-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.95rem;
+    }
+
+    .chat-btn.attach {
+        background: white;
+        color: #6b7280;
+        border: 2px solid #e5e7eb;
+    }
+
+    .chat-btn.attach:hover {
+        background: #f3f4f6;
+        color: #262632;
+    }
+
+    .chat-btn.generate {
+        background: #fdcc4c;
+        color: #262632;
+    }
+
+    .chat-btn.generate:hover {
+        background: #fbbf24;
+    }
+
+    .chat-btn.send {
+        background: #9967b9;
+        color: white;
+    }
+
+    .chat-btn.send:hover {
+        background: #7c4d9a;
+    }
+
+    .chat-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .typing-indicator {
+        display: flex;
+        gap: 0.25rem;
+        padding: 0.5rem;
+    }
+
+    .typing-dot {
+        width: 8px;
+        height: 8px;
+        background: #6b7280;
+        border-radius: 50%;
+        animation: typing 1.4s infinite;
+    }
+
+    .typing-dot:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .typing-dot:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
+    @keyframes typing {
+        0%, 60%, 100% {
+            transform: translateY(0);
+            opacity: 0.5;
+        }
+        30% {
+            transform: translateY(-10px);
+            opacity: 1;
+        }
+    }
+
+    /* Scrollbar styling */
+    .chat-messages::-webkit-scrollbar,
+    .chat-sidebar::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .chat-messages::-webkit-scrollbar-track,
+    .chat-sidebar::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb,
+    .chat-sidebar::-webkit-scrollbar-thumb {
+        background: #9967b9;
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <!-- Header -->
+    <div class="chat-header">
+        <div style="font-size: 2.5rem;">🐧</div>
+        <div>
+            <h1><i class="fas fa-graduation-cap"></i> Ask Prof. Coco</h1>
+            <p>Your AI tutor for SAT preparation - Ask questions, upload images, generate practice problems</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="chat-content">
+        <!-- Sidebar -->
+        <div class="chat-sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Quick Actions</div>
+                <div class="suggestion-card" onclick="useTemplate('What are the most important concepts to know on the SAT?')">
+                    <i class="fas fa-book"></i> Get helpful information
+                </div>
+                <div class="suggestion-card" onclick="useTemplate('Generate a question about Linear Equations')">
+                    <i class="fas fa-question-circle"></i> Generate a practice question
+                </div>
+                <div class="suggestion-card" onclick="useTemplate('How should I prepare today?')">
+                    <i class="fas fa-calendar"></i> Study plan help
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Topics</div>
+                <div class="suggestion-card" onclick="useTemplate('Explain algebra concepts for SAT')">
+                    <i class="fas fa-calculator"></i> Algebra
+                </div>
+                <div class="suggestion-card" onclick="useTemplate('Help with reading comprehension')">
+                    <i class="fas fa-book-reader"></i> Reading
+                </div>
+                <div class="suggestion-card" onclick="useTemplate('Grammar rules for SAT')">
+                    <i class="fas fa-pen"></i> Writing
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="chat-main">
+            <div class="chat-messages" id="chatMessages">
+                <!-- Welcome Screen -->
+                <div class="welcome-screen" id="welcomeScreen">
+                    <h2>Hi {{ user.first_name|default:"Agent" }}! What can I help with?</h2>
+                    <p>Ask me anything or try one of these:</p>
+                    
+                    <div class="quick-actions">
+                        <div class="quick-action-card" onclick="useTemplate('What are the most important concepts to know on the SAT?')">
+                            <i class="fas fa-lightbulb"></i>
+                            <h3>What are the most important concepts to know on the SAT?</h3>
+                            <p>Get helpful information</p>
+                        </div>
+                        
+                        <div class="quick-action-card" onclick="document.getElementById('generateQuestionBtn').click()">
+                            <i class="fas fa-question-circle"></i>
+                            <h3>Generate a question about Linear Equations</h3>
+                            <p>Generate a practice question</p>
+                        </div>
+                        
+                        <div class="quick-action-card" onclick="useTemplate('How should I prepare today?')">
+                            <i class="fas fa-calendar-check"></i>
+                            <h3>How should I prepare today?</h3>
+                            <p>Based on your personalized study plan</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="chat-input-container">
+                <div class="image-preview-container" id="imagePreviewContainer"></div>
+                
+                <div class="chat-input-wrapper">
+                    <textarea 
+                        id="chatInput" 
+                        class="chat-input" 
+                        placeholder="Send a message..."
+                        rows="1"
+                        onkeydown="handleKeyPress(event)"
+                    ></textarea>
+                    
+                    <div class="chat-input-actions">
+                        <input type="file" id="imageUpload" accept="image/*" multiple style="display: none;" onchange="handleImageUpload(event)">
+                        <button class="chat-btn attach" onclick="document.getElementById('imageUpload').click()" title="Attach image">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                        <button class="chat-btn generate" id="generateQuestionBtn" onclick="generateQuestion()" title="Generate question">
+                            <i class="fas fa-magic"></i>
+                        </button>
+                        <button class="chat-btn send" id="sendBtn" onclick="sendMessage()" title="Send message">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let uploadedImages = [];
+let isAITyping = false;
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function processMarkdown(text) {
+    // Basic markdown processing for AI responses
+    if (!text) return '';
+    
+    // Preserve LaTeX expressions by temporarily replacing them
+    const latexExpressions = [];
+    text = text.replace(/\\\[(.*?)\\\]/gs, (match, p1) => {
+        latexExpressions.push(`\\[${p1}\\]`);
+        return `__LATEX_DISPLAY_${latexExpressions.length - 1}__`;
+    });
+    text = text.replace(/\\\((.*?)\\\)/g, (match, p1) => {
+        latexExpressions.push(`\\(${p1}\\)`);
+        return `__LATEX_INLINE_${latexExpressions.length - 1}__`;
+    });
+    
+    // Convert markdown formatting
+    text = text.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>'); // Bold + italic
+    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); // Bold
+    text = text.replace(/\*(.+?)\*/g, '<em>$1</em>'); // Italic
+    text = text.replace(/`(.+?)`/g, '<code>$1</code>'); // Inline code
+    text = text.replace(/^### (.+)$/gm, '<h3>$1</h3>'); // H3
+    text = text.replace(/^## (.+)$/gm, '<h2>$1</h2>'); // H2
+    text = text.replace(/^# (.+)$/gm, '<h1>$1</h1>'); // H1
+    
+    // Convert line breaks
+    text = text.replace(/\n\n/g, '</p><p>');
+    text = text.replace(/\n/g, '<br>');
+    
+    // Wrap in paragraph if not already wrapped
+    if (!text.startsWith('<')) {
+        text = '<p>' + text + '</p>';
+    }
+    
+    // Restore LaTeX expressions
+    text = text.replace(/__LATEX_DISPLAY_(\d+)__/g, (match, index) => {
+        return latexExpressions[parseInt(index)];
+    });
+    text = text.replace(/__LATEX_INLINE_(\d+)__/g, (match, index) => {
+        return latexExpressions[parseInt(index)];
+    });
+    
+    return text;
+}
+
+function hideWelcomeScreen() {
+    const welcomeScreen = document.getElementById('welcomeScreen');
+    if (welcomeScreen) {
+        welcomeScreen.style.display = 'none';
+    }
+}
+
+function addMessage(content, isUser = false, hasImage = false) {
+    hideWelcomeScreen();
+    
+    const messagesContainer = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+    
+    const avatar = document.createElement('div');
+    avatar.className = 'message-avatar';
+    avatar.textContent = isUser ? '{{ user.first_name.0|default:"U" }}' : '🐧';
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    
+    if (hasImage && uploadedImages.length > 0) {
+        uploadedImages.forEach(img => {
+            const imgElement = document.createElement('img');
+            imgElement.src = img.url;
+            imgElement.className = 'message-image';
+            contentDiv.appendChild(imgElement);
+        });
+    }
+    
+    const textDiv = document.createElement('div');
+    // Process content for proper rendering
+    textDiv.innerHTML = processMarkdown(content);
+    contentDiv.appendChild(textDiv);
+    
+    messageDiv.appendChild(avatar);
+    messageDiv.appendChild(contentDiv);
+    
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    // Trigger MathJax rendering for LaTeX expressions
+    if (typeof MathJax !== 'undefined') {
+        MathJax.typesetPromise([textDiv]).catch((err) => console.log('MathJax error:', err));
+    }
+}
+
+function showTypingIndicator() {
+    const messagesContainer = document.getElementById('chatMessages');
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'message ai';
+    typingDiv.id = 'typingIndicator';
+    
+    const avatar = document.createElement('div');
+    avatar.className = 'message-avatar';
+    avatar.textContent = '🐧';
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    contentDiv.innerHTML = '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+    
+    typingDiv.appendChild(avatar);
+    typingDiv.appendChild(contentDiv);
+    
+    messagesContainer.appendChild(typingDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function hideTypingIndicator() {
+    const typingIndicator = document.getElementById('typingIndicator');
+    if (typingIndicator) {
+        typingIndicator.remove();
+    }
+}
+
+async function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    
+    if (!message && uploadedImages.length === 0) return;
+    if (isAITyping) return;
+    
+    // Add user message
+    addMessage(message, true, uploadedImages.length > 0);
+    
+    // Clear input
+    input.value = '';
+    input.style.height = 'auto';
+    clearImagePreviews();
+    
+    // Show typing indicator
+    isAITyping = true;
+    showTypingIndicator();
+    
+    try {
+        // Prepare image IDs if images were uploaded
+        const imageIds = uploadedImages.map(img => {
+            // Extract the image ID from the file path
+            // Path format: /media/ai_uploads/user_id/filename
+            const pathParts = img.path.split('/');
+            const userId = pathParts[pathParts.length - 2];
+            return userId;
+        });
+        
+        const response = await fetch('/ai/chat/message/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                message: message,
+                context: '',
+                images: imageIds
+            })
+        });
+        
+        const data = await response.json();
+        
+        hideTypingIndicator();
+        
+        if (data.success) {
+            addMessage(data.response, false);
+        } else {
+            addMessage('Sorry, I encountered an error. Please try again.', false);
+        }
+    } catch (error) {
+        hideTypingIndicator();
+        addMessage('Sorry, I encountered an error. Please try again.', false);
+        console.error('Error:', error);
+    } finally {
+        isAITyping = false;
+    }
+}
+
+function handleKeyPress(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+    }
+}
+
+function useTemplate(text) {
+    const input = document.getElementById('chatInput');
+    input.value = text;
+    input.focus();
+    input.style.height = 'auto';
+    input.style.height = input.scrollHeight + 'px';
+}
+
+async function handleImageUpload(event) {
+    const files = event.target.files;
+    
+    for (let file of files) {
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File size too large. Maximum 5MB allowed.');
+            continue;
+        }
+        
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        try {
+            const response = await fetch('/ai/upload-image/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                uploadedImages.push({
+                    url: data.file_url,
+                    path: data.file_path
+                });
+                displayImagePreview(data.file_url);
+            } else {
+                alert('Failed to upload image: ' + data.error);
+            }
+        } catch (error) {
+            alert('Failed to upload image');
+            console.error('Error:', error);
+        }
+    }
+    
+    // Reset file input
+    event.target.value = '';
+}
+
+function displayImagePreview(url) {
+    const container = document.getElementById('imagePreviewContainer');
+    
+    const previewDiv = document.createElement('div');
+    previewDiv.className = 'image-preview';
+    
+    const img = document.createElement('img');
+    img.src = url;
+    
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'image-preview-remove';
+    removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+    removeBtn.onclick = () => {
+        uploadedImages = uploadedImages.filter(img => img.url !== url);
+        previewDiv.remove();
+    };
+    
+    previewDiv.appendChild(img);
+    previewDiv.appendChild(removeBtn);
+    container.appendChild(previewDiv);
+}
+
+function clearImagePreviews() {
+    const container = document.getElementById('imagePreviewContainer');
+    container.innerHTML = '';
+    uploadedImages = [];
+}
+
+async function generateQuestion() {
+    const input = document.getElementById('chatInput');
+    const topic = input.value.trim() || 'SAT Math';
+    
+    if (isAITyping) return;
+    
+    addMessage(`Generate a practice question about: ${topic}`, true);
+    input.value = '';
+    
+    isAITyping = true;
+    showTypingIndicator();
+    
+    try {
+        const response = await fetch('/ai/generate-question/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                topic: topic,
+                difficulty: 'medium'
+            })
+        });
+        
+        const data = await response.json();
+        
+        hideTypingIndicator();
+        
+        if (data.success) {
+            const question = data.question;
+            let responseHtml = `<strong>Question:</strong><br>${question.question}<br><br>`;
+            responseHtml += '<strong>Options:</strong><br>';
+            for (let [key, value] of Object.entries(question.options)) {
+                responseHtml += `${key}: ${value}<br>`;
+            }
+            addMessage(responseHtml, false);
+        } else {
+            addMessage('Sorry, I could not generate a question. Please try again.', false);
+        }
+    } catch (error) {
+        hideTypingIndicator();
+        addMessage('Sorry, I encountered an error. Please try again.', false);
+        console.error('Error:', error);
+    } finally {
+        isAITyping = false;
+    }
+}
+
+// Auto-resize textarea
+document.getElementById('chatInput').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
+});
+</script>
+{% endblock %}
