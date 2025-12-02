@@ -623,7 +623,7 @@
     <div class="practice-header">
         <div class="flex items-center gap-3">
             <div class="timer" id="timer">0:00</div>
-            <button class="hide-timer-btn" onclick="toggleTimer()">Hide</button>
+            <button class="hide-timer-btn" onclick="toggleTimer()"><i class="fas fa-eye-slash"></i> <span id="timer-btn-text">Hide</span></button>
         </div>
         <div class="flex items-center gap-2" id="topic-badges">
             <span class="domain-badge">
@@ -636,7 +636,7 @@
             </span>
         </div>
         <button class="annotate-btn" onclick="toggleAnnotate()">
-            <span>✏️</span> Annotate
+            <i class="fas fa-pen"></i> Annotate
         </button>
     </div>
 
@@ -660,7 +660,7 @@
                 <span class="question-number" id="question-number">1</span>
                 <label class="mark-review">
                     <input type="checkbox" id="mark-for-review" onchange="toggleMarkForReview()">
-                    <span>Mark for Review</span>
+                    <span><i class="fas fa-flag"></i> Mark for Review</span>
                 </label>
             </div>
 
@@ -675,7 +675,7 @@
                         <span class="option-label">{{ key }}:</span>
                         <span class="option-text">{{ value|safe }}</span>
                         <button class="strikethrough-btn" onclick="toggleStrikethrough(event, this)">
-                            <span>⊘</span>
+                            <i class="fas fa-ban"></i>
                         </button>
                     </div>
                     {% endfor %}
@@ -693,20 +693,20 @@
     <!-- Footer with Navigation -->
     <div class="practice-footer">
         <button class="question-counter" id="question-counter" onclick="openQuestionMap()" style="cursor: pointer;">
-            Question <span id="current-index">1</span> of <span id="total-count">{{ total_questions }}</span>
+            <i class="fas fa-list-ol"></i> Question <span id="current-index">1</span> of <span id="total-count">{{ total_questions }}</span>
         </button>
         <div class="navigation-buttons">
             <button class="nav-btn" onclick="endPractice()" style="background: #ef4444; color: white;">
-                End Practice
+                <i class="fas fa-stop-circle"></i> End Practice
             </button>
             <button class="nav-btn back" id="back-btn" onclick="previousQuestion()" disabled>
-                Back
+                <i class="fas fa-arrow-left"></i> Back
             </button>
             <button class="nav-btn" id="check-answer-btn" onclick="checkAnswer()" style="background: #10b981; color: white;" disabled>
-                Check Answer
+                <i class="fas fa-check-circle"></i> <span id="check-btn-text">Check Answer</span>
             </button>
             <button class="nav-btn next" id="next-btn" onclick="nextQuestion()">
-                Next
+                <span id="next-btn-text">Next</span> <i class="fas fa-arrow-right"></i>
             </button>
         </div>
     </div>
@@ -722,8 +722,8 @@
     <div class="question-map-modal" id="questionMapModal">
         <div class="question-map-content">
             <div class="question-map-header">
-                <h3>Question Map</h3>
-                <button class="close-modal-btn" onclick="closeQuestionMap()">×</button>
+                <h3><i class="fas fa-map"></i> Question Map</h3>
+                <button class="close-modal-btn" onclick="closeQuestionMap()"><i class="fas fa-times"></i></button>
             </div>
             
             <div class="question-map-legend">
@@ -817,14 +817,18 @@ function updateTimerDisplay() {
 function toggleTimer() {
     timerVisible = !timerVisible;
     const timerElement = document.getElementById('timer');
-    const btn = event.target;
+    const btn = event.target.closest('button');
+    const btnText = document.getElementById('timer-btn-text');
+    const btnIcon = btn.querySelector('i');
     
     if (timerVisible) {
         timerElement.style.display = 'block';
-        btn.textContent = 'Hide';
+        btnText.textContent = 'Hide';
+        btnIcon.className = 'fas fa-eye-slash';
     } else {
         timerElement.style.display = 'none';
-        btn.textContent = 'Show Timer';
+        btnText.textContent = 'Show';
+        btnIcon.className = 'fas fa-eye';
     }
 }
 
@@ -1014,9 +1018,18 @@ async function checkAnswer() {
             }
         }
         
-        // Change button text
-        checkBtn.textContent = data.is_correct ? '✓ Correct!' : '✗ Incorrect';
-        checkBtn.style.background = data.is_correct ? '#10b981' : '#ef4444';
+        // Change button text with icon
+        const checkBtnText = document.getElementById('check-btn-text');
+        const checkBtnIcon = checkBtn.querySelector('i');
+        if (data.is_correct) {
+            checkBtnText.textContent = 'Correct!';
+            checkBtnIcon.className = 'fas fa-check-circle';
+            checkBtn.style.background = '#10b981';
+        } else {
+            checkBtnText.textContent = 'Incorrect';
+            checkBtnIcon.className = 'fas fa-times-circle';
+            checkBtn.style.background = '#ef4444';
+        }
         
     } catch (error) {
         console.error('Error checking answer:', error);
@@ -1109,7 +1122,7 @@ async function loadQuestion(index) {
                 <span class="option-text">${value}</span>
                 <button class="strikethrough-btn ${strikethroughOptions[questionId]?.has(key) ? 'active' : ''}" 
                         onclick="toggleStrikethrough(event, this)">
-                    <span>⊘</span>
+                    <i class="fas fa-ban"></i>
                 </button>
             </div>
         `).join('');
@@ -1135,20 +1148,27 @@ async function loadQuestion(index) {
         // Update navigation buttons
         document.getElementById('back-btn').disabled = index === 0;
         const nextBtn = document.getElementById('next-btn');
+        const nextBtnText = document.getElementById('next-btn-text');
+        const nextBtnIcon = nextBtn.querySelector('i');
         
         if (index === questionIds.length - 1) {
             // Last question - change Next to Finish
-            nextBtn.textContent = 'Finish';
+            nextBtnText.textContent = 'Finish';
+            nextBtnIcon.className = 'fas fa-flag-checkered';
             nextBtn.disabled = false;
         } else {
-            nextBtn.textContent = 'Next';
+            nextBtnText.textContent = 'Next';
+            nextBtnIcon.className = 'fas fa-arrow-right';
             nextBtn.disabled = false;
         }
         
         // Reset Check Answer button
         const checkBtn = document.getElementById('check-answer-btn');
+        const checkBtnText = document.getElementById('check-btn-text');
+        const checkBtnIcon = checkBtn.querySelector('i');
         checkBtn.disabled = !userAnswers[questionId];
-        checkBtn.textContent = 'Check Answer';
+        checkBtnText.textContent = 'Check Answer';
+        checkBtnIcon.className = 'fas fa-check-circle';
         checkBtn.style.background = '#10b981';
         
         // Remove correct/incorrect classes from all options
