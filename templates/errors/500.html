@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}500 - Server Error{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-50 px-4">
+    <div class="max-w-2xl w-full text-center">
+        <!-- Penguin Mascot -->
+        <div class="mb-8">
+            <div class="text-9xl mb-4">🐧</div>
+            <div class="inline-block bg-white rounded-2xl shadow-lg px-6 py-3">
+                <p class="text-sm font-semibold text-gray-600">Hmm, something went wrong...</p>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div class="bg-white rounded-3xl shadow-xl p-8 mb-8">
+            <h1 class="text-6xl font-bold mb-4 text-red-500">500</h1>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Internal Server Error</h2>
+            <p class="text-gray-600 mb-6">
+                Oops! Something unexpected happened on our end. Our team has been notified 
+                and we're working to fix it. Please try again in a few moments.
+            </p>
+            
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="location.reload()" 
+                   class="inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold text-white transition-all"
+                   style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                    <i class="fas fa-redo mr-2"></i>
+                    Try Again
+                </button>
+                <a href="{% url 'dashboard' %}" 
+                   class="inline-flex items-center justify-center px-6 py-3 bg-gray-100 rounded-lg font-semibold text-gray-700 hover:bg-gray-200 transition-all">
+                    <i class="fas fa-home mr-2"></i>
+                    Back to Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Support Info -->
+        <div class="bg-white/50 backdrop-blur rounded-2xl p-6">
+            <p class="text-sm text-gray-600 mb-3">
+                <i class="fas fa-info-circle mr-2" style="color: #9967b9;"></i>
+                If this problem persists, please contact support
+            </p>
+            <div class="flex flex-wrap gap-3 justify-center">
+                <a href="{% url 'ai_chat' %}" class="text-sm px-4 py-2 bg-white rounded-lg hover:shadow-md transition-all" style="color: #9967b9;">
+                    <i class="fas fa-comments mr-1"></i>
+                    Ask Prof. Coco
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

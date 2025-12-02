@@ -254,13 +254,15 @@ ACCOUNT_SIGNUP_REDIRECT_URL = "/dashboard/"
 # Social account settings
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
-SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_LOGIN_ON_GET = False  # Changed to False to prevent auto-redirect errors
 SOCIALACCOUNT_QUERY_EMAIL = True
+# Make social account providers optional - don't raise error if not configured
+SOCIALACCOUNT_ADAPTER = 'allauth.socialaccount.adapter.DefaultSocialAccountAdapter'
+SOCIALACCOUNT_STORE_TOKENS = True
 
 # Redirect URLs
 LOGIN_REDIRECT_URL = "/dashboard/"
 ACCOUNT_LOGOUT_REDIRECT_URL = "/landing/"
-SOCIALACCOUNT_LOGIN_ON_GET = True
 LOGIN_URL = "/login/"
 
 # ================================================================
