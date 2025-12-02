@@ -354,6 +354,266 @@
         font-size: 0.875rem;
         color: #6b7280;
     }
+
+    /* Question Map Modal */
+    .question-map-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .question-map-modal.show {
+        display: flex;
+    }
+
+    .question-map-content {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        position: relative;
+    }
+
+    .question-map-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .question-map-header h3 {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: #262632;
+    }
+
+    .close-modal-btn {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #6b7280;
+        cursor: pointer;
+        padding: 0;
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+    }
+
+    .close-modal-btn:hover {
+        background: #f3f4f6;
+        color: #262632;
+    }
+
+    .question-map-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding: 0.75rem;
+        background: #f9fafb;
+        border-radius: 8px;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+
+    .legend-box {
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 4px;
+        border: 2px solid #e5e7eb;
+    }
+
+    .legend-box.current {
+        background: #9967b9;
+        border-color: #9967b9;
+        position: relative;
+    }
+
+    .legend-box.current::after {
+        content: '✓';
+        color: white;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 0.75rem;
+    }
+
+    .legend-box.answered {
+        background: #10b981;
+        border-color: #10b981;
+    }
+
+    .legend-box.tried {
+        background: #fbbf24;
+        border-color: #fbbf24;
+    }
+
+    .legend-box.not-tried {
+        background: white;
+        border-color: #d1d5db;
+    }
+
+    .legend-box.marked {
+        background: #8b5cf6;
+        border-color: #8b5cf6;
+    }
+
+    .question-map-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(3rem, 1fr));
+        gap: 0.75rem;
+    }
+
+    .question-map-item {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #d1d5db;
+        border-radius: 6px;
+        background: white;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #6b7280;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+    }
+
+    .question-map-item:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .question-map-item.current {
+        background: #9967b9;
+        border-color: #9967b9;
+        color: white;
+    }
+
+    .question-map-item.current::after {
+        content: '✓';
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        font-size: 0.625rem;
+    }
+
+    .question-map-item.answered {
+        background: #10b981;
+        border-color: #10b981;
+        color: white;
+    }
+
+    .question-map-item.tried {
+        background: #fbbf24;
+        border-color: #fbbf24;
+        color: white;
+    }
+
+    .question-map-item.marked {
+        border-color: #8b5cf6;
+        border-width: 3px;
+    }
+
+    /* Alert Modal */
+    .alert-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .alert-modal.show {
+        display: flex;
+    }
+
+    .alert-modal-content {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        max-width: 400px;
+        width: 90%;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .alert-modal-message {
+        font-size: 0.875rem;
+        color: #374151;
+        margin-bottom: 1.5rem;
+        line-height: 1.5;
+    }
+
+    .alert-modal-buttons {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-end;
+    }
+
+    .alert-modal-btn {
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s;
+    }
+
+    .alert-modal-btn.cancel {
+        background: #f3f4f6;
+        color: #374151;
+    }
+
+    .alert-modal-btn.cancel:hover {
+        background: #e5e7eb;
+    }
+
+    .alert-modal-btn.confirm {
+        background: #9967b9;
+        color: white;
+    }
+
+    .alert-modal-btn.confirm:hover {
+        background: #7c4d9a;
+    }
+
+    .alert-modal-btn.ok {
+        background: #9967b9;
+        color: white;
+    }
+
+    .alert-modal-btn.ok:hover {
+        background: #7c4d9a;
+    }
 </style>
 {% endblock %}
 
@@ -361,19 +621,19 @@
 <div class="practice-container">
     <!-- Header with Timer and Controls -->
     <div class="practice-header">
-        <div class="flex items-center gap-4">
-            <div class="timer" id="timer">31:14</div>
+        <div class="flex items-center gap-3">
+            <div class="timer" id="timer">0:00</div>
             <button class="hide-timer-btn" onclick="toggleTimer()">Hide</button>
-            <div class="flex items-center gap-2 ml-4" id="topic-badges">
-                <span class="domain-badge">
-                    <span id="domain-code">{{ first_question.domain_code }}</span>
-                    <span id="domain-name">{{ first_question.domain_name }}</span>
-                </span>
-                <span class="skill-badge">
-                    <span id="skill-code">{{ first_question.skill_code }}</span>
-                    <span id="skill-name">{{ first_question.skill_name }}</span>
-                </span>
-            </div>
+        </div>
+        <div class="flex items-center gap-2" id="topic-badges">
+            <span class="domain-badge">
+                <span id="domain-code">{{ first_question.domain_code }}</span>
+                <span id="domain-name">{{ first_question.domain_name }}</span>
+            </span>
+            <span class="skill-badge">
+                <span id="skill-code">{{ first_question.skill_code }}</span>
+                <span id="skill-name">{{ first_question.skill_name }}</span>
+            </span>
         </div>
         <button class="annotate-btn" onclick="toggleAnnotate()">
             <span>✏️</span> Annotate
@@ -399,7 +659,7 @@
             <div class="flex items-center justify-between">
                 <span class="question-number" id="question-number">1</span>
                 <label class="mark-review">
-                    <input type="checkbox" id="mark-for-review">
+                    <input type="checkbox" id="mark-for-review" onchange="toggleMarkForReview()">
                     <span>Mark for Review</span>
                 </label>
             </div>
@@ -432,10 +692,13 @@
 
     <!-- Footer with Navigation -->
     <div class="practice-footer">
-        <div class="question-counter" id="question-counter">
+        <button class="question-counter" id="question-counter" onclick="openQuestionMap()" style="cursor: pointer;">
             Question <span id="current-index">1</span> of <span id="total-count">{{ total_questions }}</span>
-        </div>
+        </button>
         <div class="navigation-buttons">
+            <button class="nav-btn" onclick="endPractice()" style="background: #ef4444; color: white;">
+                End Practice
+            </button>
             <button class="nav-btn back" id="back-btn" onclick="previousQuestion()" disabled>
                 Back
             </button>
@@ -454,6 +717,51 @@
         <p>There are no questions matching your current filters. Try adjusting your selection.</p>
     </div>
     {% endif %}
+
+    <!-- Question Map Modal -->
+    <div class="question-map-modal" id="questionMapModal">
+        <div class="question-map-content">
+            <div class="question-map-header">
+                <h3>Question Map</h3>
+                <button class="close-modal-btn" onclick="closeQuestionMap()">×</button>
+            </div>
+            
+            <div class="question-map-legend">
+                <div class="legend-item">
+                    <div class="legend-box current"></div>
+                    <span>Current</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box answered"></div>
+                    <span>Mastered</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box tried"></div>
+                    <span>Tried</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box not-tried"></div>
+                    <span>Not Tried</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box marked"></div>
+                    <span>Marked</span>
+                </div>
+            </div>
+            
+            <div class="question-map-grid" id="questionMapGrid">
+                <!-- Questions will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div class="alert-modal" id="alertModal">
+        <div class="alert-modal-content">
+            <div class="alert-modal-message" id="alertMessage"></div>
+            <div class="alert-modal-buttons" id="alertButtons"></div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -462,6 +770,7 @@ const questionIds = {{ question_ids|safe }};
 let currentIndex = 0;
 let selectedAnswer = null;
 let userAnswers = {};
+let answeredCorrectly = {}; // Track which questions were answered correctly
 let markedForReview = new Set();
 let strikethroughOptions = {};
 
@@ -469,22 +778,33 @@ let strikethroughOptions = {};
 const sessionId = '{{ session_id }}';
 let questionStartTime = Date.now();
 
-// Timer
-let timerSeconds = 31 * 60 + 14; // 31:14
+// Timer - counts up from 0 for each question
+let timerSeconds = 0;
 let timerInterval = null;
 let timerVisible = true;
 
 function startTimer() {
+    // Clear any existing timer
+    if (timerInterval) {
+        clearInterval(timerInterval);
+    }
+    
+    // Reset to 0
+    timerSeconds = 0;
+    updateTimerDisplay();
+    
+    // Start counting up
     timerInterval = setInterval(() => {
-        timerSeconds--;
-        
-        if (timerSeconds <= 0) {
-            clearInterval(timerInterval);
-            timerSeconds = 0;
-        }
-        
+        timerSeconds++;
         updateTimerDisplay();
     }, 1000);
+}
+
+function stopTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
 }
 
 function updateTimerDisplay() {
@@ -509,8 +829,108 @@ function toggleTimer() {
 }
 
 function toggleAnnotate() {
-    alert('Annotation feature coming soon!');
+    showAlert('Annotation feature coming soon!');
 }
+
+// Alert Modal Functions
+function showAlert(message, onConfirm = null) {
+    const modal = document.getElementById('alertModal');
+    const messageEl = document.getElementById('alertMessage');
+    const buttonsEl = document.getElementById('alertButtons');
+    
+    messageEl.textContent = message;
+    buttonsEl.innerHTML = '';
+    
+    if (onConfirm) {
+        // Confirmation dialog with Cancel and OK buttons
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'alert-modal-btn cancel';
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.onclick = () => closeAlert();
+        
+        const confirmBtn = document.createElement('button');
+        confirmBtn.className = 'alert-modal-btn confirm';
+        confirmBtn.textContent = 'OK';
+        confirmBtn.onclick = () => {
+            closeAlert();
+            onConfirm();
+        };
+        
+        buttonsEl.appendChild(cancelBtn);
+        buttonsEl.appendChild(confirmBtn);
+    } else {
+        // Simple alert with OK button
+        const okBtn = document.createElement('button');
+        okBtn.className = 'alert-modal-btn ok';
+        okBtn.textContent = 'OK';
+        okBtn.onclick = () => closeAlert();
+        
+        buttonsEl.appendChild(okBtn);
+    }
+    
+    modal.classList.add('show');
+}
+
+function closeAlert() {
+    const modal = document.getElementById('alertModal');
+    modal.classList.remove('show');
+}
+
+// Question Map Modal Functions
+function openQuestionMap() {
+    const modal = document.getElementById('questionMapModal');
+    modal.classList.add('show');
+    renderQuestionMap();
+}
+
+function closeQuestionMap() {
+    const modal = document.getElementById('questionMapModal');
+    modal.classList.remove('show');
+}
+
+function renderQuestionMap() {
+    const grid = document.getElementById('questionMapGrid');
+    grid.innerHTML = '';
+    
+    questionIds.forEach((questionId, index) => {
+        const item = document.createElement('div');
+        item.className = 'question-map-item';
+        item.textContent = index + 1;
+        
+        // Add status classes
+        if (index === currentIndex) {
+            item.classList.add('current');
+        } else if (answeredCorrectly[questionId] === true) {
+            // Question was answered correctly - show as mastered (green)
+            item.classList.add('answered');
+        } else if (userAnswers[questionId]) {
+            // Question was attempted but not correct - show as tried (yellow)
+            item.classList.add('tried');
+        }
+        // If no answer, it stays as not-tried (white)
+        
+        // Check if marked for review
+        if (markedForReview.has(questionId)) {
+            item.classList.add('marked');
+        }
+        
+        // Click handler to jump to question
+        item.onclick = () => {
+            closeQuestionMap();
+            loadQuestion(index);
+        };
+        
+        grid.appendChild(item);
+    });
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('questionMapModal');
+    if (e.target === modal) {
+        closeQuestionMap();
+    }
+});
 
 // Question navigation
 function selectAnswer(answer) {
@@ -534,7 +954,7 @@ function selectAnswer(answer) {
 // Check answer with backend validation
 async function checkAnswer() {
     if (!selectedAnswer) {
-        alert('Please select an answer first!');
+        showAlert('Please select an answer first!');
         return;
     }
     
@@ -563,6 +983,9 @@ async function checkAnswer() {
         });
         
         const data = await response.json();
+        
+        // Track if answer was correct
+        answeredCorrectly[currentQuestionId] = data.is_correct;
         
         // Update UI based on correctness
         document.querySelectorAll('.answer-option').forEach(option => {
@@ -597,7 +1020,7 @@ async function checkAnswer() {
         
     } catch (error) {
         console.error('Error checking answer:', error);
-        alert('Failed to check answer. Please try again.');
+        showAlert('Failed to check answer. Please try again.');
         checkBtn.disabled = false;
         checkBtn.textContent = 'Check Answer';
     }
@@ -711,7 +1134,16 @@ async function loadQuestion(index) {
         
         // Update navigation buttons
         document.getElementById('back-btn').disabled = index === 0;
-        document.getElementById('next-btn').disabled = index === questionIds.length - 1;
+        const nextBtn = document.getElementById('next-btn');
+        
+        if (index === questionIds.length - 1) {
+            // Last question - change Next to Finish
+            nextBtn.textContent = 'Finish';
+            nextBtn.disabled = false;
+        } else {
+            nextBtn.textContent = 'Next';
+            nextBtn.disabled = false;
+        }
         
         // Reset Check Answer button
         const checkBtn = document.getElementById('check-answer-btn');
@@ -727,12 +1159,18 @@ async function loadQuestion(index) {
         // Hide explanation
         document.getElementById('explanation-panel').classList.remove('show');
         
+        // Reset question start time for timing
+        questionStartTime = Date.now();
+        
+        // Start fresh timer for this question
+        startTimer();
+        
         // Restore selected answer
         selectedAnswer = userAnswers[questionId] || null;
         
     } catch (error) {
         console.error('Error loading question:', error);
-        alert('Error loading question. Please try again.');
+        showAlert('Error loading question. Please try again.');
     }
 }
 
@@ -745,6 +1183,57 @@ function previousQuestion() {
 function nextQuestion() {
     if (currentIndex < questionIds.length - 1) {
         loadQuestion(currentIndex + 1);
+    } else {
+        // Last question - show finish option
+        showAlert(
+            'You have reached the last question. Do you want to finish the practice session and view your results?',
+            () => endPractice()
+        );
+    }
+}
+
+// End practice session
+async function endPractice() {
+    // Create a promise-based confirmation
+    return new Promise((resolve) => {
+        showAlert(
+            'Are you sure you want to end this practice session? You will see a detailed report of your performance.',
+            async () => {
+                try {
+                    await performEndPractice();
+                    resolve();
+                } catch (error) {
+                    resolve();
+                }
+            }
+        );
+    });
+}
+
+// Actual end practice logic
+async function performEndPractice() {
+    try {
+        const response = await fetch('/practice/api/end-practice/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                session_id: sessionId
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            window.location.href = data.redirect_url;
+        } else {
+            showAlert('Failed to end practice: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error ending practice:', error);
+        showAlert('Failed to end practice. Please try again.');
     }
 }
 
@@ -770,22 +1259,78 @@ async function showExplanation() {
     }
 }
 
-// Mark for review
-document.addEventListener('DOMContentLoaded', function() {
+// Mark for review - toggle function that saves to backend
+async function toggleMarkForReview() {
+    const currentQuestionId = questionIds[currentIndex];
     const markCheckbox = document.getElementById('mark-for-review');
-    if (markCheckbox) {
-        markCheckbox.addEventListener('change', function() {
-            const currentQuestionId = questionIds[currentIndex];
-            if (this.checked) {
-                markedForReview.add(currentQuestionId);
-            } else {
-                markedForReview.delete(currentQuestionId);
-            }
-        });
-    }
     
-    // Start timer
-    startTimer();
+    try {
+        const response = await fetch('/practice/api/mark-question/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                question_id: currentQuestionId
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.marked) {
+            markedForReview.add(currentQuestionId);
+            markCheckbox.checked = true;
+        } else {
+            markedForReview.delete(currentQuestionId);
+            markCheckbox.checked = false;
+        }
+    } catch (error) {
+        console.error('Error marking question:', error);
+        // Revert checkbox state on error
+        markCheckbox.checked = !markCheckbox.checked;
+    }
+}
+
+// Load marked questions on page load
+async function loadMarkedQuestions() {
+    try {
+        const response = await fetch('/practice/api/marked-questions/');
+        const data = await response.json();
+        
+        if (data.marked_question_ids) {
+            markedForReview = new Set(data.marked_question_ids);
+        }
+    } catch (error) {
+        console.error('Error loading marked questions:', error);
+    }
+}
+
+// Load session answers on page load
+async function loadSessionAnswers() {
+    try {
+        const response = await fetch(`/practice/api/session-answers/${sessionId}/`);
+        const data = await response.json();
+        
+        if (data.answers) {
+            // Populate userAnswers object with previous answers
+            Object.entries(data.answers).forEach(([questionId, answerData]) => {
+                userAnswers[questionId] = answerData.answer;
+                answeredCorrectly[questionId] = answerData.is_correct;
+            });
+        }
+    } catch (error) {
+        console.error('Error loading session answers:', error);
+    }
+}
+
+// Initialize on DOM ready
+document.addEventListener('DOMContentLoaded', async function() {
+    // Load marked questions from backend
+    await loadMarkedQuestions();
+    
+    // Load session answers from backend (for resumed sessions)
+    await loadSessionAnswers();
     
     // Check if there's a question ID in the URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -799,7 +1344,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Load the initial question
+    // Load the initial question (this will start the timer)
     loadQuestion(initialIndex);
     
     // Render MathJax on initial page load

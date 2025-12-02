@@ -59,8 +59,9 @@
                             <span class="text-sm text-gray-700">Mastered</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" class="filter-status rounded border-gray-300 text-yellow-600 focus:ring-yellow-500" value="marked">
+                            <input type="checkbox" id="marked-review-filter" class="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500" {% if marked_for_review_only %}checked{% endif %}>
                             <span class="text-sm text-gray-700">Marked for Review</span>
+                            <span class="text-xs text-gray-500">({{ marked_count }})</span>
                         </label>
                     </div>
                 </div>
@@ -89,6 +90,30 @@
 
     <!-- Main Content -->
     <div class="max-w-[1920px] mx-auto px-8 py-6">
+        <!-- Resume Last Session Card -->
+        {% if last_session %}
+        <div class="bg-gradient-to-r from-primary to-purple-600 rounded-lg p-6 mb-6 text-white">
+            <div class="flex items-center justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <h3 class="text-lg font-bold">Resume Last Session</h3>
+                    </div>
+                    <div class="text-sm opacity-90 space-y-1">
+                        <p><strong>Domain:</strong> {{ last_session.domain_name }} • <strong>Skill:</strong> {{ last_session.skill_name }}</p>
+                        <p><strong>Progress:</strong> {{ last_session.answered_count }}/{{ last_session.total_questions }} questions answered</p>
+                        <p><strong>Started:</strong> {{ last_session.started_at|timesince }} ago</p>
+                    </div>
+                </div>
+                <a href="{% url 'practice:resume_session' last_session.id %}" class="px-6 py-3 bg-white text-primary rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors">
+                    Continue Practice →
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Category Tabs -->
         <div class="flex items-center gap-2 mb-6">
             <button class="category-tab {% if subject == 'reading' %}active bg-primary text-white{% else %}bg-white text-gray-700 border border-gray-300{% endif %} px-4 py-2 text-sm font-semibold rounded-lg hover:bg-gray-50" data-category="reading">
@@ -215,6 +240,9 @@ document.querySelectorAll('.filter-provider, .filter-status, .filter-difficulty'
     checkbox.addEventListener('change', applyFilters);
 });
 
+// Also listen to marked review filter
+document.getElementById('marked-review-filter')?.addEventListener('change', applyFilters);
+
 function applyFilters() {
     const urlParams = new URLSearchParams();
     
@@ -237,6 +265,12 @@ function applyFilters() {
     document.querySelectorAll('.filter-difficulty:checked').forEach(checkbox => {
         urlParams.append('difficulty', checkbox.value);
     });
+    
+    // Check if marked for review filter is active
+    const markedReviewFilter = document.getElementById('marked-review-filter');
+    if (markedReviewFilter && markedReviewFilter.checked) {
+        urlParams.set('marked_review', 'true');
+    }
     
     // Reload page with new filters
     window.location.href = `?${urlParams.toString()}`;

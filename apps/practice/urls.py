@@ -13,8 +13,18 @@ urlpatterns = [
     # Practice interface - main view with URL parameters
     path('', views.practice_view, name='practice'),
     
+    # Results page
+    path('results/<uuid:session_id>/', views.practice_results, name='results'),
+    
+    # Resume session
+    path('resume/<uuid:session_id>/', views.resume_session, name='resume_session'),
+    
     # API endpoints for AJAX
     path('api/question/<uuid:question_id>/', views.get_question, name='get_question'),
     path('api/check-answer/<uuid:question_id>/', views.check_answer, name='check_answer'),
     path('api/submit-answer/', views.submit_answer, name='submit_answer'),
+    path('api/end-practice/', views.end_practice, name='end_practice'),
+    path('api/mark-question/', views.mark_question_for_review, name='mark_question'),
+    path('api/marked-questions/', views.get_marked_questions, name='marked_questions'),
+    path('api/session-answers/<uuid:session_id>/', views.get_session_answers, name='session_answers'),
 ]

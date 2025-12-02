@@ -13,7 +13,7 @@ from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
-from .models import Question, PracticeSession, UserAnswer
+from .models import Question, PracticeSession, UserAnswer, MarkedQuestion
 
 
 @login_required
@@ -28,9 +28,17 @@ def practice_modules_view(request):
     selected_providers = request.GET.getlist('provider')
     selected_status = request.GET.getlist('status')
     selected_difficulty = request.GET.getlist('difficulty')
+    marked_for_review_only = request.GET.get('marked_review', False)
     
     # Base queryset - only active questions
     questions = Question.objects.filter(is_active=True)
+    
+    # Filter by marked for review if selected
+    if marked_for_review_only:
+        marked_question_ids = MarkedQuestion.objects.filter(
+            user=request.user
+        ).values_list('question_id', flat=True)
+        questions = questions.filter(id__in=marked_question_ids)
     
     # Filter by subject (Reading & Writing vs Math)
     if subject == 'reading':
@@ -76,6 +84,32 @@ def practice_modules_view(request):
         question_count=Count('id')
     ).distinct().order_by('provider_name')
     
+    # Get count of marked questions for the user
+    marked_count = MarkedQuestion.objects.filter(user=request.user).count()
+    
+    # Get last active session for this user
+    last_session = PracticeSession.objects.filter(
+        user=request.user,
+        status='active'
+    ).order_by('-started_at').first()
+    
+    # If there's an active session, get additional details
+    if last_session:
+        # Count answered questions in this session
+        answered_count = UserAnswer.objects.filter(session=last_session).count()
+        last_session.answered_count = answered_count
+        
+        # Get domain and skill names
+        if last_session.domain_code:
+            domain = Question.objects.filter(domain_code=last_session.domain_code).first()
+            if domain:
+                last_session.domain_name = domain.domain_name
+        
+        if last_session.skill_code:
+            skill = Question.objects.filter(skill_code=last_session.skill_code).first()
+            if skill:
+                last_session.skill_name = skill.skill_name
+    
     context = {
         'domains': domains,
         'skills_by_domain': skills_by_domain,
@@ -85,6 +119,9 @@ def practice_modules_view(request):
         'selected_providers': selected_providers,
         'selected_status': selected_status,
         'selected_difficulty': selected_difficulty,
+        'marked_for_review_only': marked_for_review_only,
+        'marked_count': marked_count,
+        'last_session': last_session,
     }
     
     return render(request, 'practice/modules.html', context)
@@ -101,6 +138,8 @@ def practice_view(request):
     - provider: Filter by provider_code (e.g., ?provider=cb)
     - difficulty: Filter by difficulty level
     - type: Filter by question_type (e.g., ?type=mcq)
+    - session: Resume existing session by ID
+    - question: Start from specific question by ID
     
     Multiple filters can be combined (e.g., ?domain=CAS&skill=CTC)
     """
@@ -109,6 +148,25 @@ def practice_view(request):
     skill_filter = request.GET.get('skill')
     provider_filter = request.GET.get('provider')
     question_type_filter = request.GET.get('type')
+    session_id_param = request.GET.get('session')
+    question_id_param = request.GET.get('question')
+    
+    # Check if resuming an existing session
+    session = None
+    if session_id_param:
+        try:
+            session = PracticeSession.objects.get(
+                id=session_id_param,
+                user=request.user,
+                status='active'
+            )
+            # Use session's filters if resuming
+            domain_filter = session.domain_code or domain_filter
+            skill_filter = session.skill_code or skill_filter
+            provider_filter = session.provider_code or provider_filter
+        except PracticeSession.DoesNotExist:
+            # Session not found, will create new one
+            session = None
     
     # Build query
     questions = Question.objects.filter(is_active=True)
@@ -129,33 +187,39 @@ def practice_view(request):
     # Get total count
     total_questions = questions.count()
     
-    # Get first question for initial display
-    first_question = questions.first() if total_questions > 0 else None
-    
     # Get all questions for navigation (IDs only)
     question_ids = list(questions.values_list('id', flat=True))
     
-    # Create or get practice session
-    # Generate unique session key based on filters
-    session_key_parts = [
-        f"user_{request.user.id}",
-        f"domain_{domain_filter or 'all'}",
-        f"skill_{skill_filter or 'all'}",
-        f"provider_{provider_filter or 'all'}",
-        timezone.now().strftime("%Y%m%d%H%M%S")
-    ]
-    session_key = "_".join(session_key_parts)
+    # Determine starting question
+    first_question = None
+    current_index = 1
     
-    # Create new session
-    session = PracticeSession.objects.create(
-        user=request.user,
-        session_key=session_key,
-        status='active',
-        domain_code=domain_filter or '',
-        skill_code=skill_filter or '',
-        provider_code=provider_filter or '',
-        total_questions=total_questions
-    )
+    if question_id_param and question_id_param in [str(qid) for qid in question_ids]:
+        # Start from specified question
+        first_question = questions.filter(id=question_id_param).first()
+        if first_question:
+            current_index = question_ids.index(first_question.id) + 1
+    else:
+        # Start from first question
+        first_question = questions.first() if total_questions > 0 else None
+    
+    # Create or reuse session
+    if not session:
+        # Generate unique session key with UUID for uniqueness
+        session_key = f"session_{uuid.uuid4().hex[:12]}_{timezone.now().strftime('%Y%m%d%H%M%S')}"
+        
+        # Create new session
+        session = PracticeSession.objects.create(
+            user=request.user,
+            session_key=session_key,
+            status='active',
+            domain_code=domain_filter or '',
+            skill_code=skill_filter or '',
+            provider_code=provider_filter or '',
+            total_questions=total_questions
+        )
+    else:
+        session_key = session.session_key
     
     # Prepare filter context
     filter_context = {
@@ -170,7 +234,7 @@ def practice_view(request):
         'first_question': first_question,
         'question_ids': json.dumps([str(qid) for qid in question_ids]),
         'filters': filter_context,
-        'current_index': 1 if first_question else 0,
+        'current_index': current_index,
         'session_id': str(session.id),
         'session_key': session_key,
     }
@@ -314,3 +378,279 @@ def submit_answer(request):
         return JsonResponse({
             'error': str(e)
         }, status=400)
+
+
+@login_required
+@require_http_methods(["POST"])
+def end_practice(request):
+    """End practice session and return session ID for results."""
+    try:
+        data = json.loads(request.body)
+        session_id = data.get('session_id')
+        
+        if not session_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'Session ID required'
+            }, status=400)
+        
+        # Get session
+        session = get_object_or_404(PracticeSession, id=session_id, user=request.user)
+        
+        # Update session status
+        session.status = 'completed'
+        session.completed_at = timezone.now()
+        
+        # Calculate total time
+        if session.started_at:
+            time_diff = session.completed_at - session.started_at
+            session.time_spent_seconds = int(time_diff.total_seconds())
+        
+        # Calculate stats
+        answers = UserAnswer.objects.filter(session=session)
+        session.total_questions = answers.count()
+        session.correct_answers = answers.filter(is_correct=True).count()
+        
+        session.save()
+        
+        return JsonResponse({
+            'success': True,
+            'session_id': str(session.id),
+            'redirect_url': f'/practice/results/{session.id}/'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+def practice_results(request, session_id):
+    """Display detailed practice session results."""
+    from django.db.models import Avg
+    
+    session = get_object_or_404(PracticeSession, id=session_id, user=request.user)
+    
+    # Get all answers for this session
+    answers = UserAnswer.objects.filter(session=session).select_related('question').order_by('answered_at')
+    
+    # Calculate statistics
+    total_questions = answers.count()
+    correct_answers = answers.filter(is_correct=True).count()
+    incorrect_answers = total_questions - correct_answers
+    accuracy = (correct_answers / total_questions * 100) if total_questions > 0 else 0
+    
+    # Calculate average time per question
+    avg_time = answers.aggregate(Avg('time_taken_seconds'))['time_taken_seconds__avg'] or 0
+    
+    # Group by domain
+    domain_stats = {}
+    for answer in answers:
+        domain = answer.question.domain_name
+        if domain not in domain_stats:
+            domain_stats[domain] = {
+                'total': 0,
+                'correct': 0,
+                'domain_code': answer.question.domain_code
+            }
+        domain_stats[domain]['total'] += 1
+        if answer.is_correct:
+            domain_stats[domain]['correct'] += 1
+    
+    # Calculate domain accuracy
+    for domain in domain_stats:
+        total = domain_stats[domain]['total']
+        correct = domain_stats[domain]['correct']
+        domain_stats[domain]['accuracy'] = (correct / total * 100) if total > 0 else 0
+    
+    # Group by skill
+    skill_stats = {}
+    for answer in answers:
+        skill = answer.question.skill_name
+        if skill not in skill_stats:
+            skill_stats[skill] = {
+                'total': 0,
+                'correct': 0,
+                'skill_code': answer.question.skill_code
+            }
+        skill_stats[skill]['total'] += 1
+        if answer.is_correct:
+            skill_stats[skill]['correct'] += 1
+    
+    # Calculate skill accuracy
+    for skill in skill_stats:
+        total = skill_stats[skill]['total']
+        correct = skill_stats[skill]['correct']
+        skill_stats[skill]['accuracy'] = (correct / total * 100) if total > 0 else 0
+    
+    context = {
+        'session': session,
+        'answers': answers,
+        'total_questions': total_questions,
+        'correct_answers': correct_answers,
+        'incorrect_answers': incorrect_answers,
+        'accuracy': round(accuracy, 1),
+        'avg_time': round(avg_time, 1),
+        'domain_stats': domain_stats,
+        'skill_stats': skill_stats,
+    }
+    
+    return render(request, 'practice/results.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def mark_question_for_review(request):
+    """
+    Toggle mark for review on a question.
+    
+    POST /practice/api/mark-question/
+    Body: { question_id: "uuid" }
+    Returns: { marked: true/false }
+    """
+    try:
+        data = json.loads(request.body)
+        question_id = data.get('question_id')
+        
+        if not question_id:
+            return JsonResponse({'error': 'Question ID is required'}, status=400)
+        
+        question = get_object_or_404(Question, id=question_id)
+        
+        # Check if already marked
+        marked_question = MarkedQuestion.objects.filter(
+            user=request.user,
+            question=question
+        ).first()
+        
+        if marked_question:
+            # Unmark - remove from database
+            marked_question.delete()
+            return JsonResponse({'marked': False})
+        else:
+            # Mark - add to database
+            MarkedQuestion.objects.create(
+                user=request.user,
+                question=question
+            )
+            return JsonResponse({'marked': True})
+    
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_marked_questions(request):
+    """
+    Get list of question IDs that are marked for review by the current user.
+    
+    GET /practice/api/marked-questions/
+    Returns: { marked_question_ids: ["uuid1", "uuid2", ...] }
+    """
+    try:
+        marked_questions = MarkedQuestion.objects.filter(
+            user=request.user
+        ).values_list('question_id', flat=True)
+        
+        return JsonResponse({
+            'marked_question_ids': list(marked_questions)
+        })
+    
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_session_answers(request, session_id):
+    """
+    Get all answers for a specific practice session.
+    
+    GET /practice/api/session-answers/<session_id>/
+    Returns: { 
+        answers: {
+            "question_id": {"answer": "A", "is_correct": true},
+            ...
+        }
+    }
+    """
+    try:
+        session = get_object_or_404(PracticeSession, id=session_id, user=request.user)
+        
+        # Get all answers for this session
+        answers = UserAnswer.objects.filter(session=session).select_related('question')
+        
+        # Build response dict
+        answers_dict = {}
+        for answer in answers:
+            answers_dict[str(answer.question.id)] = {
+                'answer': answer.user_answer,
+                'is_correct': answer.is_correct,
+                'time_taken': answer.time_taken_seconds,
+            }
+        
+        return JsonResponse({
+            'answers': answers_dict
+        })
+    
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def resume_session(request, session_id):
+    """
+    Resume a previous practice session.
+    
+    GET /practice/resume/<session_id>/
+    Redirects to practice interface with the session's questions and last answered position.
+    """
+    # Get the session
+    session = get_object_or_404(PracticeSession, id=session_id, user=request.user)
+    
+    # Get all answered questions in this session to find the last one
+    last_answer = UserAnswer.objects.filter(session=session).order_by('-answered_at').first()
+    
+    # Build the practice URL with session ID and filters
+    params = {'session': str(session.id)}
+    
+    if session.domain_code:
+        params['domain'] = session.domain_code
+    if session.skill_code:
+        params['skill'] = session.skill_code
+    if session.provider_code:
+        params['provider'] = session.provider_code
+    
+    # If there was a last answered question, start from the NEXT question
+    # (since they already answered the last one)
+    if last_answer:
+        # Get the question after the last answered one
+        questions = Question.objects.filter(is_active=True)
+        if session.domain_code:
+            questions = questions.filter(domain_code=session.domain_code)
+        if session.skill_code:
+            questions = questions.filter(skill_code=session.skill_code)
+        if session.provider_code:
+            questions = questions.filter(provider_code=session.provider_code)
+        
+        question_ids = list(questions.values_list('id', flat=True))
+        try:
+            last_index = question_ids.index(last_answer.question.id)
+            # Get next question if available
+            if last_index + 1 < len(question_ids):
+                next_question_id = question_ids[last_index + 1]
+                params['question'] = str(next_question_id)
+        except ValueError:
+            # Last answered question not in current filtered list
+            pass
+    
+    # Build query string
+    from urllib.parse import urlencode
+    query_string = urlencode(params)
+    
+    # Redirect to practice interface with session context
+    from django.shortcuts import redirect
+    return redirect(f"/practice/?{query_string}")

@@ -6,7 +6,7 @@ Simplified admin for single Question model.
 from django.contrib import admin
 from django.utils.html import format_html, strip_tags
 
-from .models import Question, PracticeSession, UserAnswer
+from .models import Question, PracticeSession, UserAnswer, MarkedQuestion
 
 
 @admin.register(Question)
@@ -170,3 +170,35 @@ class UserAnswerAdmin(admin.ModelAdmin):
         seconds = obj.time_taken_seconds % 60
         return f"{minutes}m {seconds}s"
     time_taken_display.short_description = 'Time Taken'
+
+
+@admin.register(MarkedQuestion)
+class MarkedQuestionAdmin(admin.ModelAdmin):
+    """Admin for MarkedQuestion model."""
+    
+    list_display = [
+        'user',
+        'question_identifier',
+        'domain_skill',
+        'marked_at'
+    ]
+    list_filter = ['marked_at', 'user']
+    search_fields = [
+        'user__email',
+        'user__username',
+        'question__identifier_id',
+        'question__domain_name',
+        'question__skill_name'
+    ]
+    readonly_fields = ['id', 'marked_at']
+    ordering = ['-marked_at']
+    
+    def question_identifier(self, obj):
+        """Display question identifier."""
+        return obj.question.identifier_id
+    question_identifier.short_description = 'Question'
+    
+    def domain_skill(self, obj):
+        """Display domain and skill."""
+        return f"{obj.question.domain_code} - {obj.question.skill_name}"
+    domain_skill.short_description = 'Domain & Skill'

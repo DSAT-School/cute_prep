@@ -1,0 +1,150 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Practice Results - DSAT SCHOOL{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white border-b border-gray-200">
+        <div class="max-w-[1920px] mx-auto px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900">Practice Results</h1>
+                    <p class="text-sm text-gray-600 mt-1">Review your performance</p>
+                </div>
+                <div class="flex gap-3">
+                    <a href="{% url 'practice:modules' %}" class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                        Back to Modules
+                    </a>
+                    <a href="{% url 'practice:practice' %}" class="px-4 py-2 text-sm font-semibold text-white bg-primary rounded-lg hover:bg-purple-700">
+                        New Practice
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Content -->
+    <div class="max-w-[1920px] mx-auto px-8 py-6">
+        <!-- Overall Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-lg border border-gray-200 p-4">
+                <div class="text-sm text-gray-600 mb-1">Total Questions</div>
+                <div class="text-2xl font-bold text-gray-900">{{ total_questions }}</div>
+            </div>
+            <div class="bg-white rounded-lg border border-gray-200 p-4">
+                <div class="text-sm text-gray-600 mb-1">Correct Answers</div>
+                <div class="text-2xl font-bold text-green-600">{{ correct_answers }}</div>
+            </div>
+            <div class="bg-white rounded-lg border border-gray-200 p-4">
+                <div class="text-sm text-gray-600 mb-1">Accuracy</div>
+                <div class="text-2xl font-bold {% if accuracy >= 70 %}text-green-600{% elif accuracy >= 50 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                    {{ accuracy }}%
+                </div>
+            </div>
+            <div class="bg-white rounded-lg border border-gray-200 p-4">
+                <div class="text-sm text-gray-600 mb-1">Avg Time/Question</div>
+                <div class="text-2xl font-bold text-gray-900">{{ avg_time }}s</div>
+            </div>
+        </div>
+
+        <!-- Performance by Domain -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">Performance by Domain</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for domain_name, stats in domain_stats.items %}
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-1 text-xs font-bold text-primary bg-primary/10 rounded">{{ stats.domain_code }}</span>
+                            <span class="text-sm font-semibold text-gray-900">{{ domain_name }}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-600">{{ stats.correct }}/{{ stats.total }} correct</span>
+                        <span class="font-semibold {% if stats.accuracy >= 70 %}text-green-600{% elif stats.accuracy >= 50 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                            {{ stats.accuracy|floatformat:0 }}%
+                        </span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div class="{% if stats.accuracy >= 70 %}bg-green-500{% elif stats.accuracy >= 50 %}bg-yellow-500{% else %}bg-red-500{% endif %} h-2 rounded-full" style="width: {{ stats.accuracy }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Performance by Skill -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">Performance by Skill</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for skill_name, stats in skill_stats.items %}
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-semibold text-gray-900">{{ skill_name }}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-600">{{ stats.correct }}/{{ stats.total }} correct</span>
+                        <span class="font-semibold {% if stats.accuracy >= 70 %}text-green-600{% elif stats.accuracy >= 50 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                            {{ stats.accuracy|floatformat:0 }}%
+                        </span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div class="{% if stats.accuracy >= 70 %}bg-green-500{% elif stats.accuracy >= 50 %}bg-yellow-500{% else %}bg-red-500{% endif %} h-2 rounded-full" style="width: {{ stats.accuracy }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Question-by-Question Review -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">Question Review</h2>
+            <div class="space-y-3">
+                {% for answer in answers %}
+                <div class="p-4 bg-gray-50 rounded-lg border {% if answer.is_correct %}border-green-200{% else %}border-red-200{% endif %}">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="text-sm font-bold text-gray-900">Question {{ forloop.counter }}</span>
+                                <span class="px-2 py-1 text-xs font-bold text-primary bg-primary/10 rounded">{{ answer.question.domain_code }}</span>
+                                <span class="text-xs text-gray-600">{{ answer.question.skill_name }}</span>
+                            </div>
+                            <div class="flex items-center gap-4 text-sm">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-gray-600">Your Answer:</span>
+                                    <span class="font-semibold {% if answer.is_correct %}text-green-600{% else %}text-red-600{% endif %}">
+                                        {{ answer.user_answer }}
+                                    </span>
+                                </div>
+                                {% if not answer.is_correct %}
+                                <div class="flex items-center gap-2">
+                                    <span class="text-gray-600">Correct:</span>
+                                    <span class="font-semibold text-green-600">{{ answer.correct_answer }}</span>
+                                </div>
+                                {% endif %}
+                                <div class="flex items-center gap-2">
+                                    <span class="text-gray-600">Time:</span>
+                                    <span class="font-semibold text-gray-900">{{ answer.time_taken_seconds }}s</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="{% if answer.is_correct %}text-green-600{% else %}text-red-600{% endif %}">
+                            {% if answer.is_correct %}
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            {% else %}
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                            </svg>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

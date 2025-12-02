@@ -328,3 +328,48 @@ class UserAnswer(models.Model):
     
     def __str__(self):
         return f"{self.user.email} - {self.question.identifier_id} ({'✓' if self.is_correct else '✗'})"
+
+
+class MarkedQuestion(models.Model):
+    """
+    Questions marked for review by users.
+    
+    Allows users to flag questions for later review.
+    """
+    
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        help_text=_("Unique identifier")
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='marked_questions',
+        help_text=_("User who marked the question")
+    )
+    question = models.ForeignKey(
+        Question,
+        on_delete=models.CASCADE,
+        related_name='marked_by_users',
+        help_text=_("Question that was marked")
+    )
+    marked_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text=_("When the question was marked")
+    )
+    
+    class Meta:
+        db_table = 'practice_marked_questions'
+        verbose_name = _("Marked Question")
+        verbose_name_plural = _("Marked Questions")
+        ordering = ['-marked_at']
+        unique_together = [['user', 'question']]
+        indexes = [
+            models.Index(fields=['user', 'marked_at']),
+            models.Index(fields=['question']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.email} - {self.question.identifier_id}"
