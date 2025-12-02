@@ -266,11 +266,15 @@ Return a JSON object with this exact structure:
     "explanation": "Detailed explanation here"
 }}
 
-Guidelines:
+CRITICAL Guidelines:
+- The question MUST be SELF-CONTAINED and COMPLETE - include all necessary information
+- DO NOT reference external passages, texts, or materials that aren't provided
+- If the question requires a passage (reading comprehension), INCLUDE THE FULL PASSAGE in the question text
+- For math questions, provide all given values and constraints in the question itself
 - Make the question realistic and follow SAT formatting standards
 - Provide 4 answer choices labeled A, B, C, D
 - Indicate the correct answer (A, B, C, or D)
-- Provide a clear, step-by-step explanation of why the answer is correct
+- Provide a clear, concise explanation of why the answer is correct
 - Use proper spacing in text (e.g., "$10 each" not "$10each")
 - For currency, use $ symbol with proper spacing
 - For math expressions in JSON: 
@@ -278,8 +282,7 @@ Guidelines:
   * Complex equations: use LaTeX with DOUBLE backslashes (\\\\) for proper JSON escaping
   * Example: "\\\\(x^2 + 2x + 1\\\\)" or "\\\\[\\\\frac{{a}}{{b}}\\\\]"
 - Keep numbers and units properly formatted with spaces
-- Keep it at {difficulty} difficulty level
-- Make the explanation educational with step-by-step reasoning"""
+- Keep it at {difficulty} difficulty level"""
         
         # Generate question
         try:
