@@ -528,6 +528,7 @@ let isAITyping = false;
 let questionGenerationMode = false;
 let currentQuestion = null;
 let conversationHistory = []; // Store last 5 messages for context
+let typingIntervalId = null; // For typing animation control
 
 function getCookie(name) {
     let cookieValue = null;
@@ -595,6 +596,34 @@ function hideWelcomeScreen() {
     }
 }
 
+function typeWriterEffect(element, text, onComplete) {
+    // Split by words and spaces to maintain formatting
+    const words = text.split(/\s+/);
+    let currentIndex = 0;
+    element.innerHTML = '';
+    
+    // Clear any existing typing interval
+    if (typingIntervalId) {
+        clearInterval(typingIntervalId);
+    }
+    
+    typingIntervalId = setInterval(() => {
+        if (currentIndex < words.length) {
+            // Add word with space (except for last word)
+            element.innerHTML += words[currentIndex] + (currentIndex < words.length - 1 ? ' ' : '');
+            currentIndex++;
+            
+            // Auto-scroll as text appears
+            const messagesContainer = document.getElementById('chatMessages');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        } else {
+            clearInterval(typingIntervalId);
+            typingIntervalId = null;
+            if (onComplete) onComplete();
+        }
+    }, 50); // 50ms per word for smooth typing
+}
+
 function addMessage(content, isUser = false, hasImage = false) {
     hideWelcomeScreen();
     
@@ -619,8 +648,6 @@ function addMessage(content, isUser = false, hasImage = false) {
     }
     
     const textDiv = document.createElement('div');
-    // Process content for proper rendering
-    textDiv.innerHTML = processMarkdown(content);
     contentDiv.appendChild(textDiv);
     
     messageDiv.appendChild(avatar);
@@ -629,9 +656,34 @@ function addMessage(content, isUser = false, hasImage = false) {
     messagesContainer.appendChild(messageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
     
-    // Trigger MathJax rendering for LaTeX expressions
-    if (typeof MathJax !== 'undefined') {
-        MathJax.typesetPromise([textDiv]).catch((err) => console.log('MathJax error:', err));
+    // Apply typing effect only for AI messages (non-user)
+    if (!isUser) {
+        const processedContent = processMarkdown(content);
+        
+        // Extract text content for typing (strip HTML for typing, then add it back)
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = processedContent;
+        const textContent = tempDiv.textContent || tempDiv.innerText || '';
+        
+        // Use typing effect for plain text responses
+        if (textContent.length < 2000 && !content.includes('<div') && !content.includes('<strong')) {
+            typeWriterEffect(textDiv, textContent, () => {
+                // After typing completes, apply full markdown and MathJax
+                textDiv.innerHTML = processedContent;
+                if (typeof MathJax !== 'undefined') {
+                    MathJax.typesetPromise([textDiv]).catch((err) => console.log('MathJax error:', err));
+                }
+            });
+        } else {
+            // For complex content (HTML/formatted), show immediately
+            textDiv.innerHTML = processedContent;
+            if (typeof MathJax !== 'undefined') {
+                MathJax.typesetPromise([textDiv]).catch((err) => console.log('MathJax error:', err));
+            }
+        }
+    } else {
+        // User messages appear immediately
+        textDiv.innerHTML = processMarkdown(content);
     }
 }
 
