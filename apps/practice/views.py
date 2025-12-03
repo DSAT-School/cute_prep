@@ -445,46 +445,6 @@ def practice_results(request, session_id):
     # Calculate average time per question
     avg_time = answers.aggregate(Avg('time_taken_seconds'))['time_taken_seconds__avg'] or 0
     
-    # Group by domain
-    domain_stats = {}
-    for answer in answers:
-        domain = answer.question.domain_name
-        if domain not in domain_stats:
-            domain_stats[domain] = {
-                'total': 0,
-                'correct': 0,
-                'domain_code': answer.question.domain_code
-            }
-        domain_stats[domain]['total'] += 1
-        if answer.is_correct:
-            domain_stats[domain]['correct'] += 1
-    
-    # Calculate domain accuracy
-    for domain in domain_stats:
-        total = domain_stats[domain]['total']
-        correct = domain_stats[domain]['correct']
-        domain_stats[domain]['accuracy'] = (correct / total * 100) if total > 0 else 0
-    
-    # Group by skill
-    skill_stats = {}
-    for answer in answers:
-        skill = answer.question.skill_name
-        if skill not in skill_stats:
-            skill_stats[skill] = {
-                'total': 0,
-                'correct': 0,
-                'skill_code': answer.question.skill_code
-            }
-        skill_stats[skill]['total'] += 1
-        if answer.is_correct:
-            skill_stats[skill]['correct'] += 1
-    
-    # Calculate skill accuracy
-    for skill in skill_stats:
-        total = skill_stats[skill]['total']
-        correct = skill_stats[skill]['correct']
-        skill_stats[skill]['accuracy'] = (correct / total * 100) if total > 0 else 0
-    
     context = {
         'session': session,
         'answers': answers,
@@ -493,8 +453,6 @@ def practice_results(request, session_id):
         'incorrect_answers': incorrect_answers,
         'accuracy': round(accuracy, 1),
         'avg_time': round(avg_time, 1),
-        'domain_stats': domain_stats,
-        'skill_stats': skill_stats,
     }
     
     return render(request, 'practice/results.html', context)

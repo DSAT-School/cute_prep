@@ -285,16 +285,142 @@ class CustomLogoutView(LogoutView):
 @login_required
 def dashboard_view(request):
     """
-    Dashboard view for authenticated users.
+    Dashboard view for authenticated users with comprehensive analytics.
     
     Args:
         request: HTTP request object
         
     Returns:
-        Rendered dashboard template
+        Rendered dashboard template with performance insights
     """
+    from apps.practice.models import PracticeSession, UserAnswer, Question
+    from django.db.models import Count, Avg, Q, F
+    from datetime import datetime, timedelta
+    from collections import defaultdict
+    
+    user = request.user
+    
+    # Get all completed sessions
+    sessions = PracticeSession.objects.filter(
+        user=user,
+        status='completed'
+    ).order_by('-completed_at')
+    
+    # Calculate total stats
+    total_sessions = sessions.count()
+    total_questions = UserAnswer.objects.filter(user=user).count()
+    correct_answers = UserAnswer.objects.filter(user=user, is_correct=True).count()
+    incorrect_answers = total_questions - correct_answers
+    overall_accuracy = (correct_answers / total_questions * 100) if total_questions > 0 else 0
+    
+    # Calculate study streak
+    study_streak = 0
+    if sessions.exists():
+        current_date = datetime.now().date()
+        for i in range(365):  # Check up to 1 year
+            check_date = current_date - timedelta(days=i)
+            if sessions.filter(completed_at__date=check_date).exists():
+                study_streak += 1
+            else:
+                break
+    
+    # Get recent sessions (last 5)
+    recent_sessions = sessions[:5]
+    
+    # Analyze performance by domain
+    domain_stats = UserAnswer.objects.filter(user=user).values(
+        'question__domain_name', 'question__domain_code'
+    ).annotate(
+        total=Count('id'),
+        correct=Count('id', filter=Q(is_correct=True)),
+        incorrect=Count('id', filter=Q(is_correct=False))
+    ).order_by('-incorrect')
+    
+    # Calculate accuracy for each domain
+    for stat in domain_stats:
+        stat['accuracy'] = (stat['correct'] / stat['total'] * 100) if stat['total'] > 0 else 0
+    
+    # Analyze performance by skill
+    skill_stats = UserAnswer.objects.filter(user=user).values(
+        'question__skill_name', 'question__skill_code', 'question__domain_code'
+    ).annotate(
+        total=Count('id'),
+        correct=Count('id', filter=Q(is_correct=True)),
+        incorrect=Count('id', filter=Q(is_correct=False))
+    ).order_by('-incorrect')
+    
+    # Calculate accuracy for each skill
+    for stat in skill_stats:
+        stat['accuracy'] = (stat['correct'] / stat['total'] * 100) if stat['total'] > 0 else 0
+    
+    # Identify weak areas (skills with accuracy < 70% and at least 3 questions attempted)
+    weak_skills = [s for s in skill_stats if s['accuracy'] < 70 and s['total'] >= 3][:5]
+    
+    # Identify strong areas (skills with accuracy >= 80% and at least 5 questions)
+    strong_skills = [s for s in skill_stats if s['accuracy'] >= 80 and s['total'] >= 5][:3]
+    
+    # Get recommended practice topics (weak skills with available questions)
+    recommendations = []
+    for weak_skill in weak_skills[:3]:
+        # Count available questions for this skill
+        available_count = Question.objects.filter(
+            skill_code=weak_skill['question__skill_code']
+        ).exclude(
+            user_answers__user=user
+        ).count()
+        
+        if available_count > 0:
+            recommendations.append({
+                'skill_name': weak_skill['question__skill_name'],
+                'skill_code': weak_skill['question__skill_code'],
+                'domain_code': weak_skill['question__domain_code'],
+                'accuracy': weak_skill['accuracy'],
+                'total_attempted': weak_skill['total'],
+                'available_questions': available_count,
+                'priority': 'high' if weak_skill['accuracy'] < 50 else 'medium'
+            })
+    
+    # If no weak areas, recommend untried skills
+    if not recommendations:
+        untried_skills = Question.objects.exclude(
+            user_answers__user=user
+        ).values('skill_name', 'skill_code', 'domain_code').annotate(
+            count=Count('id')
+        ).order_by('-count')[:3]
+        
+        for skill in untried_skills:
+            recommendations.append({
+                'skill_name': skill['skill_name'],
+                'skill_code': skill['skill_code'],
+                'domain_code': skill['domain_code'],
+                'accuracy': None,
+                'total_attempted': 0,
+                'available_questions': skill['count'],
+                'priority': 'explore'
+            })
+    
+    # Calculate estimated SAT score (rough estimation: 200-800 scale)
+    # Each section (Math, Reading & Writing) is 200-800
+    estimated_score = None
+    if total_questions >= 10:  # Only estimate if enough data
+        base_score = 200
+        accuracy_bonus = (overall_accuracy / 100) * 600
+        estimated_score = int(base_score + accuracy_bonus)
+    
     context = {
-        'user': request.user,
+        'user': user,
+        'total_sessions': total_sessions,
+        'total_questions': total_questions,
+        'correct_answers': correct_answers,
+        'incorrect_answers': incorrect_answers,
+        'overall_accuracy': round(overall_accuracy, 1),
+        'study_streak': study_streak,
+        'estimated_score': estimated_score,
+        'recent_sessions': recent_sessions,
+        'domain_stats': domain_stats,
+        'weak_skills': weak_skills,
+        'strong_skills': strong_skills,
+        'recommendations': recommendations,
     }
     return render(request, 'dashboard.html', context)
 

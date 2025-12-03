@@ -2,22 +2,99 @@
 
 {% block title %}Practice Results - DSAT SCHOOL{% endblock %}
 
+{% block extra_css %}
+<style>
+    .score-circle {
+        position: relative;
+        width: 200px;
+        height: 200px;
+    }
+    
+    .score-circle svg {
+        transform: rotate(-90deg);
+    }
+    
+    .score-circle-bg {
+        fill: none;
+        stroke: #e5e7eb;
+        stroke-width: 12;
+    }
+    
+    .score-circle-progress {
+        fill: none;
+        stroke-width: 12;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 1s ease-in-out;
+    }
+    
+    .insight-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .insight-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .animate-fade-in-up {
+        animation: fadeInUp 0.6s ease-out forwards;
+    }
+    
+    .strength-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    
+    .weakness-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="min-h-screen bg-gray-50">
     <!-- Header -->
-    <div class="bg-white border-b border-gray-200">
-        <div class="max-w-[1920px] mx-auto px-8 py-6">
+    <div class="bg-white border-b border-gray-200 shadow-sm">
+        <div class="max-w-[1920px] mx-auto px-4 py-3">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-xl font-bold text-gray-900">Practice Results</h1>
-                    <p class="text-sm text-gray-600 mt-1">Review your performance</p>
+                    <h1 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                        <i class="fas fa-chart-line text-primary"></i>
+                        Practice Results
+                    </h1>
                 </div>
                 <div class="flex gap-3">
-                    <a href="{% url 'practice:modules' %}" class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                        Back to Modules
+                    <a href="{% url 'practice:modules' %}" class="px-3 py-1.5 text-sm font-semibold text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 hover:border-primary transition-all">
+                        <i class="fas fa-th-large mr-1.5"></i>Back to Modules
                     </a>
-                    <a href="{% url 'practice:practice' %}" class="px-4 py-2 text-sm font-semibold text-white bg-primary rounded-lg hover:bg-purple-700">
-                        New Practice
+                    <a href="{% url 'practice:practice' %}" class="px-3 py-1.5 text-sm font-semibold text-white bg-primary rounded-lg hover:bg-primary/90 hover:shadow-lg transition-all">
+                        <i class="fas fa-plus mr-1.5"></i>New Practice
                     </a>
                 </div>
             </div>
@@ -25,119 +102,183 @@
     </div>
 
     <!-- Results Content -->
-    <div class="max-w-[1920px] mx-auto px-8 py-6">
-        <!-- Overall Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div class="bg-white rounded-lg border border-gray-200 p-4">
-                <div class="text-sm text-gray-600 mb-1">Total Questions</div>
-                <div class="text-2xl font-bold text-gray-900">{{ total_questions }}</div>
-            </div>
-            <div class="bg-white rounded-lg border border-gray-200 p-4">
-                <div class="text-sm text-gray-600 mb-1">Correct Answers</div>
-                <div class="text-2xl font-bold text-green-600">{{ correct_answers }}</div>
-            </div>
-            <div class="bg-white rounded-lg border border-gray-200 p-4">
-                <div class="text-sm text-gray-600 mb-1">Accuracy</div>
-                <div class="text-2xl font-bold {% if accuracy >= 70 %}text-green-600{% elif accuracy >= 50 %}text-yellow-600{% else %}text-red-600{% endif %}">
-                    {{ accuracy }}%
-                </div>
-            </div>
-            <div class="bg-white rounded-lg border border-gray-200 p-4">
-                <div class="text-sm text-gray-600 mb-1">Avg Time/Question</div>
-                <div class="text-2xl font-bold text-gray-900">{{ avg_time }}s</div>
-            </div>
-        </div>
-
-        <!-- Performance by Domain -->
-        <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-            <h2 class="text-lg font-bold text-gray-900 mb-4">Performance by Domain</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {% for domain_name, stats in domain_stats.items %}
-                <div class="p-4 bg-gray-50 rounded-lg">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center gap-2">
-                            <span class="px-2 py-1 text-xs font-bold text-primary bg-primary/10 rounded">{{ stats.domain_code }}</span>
-                            <span class="text-sm font-semibold text-gray-900">{{ domain_name }}</span>
+    <div class="max-w-[1920px] mx-auto px-4 py-4">
+        <!-- Score Overview Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+            <!-- Main Score Circle -->
+            <div class="lg:col-span-1 bg-white rounded-xl shadow-lg p-4 flex flex-col items-center justify-center animate-fade-in-up">
+                <h3 class="text-base font-bold text-gray-900 mb-3">Overall Score</h3>
+                <div class="score-circle relative flex items-center justify-center mb-3">
+                    <svg width="150" height="150">
+                        <circle class="score-circle-bg" cx="75" cy="75" r="65"></circle>
+                        <circle class="score-circle-progress" 
+                                cx="75" cy="75" r="65"
+                                stroke="{% if accuracy >= 70 %}#10b981{% elif accuracy >= 50 %}#f59e0b{% else %}#ef4444{% endif %}"
+                                stroke-dasharray="408.41"
+                                stroke-dashoffset="{{ 408.41|floatformat:2 }}"
+                                style="stroke-dashoffset: calc(408.41 - (408.41 * {{ accuracy }} / 100));"></circle>
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <div class="text-3xl font-bold {% if accuracy >= 70 %}text-green-600{% elif accuracy >= 50 %}text-yellow-600{% else %}text-orange-600{% endif %}">
+                            {{ accuracy }}%
                         </div>
-                    </div>
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-gray-600">{{ stats.correct }}/{{ stats.total }} correct</span>
-                        <span class="font-semibold {% if stats.accuracy >= 70 %}text-green-600{% elif stats.accuracy >= 50 %}text-yellow-600{% else %}text-red-600{% endif %}">
-                            {{ stats.accuracy|floatformat:0 }}%
-                        </span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-                        <div class="{% if stats.accuracy >= 70 %}bg-green-500{% elif stats.accuracy >= 50 %}bg-yellow-500{% else %}bg-red-500{% endif %} h-2 rounded-full" style="width: {{ stats.accuracy }}%"></div>
+                        <div class="text-xs text-gray-600">Accuracy</div>
                     </div>
                 </div>
-                {% endfor %}
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-gray-900">{{ correct_answers }}<span class="text-base text-gray-500">/{{ total_questions }}</span></div>
+                    <div class="text-xs text-gray-600">Correct Answers</div>
+                </div>
             </div>
-        </div>
-
-        <!-- Performance by Skill -->
-        <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-            <h2 class="text-lg font-bold text-gray-900 mb-4">Performance by Skill</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {% for skill_name, stats in skill_stats.items %}
-                <div class="p-4 bg-gray-50 rounded-lg">
+            
+            <!-- Stats Cards -->
+            <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <!-- Total Questions Card -->
+                <div class="bg-white rounded-xl shadow-lg p-4 border-2 border-primary animate-fade-in-up" style="animation-delay: 0.1s;">
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-sm font-semibold text-gray-900">{{ skill_name }}</span>
+                        <div class="p-2 bg-primary/10 rounded-lg">
+                            <i class="fas fa-clipboard-list text-xl text-primary"></i>
+                        </div>
+                        <div class="text-xs font-semibold text-gray-600">Total</div>
                     </div>
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-gray-600">{{ stats.correct }}/{{ stats.total }} correct</span>
-                        <span class="font-semibold {% if stats.accuracy >= 70 %}text-green-600{% elif stats.accuracy >= 50 %}text-yellow-600{% else %}text-red-600{% endif %}">
-                            {{ stats.accuracy|floatformat:0 }}%
-                        </span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-                        <div class="{% if stats.accuracy >= 70 %}bg-green-500{% elif stats.accuracy >= 50 %}bg-yellow-500{% else %}bg-red-500{% endif %} h-2 rounded-full" style="width: {{ stats.accuracy }}%"></div>
-                    </div>
+                    <div class="text-3xl font-bold text-gray-900">{{ total_questions }}</div>
+                    <div class="text-xs text-gray-600">Questions Attempted</div>
                 </div>
-                {% endfor %}
+                
+                <!-- Correct Answers Card -->
+                <div class="bg-white rounded-xl shadow-lg p-4 border-2 border-green-500 animate-fade-in-up" style="animation-delay: 0.2s;">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="p-2 bg-green-100 rounded-lg">
+                            <i class="fas fa-check-circle text-xl text-green-600"></i>
+                        </div>
+                        <div class="text-xs font-semibold text-gray-600">Correct</div>
+                    </div>
+                    <div class="text-3xl font-bold text-green-600">{{ correct_answers }}</div>
+                    <div class="text-xs text-gray-600">Right Answers</div>
+                </div>
+                
+                <!-- Incorrect Answers Card -->
+                <div class="bg-white rounded-xl shadow-lg p-4 border-2 border-orange-400 animate-fade-in-up" style="animation-delay: 0.3s;">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="p-2 bg-orange-100 rounded-lg">
+                            <i class="fas fa-times-circle text-xl text-orange-600"></i>
+                        </div>
+                        <div class="text-xs font-semibold text-gray-600">Incorrect</div>
+                    </div>
+                    <div class="text-3xl font-bold text-orange-600">{{ incorrect_answers }}</div>
+                    <div class="text-xs text-gray-600">Wrong Answers</div>
+                </div>
+                
+                <!-- Avg Time Card -->
+                <div class="bg-white rounded-xl shadow-lg p-4 border-2 border-secondary animate-fade-in-up" style="animation-delay: 0.4s;">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="p-2 bg-secondary/20 rounded-lg">
+                            <i class="fas fa-clock text-xl text-secondary"></i>
+                        </div>
+                        <div class="text-xs font-semibold text-gray-600">Speed</div>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-900">{{ avg_time }}s</div>
+                    <div class="text-xs text-gray-600">Avg per Question</div>
+                </div>
             </div>
         </div>
-
+        
         <!-- Question-by-Question Review -->
-        <div class="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 class="text-lg font-bold text-gray-900 mb-4">Question Review</h2>
+        <div class="bg-white rounded-xl shadow-lg p-4 animate-fade-in-up" style="animation-delay: 0.5s;">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <i class="fas fa-list-check text-primary"></i>
+                    Question Review
+                </h2>
+                <div class="flex items-center gap-2">
+                    <button onclick="filterQuestions('all')" class="filter-btn px-3 py-1.5 text-sm font-semibold rounded-lg transition-all bg-gray-200 text-gray-700 hover:bg-gray-300">
+                        All
+                    </button>
+                    <button onclick="filterQuestions('correct')" class="filter-btn px-3 py-1.5 text-sm font-semibold rounded-lg transition-all text-gray-600 hover:bg-green-50 hover:text-green-700">
+                        <i class="fas fa-check-circle"></i> Correct
+                    </button>
+                    <button onclick="filterQuestions('incorrect')" class="filter-btn px-3 py-1.5 text-sm font-semibold rounded-lg transition-all text-gray-600 hover:bg-orange-50 hover:text-orange-700">
+                        <i class="fas fa-times-circle"></i> Incorrect
+                    </button>
+                </div>
+            </div>
+            
             <div class="space-y-3">
                 {% for answer in answers %}
-                <div class="p-4 bg-gray-50 rounded-lg border {% if answer.is_correct %}border-green-200{% else %}border-red-200{% endif %}">
-                    <div class="flex items-start justify-between">
+                <div class="question-item {% if answer.is_correct %}correct-question{% else %}incorrect-question{% endif %} p-4 rounded-xl border-2 transition-all hover:shadow-md {% if answer.is_correct %}bg-green-50 border-green-300{% else %}bg-orange-50 border-orange-300{% endif %}">
+                    <div class="flex items-start justify-between gap-3">
                         <div class="flex-1">
-                            <div class="flex items-center gap-3 mb-2">
-                                <span class="text-sm font-bold text-gray-900">Question {{ forloop.counter }}</span>
-                                <span class="px-2 py-1 text-xs font-bold text-primary bg-primary/10 rounded">{{ answer.question.domain_code }}</span>
-                                <span class="text-xs text-gray-600">{{ answer.question.skill_name }}</span>
-                            </div>
-                            <div class="flex items-center gap-4 text-sm">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-gray-600">Your Answer:</span>
-                                    <span class="font-semibold {% if answer.is_correct %}text-green-600{% else %}text-red-600{% endif %}">
-                                        {{ answer.user_answer }}
+                            <!-- Question Header -->
+                            <div class="flex items-center gap-2 mb-3">
+                                <div class="w-8 h-8 rounded-full {% if answer.is_correct %}bg-green-500{% else %}bg-orange-500{% endif %} text-white font-bold flex items-center justify-center text-base">
+                                    {{ forloop.counter }}
+                                </div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="px-3 py-1 text-xs font-bold text-white bg-primary rounded-full">
+                                        {{ answer.question.domain_code }}
+                                    </span>
+                                    <span class="px-3 py-1 text-xs font-semibold text-gray-700 bg-white rounded-full border border-gray-300">
+                                        {{ answer.question.skill_name }}
                                     </span>
                                 </div>
+                            </div>
+                            
+                            <!-- Answer Details -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-2">
+                                <div class="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200">
+                                    <div class="w-7 h-7 rounded-full {% if answer.is_correct %}bg-green-100{% else %}bg-orange-100{% endif %} flex items-center justify-center">
+                                        <i class="fas fa-user text-sm {% if answer.is_correct %}text-green-600{% else %}text-orange-600{% endif %}"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs text-gray-600">Your Answer</div>
+                                        <div class="font-bold {% if answer.is_correct %}text-green-600{% else %}text-orange-600{% endif %}">
+                                            Option {{ answer.user_answer }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
                                 {% if not answer.is_correct %}
-                                <div class="flex items-center gap-2">
-                                    <span class="text-gray-600">Correct:</span>
-                                    <span class="font-semibold text-green-600">{{ answer.correct_answer }}</span>
+                                <div class="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200">
+                                    <div class="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center">
+                                        <i class="fas fa-check text-sm text-green-600"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs text-gray-600">Correct Answer</div>
+                                        <div class="font-bold text-green-600">Option {{ answer.correct_answer }}</div>
+                                    </div>
                                 </div>
                                 {% endif %}
-                                <div class="flex items-center gap-2">
-                                    <span class="text-gray-600">Time:</span>
-                                    <span class="font-semibold text-gray-900">{{ answer.time_taken_seconds }}s</span>
+                                
+                                <div class="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200">
+                                    <div class="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center">
+                                        <i class="fas fa-clock text-sm text-purple-600"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs text-gray-600">Time Taken</div>
+                                        <div class="font-bold text-purple-600">{{ answer.time_taken_seconds }}s</div>
+                                    </div>
                                 </div>
                             </div>
+                            
+                            <!-- Action Button -->
+                            {% if not answer.is_correct %}
+                            <a href="/ai-chat/" class="inline-flex items-center gap-2 px-3 py-1.5 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 hover:shadow-lg transition-all">
+                                <i class="fas fa-robot"></i>
+                                Get AI Help for This Question
+                            </a>
+                            {% endif %}
                         </div>
-                        <div class="{% if answer.is_correct %}text-green-600{% else %}text-red-600{% endif %}">
+                        
+                        <!-- Status Icon -->
+                        <div class="flex-shrink-0">
                             {% if answer.is_correct %}
-                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
+                            <div class="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center text-white shadow-lg">
+                                <i class="fas fa-check text-xl"></i>
+                            </div>
                             {% else %}
-                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                            </svg>
+                            <div class="w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center text-white shadow-lg">
+                                <i class="fas fa-times text-xl"></i>
+                            </div>
                             {% endif %}
                         </div>
                     </div>
@@ -145,6 +286,51 @@
                 {% endfor %}
             </div>
         </div>
+        
+        <!-- Action Buttons -->
+        <div class="mt-4 flex flex-wrap items-center justify-center gap-3 pb-4">
+            <a href="{% url 'practice:modules' %}" class="px-4 py-2 text-sm font-bold text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 hover:border-primary transition-all shadow-md hover:shadow-lg">
+                <i class="fas fa-th-large mr-1.5"></i>
+                Back to Modules
+            </a>
+            <a href="{% url 'practice:practice' %}" class="px-4 py-2 text-sm font-bold text-white bg-primary rounded-lg hover:bg-primary/90 hover:shadow-xl transition-all shadow-md">
+                <i class="fas fa-redo mr-1.5"></i>
+                Practice Again
+            </a>
+            <a href="/ai-chat/" class="px-4 py-2 text-sm font-bold text-white bg-secondary rounded-lg hover:bg-secondary/90 hover:shadow-xl transition-all shadow-md">
+                <i class="fas fa-comments mr-1.5"></i>
+                Ask Prof. Coco
+            </a>
+        </div>
     </div>
 </div>
+
+<script>
+function filterQuestions(type) {
+    const questions = document.querySelectorAll('.question-item');
+    const buttons = document.querySelectorAll('.filter-btn');
+    
+    // Update button styles
+    buttons.forEach(btn => {
+        btn.classList.remove('bg-gray-200', 'text-gray-700', 'bg-green-100', 'text-green-700', 'bg-orange-100', 'text-orange-700');
+        btn.classList.add('text-gray-600');
+    });
+    
+    questions.forEach(question => {
+        if (type === 'all') {
+            question.style.display = 'block';
+            event.target.classList.add('bg-gray-200', 'text-gray-700');
+            event.target.classList.remove('text-gray-600');
+        } else if (type === 'correct') {
+            question.style.display = question.classList.contains('correct-question') ? 'block' : 'none';
+            event.target.classList.add('bg-green-100', 'text-green-700');
+            event.target.classList.remove('text-gray-600');
+        } else if (type === 'incorrect') {
+            question.style.display = question.classList.contains('incorrect-question') ? 'block' : 'none';
+            event.target.classList.add('bg-orange-100', 'text-orange-700');
+            event.target.classList.remove('text-gray-600');
+        }
+    });
+}
+</script>
 {% endblock %}
