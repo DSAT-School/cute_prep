@@ -19,6 +19,9 @@ urlpatterns = [
     # Resume session
     path('resume/<uuid:session_id>/', views.resume_session, name='resume_session'),
     
+    # Mistake log
+    path('mistake-log/', views.mistake_log_view, name='mistake_log'),
+    
     # API endpoints for AJAX
     path('api/question/<uuid:question_id>/', views.get_question, name='get_question'),
     path('api/check-answer/<uuid:question_id>/', views.check_answer, name='check_answer'),

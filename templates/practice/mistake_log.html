@@ -1,0 +1,725 @@
+{% extends "base_dashboard.html" %}
+{% load static %}
+{% load practice_filters %}
+
+{% block title %}Mistake Log - DSAT SCHOOL{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+    .mistake-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 1.5rem;
+    }
+
+    .mistake-header {
+        margin-bottom: 2rem;
+    }
+
+    .mistake-header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #262632;
+        margin-bottom: 0.5rem;
+    }
+
+    .mistake-header p {
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .stat-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-card-header i {
+        color: #9967b9;
+        font-size: 1.25rem;
+    }
+
+    .stat-card-header h3 {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #6b7280;
+    }
+
+    .stat-card-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #262632;
+    }
+
+    .filters-section {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .filters-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        align-items: end;
+    }
+
+    .filter-group label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #6b7280;
+        margin-bottom: 0.25rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .filter-group select {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        color: #262632;
+    }
+
+    .filter-group button {
+        padding: 0.5rem 1rem;
+        background: #9967b9;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .filter-group button:hover {
+        background: #7c4d9a;
+    }
+
+    .mistakes-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .mistake-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-left: 4px solid #ef4444;
+        border-radius: 8px;
+        padding: 1.5rem;
+        transition: all 0.2s;
+    }
+
+    .mistake-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .mistake-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 1rem;
+        gap: 1rem;
+    }
+
+    .mistake-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .badge.domain {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .badge.skill {
+        background: #f3e8ff;
+        color: #7c3aed;
+    }
+
+    .badge.date {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .mistake-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .action-btn {
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+    }
+
+    .action-btn.ai {
+        background: #9967b9;
+        color: white;
+    }
+
+    .action-btn.ai:hover {
+        background: #7c4d9a;
+    }
+
+    .action-btn.retry {
+        background: #10b981;
+        color: white;
+    }
+
+    .action-btn.retry:hover {
+        background: #059669;
+    }
+
+    .action-btn.view {
+        background: #f3f4f6;
+        color: #374151;
+        border: 1px solid #d1d5db;
+    }
+
+    .action-btn.view:hover {
+        background: #e5e7eb;
+    }
+
+    .mistake-content {
+        margin-bottom: 1rem;
+    }
+
+    .question-text {
+        font-family: 'Noto Serif', serif;
+        font-size: 1rem;
+        color: #262632;
+        margin-bottom: 1rem;
+        line-height: 1.6;
+    }
+
+    .answer-comparison {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .answer-box {
+        padding: 0.75rem;
+        border-radius: 6px;
+        border: 2px solid;
+    }
+
+    .answer-box.incorrect {
+        background: #fef2f2;
+        border-color: #fca5a5;
+    }
+
+    .answer-box.correct {
+        background: #f0fdf4;
+        border-color: #86efac;
+    }
+
+    .answer-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.25rem;
+    }
+
+    .answer-box.incorrect .answer-label {
+        color: #dc2626;
+    }
+
+    .answer-box.correct .answer-label {
+        color: #16a34a;
+    }
+
+    .answer-text {
+        font-family: 'Noto Serif', serif;
+        font-size: 0.875rem;
+        color: #262632;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+        padding: 1rem;
+    }
+
+    .pagination a,
+    .pagination span {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        color: #374151;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .pagination a:hover {
+        background: #f3f4f6;
+    }
+
+    .pagination .current {
+        background: #9967b9;
+        color: white;
+        border-color: #9967b9;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: #d1d5db;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #262632;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 1.5rem;
+    }
+
+    .empty-state .btn {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        background: #9967b9;
+        color: white;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .empty-state .btn:hover {
+        background: #7c4d9a;
+    }
+
+    .bulk-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding: 0.75rem 1rem;
+        background: #f9fafb;
+        border-radius: 8px;
+    }
+
+    .bulk-actions-left {
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+
+    .bulk-actions-right {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .bulk-btn {
+        padding: 0.5rem 1rem;
+        background: white;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #374151;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .bulk-btn:hover {
+        background: #f3f4f6;
+    }
+
+    .bulk-btn.primary {
+        background: #9967b9;
+        color: white;
+        border-color: #9967b9;
+    }
+
+    .bulk-btn.primary:hover {
+        background: #7c4d9a;
+    }
+
+    @media (max-width: 768px) {
+        .mistake-container {
+            padding: 1rem;
+        }
+
+        .mistake-header h1 {
+            font-size: 1.25rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .filters-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .answer-comparison {
+            grid-template-columns: 1fr;
+        }
+
+        .mistake-card-header {
+            flex-direction: column;
+        }
+
+        .mistake-actions {
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            flex: 1;
+            min-width: calc(50% - 0.25rem);
+        }
+        
+        .action-btn.ai {
+            flex-basis: 100%;
+            margin-bottom: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mistake-container">
+    <!-- Header -->
+    <div class="mistake-header">
+        <h1><i class="fas fa-times-circle"></i> Mistake Log</h1>
+        <p>Review and learn from your incorrect answers. Practice makes progress!</p>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Total Mistakes</h3>
+            </div>
+            <div class="stat-card-value">{{ total_mistakes }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <i class="fas fa-chart-pie"></i>
+                <h3>Most Common Domain</h3>
+            </div>
+            <div class="stat-card-value" style="font-size: 1rem;">
+                {% if domain_stats %}
+                    {{ domain_stats.0.question__domain_name|truncatewords:3 }}
+                    <span style="font-size: 0.875rem; color: #6b7280;">({{ domain_stats.0.mistake_count }})</span>
+                {% else %}
+                    <span style="font-size: 0.875rem; color: #6b7280;">N/A</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <i class="fas fa-target"></i>
+                <h3>Focus Area</h3>
+            </div>
+            <div class="stat-card-value" style="font-size: 0.875rem;">
+                {% if skill_stats %}
+                    {{ skill_stats.0.question__skill_name|truncatewords:4 }}
+                {% else %}
+                    <span style="color: #6b7280;">N/A</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-section">
+        <form method="get" action="{% url 'practice:mistake_log' %}">
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label for="domain">Domain</label>
+                    <select name="domain" id="domain" onchange="this.form.submit()">
+                        <option value="">All Domains</option>
+                        {% for domain in all_domains %}
+                        <option value="{{ domain.domain_code }}" {% if selected_domain == domain.domain_code %}selected{% endif %}>
+                            {{ domain.domain_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="skill">Skill</label>
+                    <select name="skill" id="skill" onchange="this.form.submit()" {% if not selected_domain %}disabled{% endif %}>
+                        <option value="">All Skills</option>
+                        {% for skill in domain_skills %}
+                        <option value="{{ skill.skill_code }}" {% if selected_skill == skill.skill_code %}selected{% endif %}>
+                            {{ skill.skill_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="date_range">Date Range</label>
+                    <select name="date_range" id="date_range" onchange="this.form.submit()">
+                        <option value="all" {% if selected_date_range == 'all' %}selected{% endif %}>All Time</option>
+                        <option value="week" {% if selected_date_range == 'week' %}selected{% endif %}>Last 7 Days</option>
+                        <option value="month" {% if selected_date_range == 'month' %}selected{% endif %}>Last 30 Days</option>
+                        <option value="3months" {% if selected_date_range == '3months' %}selected{% endif %}>Last 3 Months</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="sort">Sort By</label>
+                    <select name="sort" id="sort" onchange="this.form.submit()">
+                        <option value="recent" {% if selected_sort == 'recent' %}selected{% endif %}>Most Recent</option>
+                        <option value="oldest" {% if selected_sort == 'oldest' %}selected{% endif %}>Oldest First</option>
+                        <option value="domain" {% if selected_sort == 'domain' %}selected{% endif %}>By Domain</option>
+                        <option value="skill" {% if selected_sort == 'skill' %}selected{% endif %}>By Skill</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {% if page_obj %}
+        <!-- Bulk Actions -->
+        <div class="bulk-actions">
+            <div class="bulk-actions-left">
+                Showing {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ page_obj.paginator.count }} mistakes
+            </div>
+            <div class="bulk-actions-right">
+                <button class="bulk-btn primary" onclick="practiceAllMistakes()">
+                    <i class="fas fa-redo"></i> Practice All Mistakes
+                </button>
+                {% if selected_domain or selected_skill %}
+                <button class="bulk-btn primary" onclick="practiceFilteredMistakes()">
+                    <i class="fas fa-filter"></i> Practice Filtered
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Mistakes List -->
+        <div class="mistakes-list">
+            {% for mistake in page_obj %}
+            <div class="mistake-card">
+                <div class="mistake-card-header">
+                    <div class="mistake-meta">
+                        <span class="badge domain">
+                            <i class="fas fa-folder"></i> {{ mistake.question.domain_name }}
+                        </span>
+                        <span class="badge skill">
+                            <i class="fas fa-bullseye"></i> {{ mistake.question.skill_name }}
+                        </span>
+                        <span class="badge date">
+                            <i class="fas fa-clock"></i> {{ mistake.answered_at|date:"M d, Y" }}
+                        </span>
+                    </div>
+                    <div class="mistake-actions">
+                        <button class="action-btn ai" onclick="askAIAboutMistake('{{ mistake.question.id }}', '{{ mistake.question.identifier_id }}')">
+                            <i class="fas fa-robot"></i> Ask AI
+                        </button>
+                        <button class="action-btn retry" onclick="retryQuestion('{{ mistake.question.id }}')">
+                            <i class="fas fa-redo"></i> Retry
+                        </button>
+                        <button class="action-btn view" onclick="toggleMistakeDetails('mistake-{{ mistake.id }}')">
+                            <i class="fas fa-eye"></i> <span class="view-text">View</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mistake-content" id="mistake-{{ mistake.id }}" style="display: none;">
+                    {% if mistake.question.stimulus %}
+                    <div class="question-text" style="background: #f9fafb; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                        <strong>Context:</strong>
+                        <div style="margin-top: 0.5rem;">{{ mistake.question.stimulus|safe }}</div>
+                    </div>
+                    {% endif %}
+
+                    <div class="question-text">
+                        <strong>Question:</strong>
+                        <div style="margin-top: 0.5rem;">{{ mistake.question.stem|safe }}</div>
+                    </div>
+
+                    <div class="answer-comparison">
+                        <div class="answer-box incorrect">
+                            <div class="answer-label">
+                                <i class="fas fa-times-circle"></i> Your Answer
+                            </div>
+                            <div class="answer-text">
+                                <strong>{{ mistake.user_answer }}:</strong> 
+                                {% if mistake.question.mcq_option_list %}
+                                    {{ mistake.question.mcq_option_list|get_item:mistake.user_answer|safe }}
+                                {% else %}
+                                    {{ mistake.user_answer }}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="answer-box correct">
+                            <div class="answer-label">
+                                <i class="fas fa-check-circle"></i> Correct Answer
+                            </div>
+                            <div class="answer-text">
+                                <strong>{{ mistake.correct_answer }}:</strong>
+                                {% if mistake.question.mcq_option_list %}
+                                    {{ mistake.question.mcq_option_list|get_item:mistake.correct_answer|safe }}
+                                {% else %}
+                                    {{ mistake.correct_answer }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if mistake.question.explanation %}
+                    <div style="margin-top: 1rem; padding: 1rem; background: #eff6ff; border-radius: 6px; border-left: 4px solid #3b82f6;">
+                        <strong style="color: #1e40af; font-size: 0.875rem;">
+                            <i class="fas fa-lightbulb"></i> Explanation:
+                        </strong>
+                        <div style="margin-top: 0.5rem; font-family: 'Noto Serif', serif; font-size: 0.875rem; color: #262632;">
+                            {{ mistake.question.explanation|safe }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% if selected_domain %}&domain={{ selected_domain }}{% endif %}{% if selected_skill %}&skill={{ selected_skill }}{% endif %}{% if selected_date_range != 'all' %}&date_range={{ selected_date_range }}{% endif %}{% if selected_sort != 'recent' %}&sort={{ selected_sort }}{% endif %}">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if selected_domain %}&domain={{ selected_domain }}{% endif %}{% if selected_skill %}&skill={{ selected_skill }}{% endif %}{% if selected_date_range != 'all' %}&date_range={{ selected_date_range }}{% endif %}{% if selected_sort != 'recent' %}&sort={{ selected_sort }}{% endif %}">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+            {% endif %}
+
+            <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if selected_domain %}&domain={{ selected_domain }}{% endif %}{% if selected_skill %}&skill={{ selected_skill }}{% endif %}{% if selected_date_range != 'all' %}&date_range={{ selected_date_range }}{% endif %}{% if selected_sort != 'recent' %}&sort={{ selected_sort }}{% endif %}">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if selected_domain %}&domain={{ selected_domain }}{% endif %}{% if selected_skill %}&skill={{ selected_skill }}{% endif %}{% if selected_date_range != 'all' %}&date_range={{ selected_date_range }}{% endif %}{% if selected_sort != 'recent' %}&sort={{ selected_sort }}{% endif %}">
+                    <i class="fas fa-angle-double-right"></i>
+                </a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+    {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <i class="fas fa-check-circle"></i>
+            <h3>No Mistakes Found!</h3>
+            <p>Great job! You haven't made any mistakes yet, or there are no mistakes matching your filters.</p>
+            <a href="{% url 'practice:modules' %}" class="btn">
+                <i class="fas fa-book"></i> Start Practicing
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function toggleMistakeDetails(id) {
+    const element = document.getElementById(id);
+    const btn = event.currentTarget;
+    const viewText = btn.querySelector('.view-text');
+    
+    if (element.style.display === 'none') {
+        element.style.display = 'block';
+        viewText.textContent = 'Hide';
+        btn.querySelector('i').className = 'fas fa-eye-slash';
+    } else {
+        element.style.display = 'none';
+        viewText.textContent = 'View';
+        btn.querySelector('i').className = 'fas fa-eye';
+    }
+}
+
+function askAIAboutMistake(questionId, questionIdentifier) {
+    // Redirect to AI chat with context about this mistake
+    const context = encodeURIComponent(`I need help understanding question ${questionIdentifier}. Can you explain why I got this wrong and help me understand the concept better?`);
+    window.location.href = `/ai-chat/?context=${context}&question=${questionId}`;
+}
+
+function retryQuestion(questionId) {
+    // Start practice session with only this specific question
+    window.location.href = `/practice/?question=${questionId}&retry=true`;
+}
+
+function practiceAllMistakes() {
+    // Get all mistake question IDs and start practice
+    const params = new URLSearchParams(window.location.search);
+    window.location.href = `/practice/?mistakes=true&${params.toString()}`;
+}
+
+function practiceFilteredMistakes() {
+    // Practice only the filtered mistakes
+    const params = new URLSearchParams(window.location.search);
+    params.set('mistakes', 'true');
+    window.location.href = `/practice/?${params.toString()}`;
+}
+
+// Load MathJax for any mathematical expressions
+if (window.MathJax) {
+    MathJax.typesetPromise().catch((err) => console.log('MathJax error:', err));
+}
+</script>
+{% endblock %}

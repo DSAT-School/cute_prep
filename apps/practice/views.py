@@ -150,6 +150,9 @@ def practice_view(request):
     question_type_filter = request.GET.get('type')
     session_id_param = request.GET.get('session')
     question_id_param = request.GET.get('question')
+    mistakes_mode = request.GET.get('mistakes') == 'true'
+    retry_mode = request.GET.get('retry') == 'true'
+    date_range = request.GET.get('date_range', 'all')
     
     # Check if resuming an existing session
     session = None
@@ -171,18 +174,50 @@ def practice_view(request):
     # Build query
     questions = Question.objects.filter(is_active=True)
     
-    # Apply filters from URL parameters
-    if domain_filter:
-        questions = questions.filter(domain_code=domain_filter)
-    
-    if skill_filter:
-        questions = questions.filter(skill_code=skill_filter)
-    
-    if provider_filter:
-        questions = questions.filter(provider_code=provider_filter)
-    
-    if question_type_filter:
-        questions = questions.filter(question_type=question_type_filter)
+    # Mistakes mode - only show questions the user got wrong
+    if mistakes_mode or retry_mode:
+        from datetime import timedelta
+        
+        # Get incorrect answers for this user
+        mistake_query = UserAnswer.objects.filter(
+            user=request.user,
+            is_correct=False
+        )
+        
+        # Apply date range filter for mistakes
+        if date_range != 'all':
+            date_filters = {
+                'week': 7,
+                'month': 30,
+                '3months': 90
+            }
+            days = date_filters.get(date_range, 0)
+            if days:
+                cutoff_date = timezone.now() - timedelta(days=days)
+                mistake_query = mistake_query.filter(answered_at__gte=cutoff_date)
+        
+        # Apply domain/skill filters to mistakes
+        if domain_filter:
+            mistake_query = mistake_query.filter(question__domain_code=domain_filter)
+        if skill_filter:
+            mistake_query = mistake_query.filter(question__skill_code=skill_filter)
+        
+        # Get question IDs from mistakes
+        mistake_question_ids = mistake_query.values_list('question_id', flat=True).distinct()
+        questions = questions.filter(id__in=mistake_question_ids)
+    else:
+        # Normal practice mode - apply filters from URL parameters
+        if domain_filter:
+            questions = questions.filter(domain_code=domain_filter)
+        
+        if skill_filter:
+            questions = questions.filter(skill_code=skill_filter)
+        
+        if provider_filter:
+            questions = questions.filter(provider_code=provider_filter)
+        
+        if question_type_filter:
+            questions = questions.filter(question_type=question_type_filter)
     
     # Get total count
     total_questions = questions.count()
@@ -612,3 +647,116 @@ def resume_session(request, session_id):
     # Redirect to practice interface with session context
     from django.shortcuts import redirect
     return redirect(f"/practice/?{query_string}")
+
+
+@login_required
+def mistake_log_view(request):
+    """
+    Mistake Log - shows all incorrect answers from practice sessions.
+    
+    GET /practice/mistake-log/
+    Supports filters: domain, skill, date_range, sort
+    """
+    from datetime import datetime, timedelta
+    from django.db.models import F, Prefetch
+    
+    # Get filter parameters
+    domain_filter = request.GET.get('domain', '')
+    skill_filter = request.GET.get('skill', '')
+    date_range = request.GET.get('date_range', 'all')  # all, week, month, 3months
+    sort_by = request.GET.get('sort', 'recent')  # recent, oldest, domain, skill
+    
+    # Base query - all incorrect answers for this user
+    mistakes = UserAnswer.objects.filter(
+        user=request.user,
+        is_correct=False
+    ).select_related(
+        'question',
+        'session'
+    ).order_by('-answered_at')
+    
+    # Apply domain filter
+    if domain_filter:
+        mistakes = mistakes.filter(question__domain_code=domain_filter)
+    
+    # Apply skill filter
+    if skill_filter:
+        mistakes = mistakes.filter(question__skill_code=skill_filter)
+    
+    # Apply date range filter
+    if date_range != 'all':
+        date_filters = {
+            'week': 7,
+            'month': 30,
+            '3months': 90
+        }
+        days = date_filters.get(date_range, 0)
+        if days:
+            cutoff_date = timezone.now() - timedelta(days=days)
+            mistakes = mistakes.filter(answered_at__gte=cutoff_date)
+    
+    # Apply sorting
+    if sort_by == 'oldest':
+        mistakes = mistakes.order_by('answered_at')
+    elif sort_by == 'domain':
+        mistakes = mistakes.order_by('question__domain_name', '-answered_at')
+    elif sort_by == 'skill':
+        mistakes = mistakes.order_by('question__skill_name', '-answered_at')
+    else:  # recent
+        mistakes = mistakes.order_by('-answered_at')
+    
+    # Pagination
+    paginator = Paginator(mistakes, 20)  # 20 mistakes per page
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
+    # Get statistics
+    total_mistakes = mistakes.count()
+    
+    # Group mistakes by domain
+    domain_stats = mistakes.values(
+        'question__domain_code',
+        'question__domain_name'
+    ).annotate(
+        mistake_count=Count('id')
+    ).order_by('-mistake_count')
+    
+    # Group mistakes by skill
+    skill_stats = mistakes.values(
+        'question__skill_code',
+        'question__skill_name',
+        'question__domain_code'
+    ).annotate(
+        mistake_count=Count('id')
+    ).order_by('-mistake_count')[:10]  # Top 10 skills with most mistakes
+    
+    # Get all unique domains for filter dropdown
+    all_domains = Question.objects.values(
+        'domain_code',
+        'domain_name'
+    ).distinct().order_by('domain_name')
+    
+    # Get skills for selected domain (for filter dropdown)
+    domain_skills = []
+    if domain_filter:
+        domain_skills = Question.objects.filter(
+            domain_code=domain_filter
+        ).values(
+            'skill_code',
+            'skill_name'
+        ).distinct().order_by('skill_name')
+    
+    context = {
+        'page_obj': page_obj,
+        'total_mistakes': total_mistakes,
+        'domain_stats': domain_stats,
+        'skill_stats': skill_stats,
+        'all_domains': all_domains,
+        'domain_skills': domain_skills,
+        'selected_domain': domain_filter,
+        'selected_skill': skill_filter,
+        'selected_date_range': date_range,
+        'selected_sort': sort_by,
+    }
+    
+    return render(request, 'practice/mistake_log.html', context)
