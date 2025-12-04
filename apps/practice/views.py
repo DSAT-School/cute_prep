@@ -399,9 +399,44 @@ def get_question(request, question_id):
     """
     API endpoint to get a specific question by ID.
     
-    Returns JSON with question data.
+    Returns JSON with question data including attempt history.
     """
     question = get_object_or_404(Question, id=question_id, is_active=True)
+    
+    # Get attempt history for this user and question
+    user_attempts = UserAnswer.objects.filter(
+        user=request.user,
+        question=question
+    ).order_by('-answered_at')
+    
+    attempt_count = user_attempts.count()
+    last_attempt = user_attempts.first()
+    
+    last_attempt_data = None
+    if last_attempt:
+        last_attempt_data = {
+            'answer': last_attempt.user_answer,
+            'is_correct': last_attempt.is_correct,
+            'answered_at': last_attempt.answered_at.isoformat(),
+            'time_taken': last_attempt.time_taken_seconds
+        }
+    
+    # Determine if user can toggle mastered status
+    can_toggle_mastered = False
+    is_auto_mastered = False
+    
+    if attempt_count > 0:
+        first_attempt = user_attempts.order_by('answered_at').first()
+        has_wrong_attempt = user_attempts.filter(is_correct=False).exists()
+        has_correct_attempt = user_attempts.filter(is_correct=True).exists()
+        
+        # Auto-mastered if first attempt was correct
+        if attempt_count == 1 and first_attempt.is_correct:
+            is_auto_mastered = True
+            can_toggle_mastered = True  # Can unmark
+        # Can manually master if got wrong then correct
+        elif has_wrong_attempt and has_correct_attempt:
+            can_toggle_mastered = True
     
     data = {
         'id': str(question.id),
@@ -419,6 +454,10 @@ def get_question(request, question_id):
         'mcq_answer': question.mcq_answer,
         'mcq_options': question.mcq_option_list or {},
         'tutorial_link': question.tutorial_link,
+        'attempt_count': attempt_count,
+        'last_attempt': last_attempt_data,
+        'can_toggle_mastered': can_toggle_mastered,
+        'is_auto_mastered': is_auto_mastered,
     }
     
     return JsonResponse(data)
@@ -475,16 +514,20 @@ def check_answer(request, question_id):
                     session.total_time_seconds += int(time_taken)
                     session.save()
                     
-                    # Auto-master if answered correctly on first attempt
+                    # Mastered logic:
+                    # 1. Auto-master if answered correctly on first attempt (across all sessions)
+                    # 2. Don't auto-master if user already got it wrong before
                     if is_correct:
-                        # Check if this is the first attempt for this question
-                        previous_attempts = UserAnswer.objects.filter(
+                        # Get all previous attempts for this question by this user
+                        all_attempts = UserAnswer.objects.filter(
                             user=request.user,
                             question=question
-                        ).exclude(id=answer.id).count()
+                        ).order_by('answered_at')
                         
-                        if previous_attempts == 0:
-                            # First attempt and correct - auto-master
+                        total_attempts = all_attempts.count()
+                        
+                        # If this is the first attempt ever and it's correct - auto-master
+                        if total_attempts == 1:
                             from .models import MasteredQuestion
                             MasteredQuestion.objects.get_or_create(
                                 user=request.user,
@@ -693,11 +736,14 @@ def get_marked_questions(request):
 def master_question(request):
     """
     Toggle mastered status on a question.
-    User must have attempted the question before marking it as mastered.
+    
+    Rules:
+    1. Auto-mastered (first attempt correct): User can only UNMARK, not toggle
+    2. Manual mastering: User must have wrong attempt followed by correct attempt in different session
     
     POST /practice/api/master-question/
     Body: { question_id: "uuid" }
-    Returns: { mastered: true/false, error: "message" }
+    Returns: { mastered: true/false, error: "message", can_toggle: true/false }
     """
     try:
         data = json.loads(request.body)
@@ -708,16 +754,18 @@ def master_question(request):
         
         question = get_object_or_404(Question, id=question_id)
         
-        # Check if user has attempted this question
-        has_attempted = UserAnswer.objects.filter(
+        # Get all attempts for this question
+        all_attempts = UserAnswer.objects.filter(
             user=request.user,
             question=question
-        ).exists()
+        ).order_by('answered_at')
         
-        if not has_attempted:
+        if not all_attempts.exists():
             return JsonResponse({
                 'success': False,
-                'error': 'You must attempt this question before marking it as mastered.'
+                'mastered': False,
+                'error': 'You must attempt this question before marking it as mastered.',
+                'can_toggle': False
             }, status=400)
         
         # Check if already mastered
@@ -726,17 +774,68 @@ def master_question(request):
             question=question
         ).first()
         
+        # Check attempt history
+        total_attempts = all_attempts.count()
+        first_attempt = all_attempts.first()
+        has_wrong_attempt = all_attempts.filter(is_correct=False).exists()
+        has_correct_attempt = all_attempts.filter(is_correct=True).exists()
+        
+        # Determine if user can manually toggle mastered status
+        can_manually_master = False
+        
+        # If first attempt was correct - it was auto-mastered, user can only unmark
+        if total_attempts == 1 and first_attempt.is_correct:
+            # Auto-mastered case - allow unmask only
+            if mastered_question:
+                mastered_question.delete()
+                return JsonResponse({
+                    'success': True,
+                    'mastered': False,
+                    'message': 'Question unmarked as mastered',
+                    'can_toggle': True
+                })
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'mastered': False,
+                    'error': 'This question was auto-mastered but record is missing.',
+                    'can_toggle': False
+                }, status=400)
+        
+        # User can manually master if: got it wrong before AND got it correct later
+        if has_wrong_attempt and has_correct_attempt:
+            can_manually_master = True
+        
+        if not can_manually_master:
+            return JsonResponse({
+                'success': False,
+                'mastered': False,
+                'error': 'You can only mark as mastered after getting it wrong first and then correct.',
+                'can_toggle': False
+            }, status=400)
+        
+        # Toggle mastered status
         if mastered_question:
-            # Unmark mastered - remove from database
+            # Unmark mastered
             mastered_question.delete()
-            return JsonResponse({'mastered': False})
+            return JsonResponse({
+                'success': True,
+                'mastered': False,
+                'message': 'Question unmarked as mastered',
+                'can_toggle': True
+            })
         else:
-            # Mark as mastered - add to database
+            # Mark as mastered
             MasteredQuestion.objects.create(
                 user=request.user,
                 question=question
             )
-            return JsonResponse({'mastered': True})
+            return JsonResponse({
+                'success': True,
+                'mastered': True,
+                'message': 'Question marked as mastered',
+                'can_toggle': True
+            })
     
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)

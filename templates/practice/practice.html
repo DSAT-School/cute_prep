@@ -92,6 +92,46 @@
         background: #7c4d9a;
     }
 
+    .attempt-info-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        background: #fef3c7;
+        border: 1px solid #fbbf24;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #92400e;
+    }
+
+    .attempt-info-badge i {
+        font-size: 0.875rem;
+    }
+
+    .last-attempt-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+    }
+
+    .last-attempt-badge.correct {
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #10b981;
+    }
+
+    .last-attempt-badge.incorrect {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #ef4444;
+    }
+
     /* Question Details Modal */
     .question-details-modal {
         display: none;
@@ -531,6 +571,20 @@
         .annotate-btn {
             font-size: 0.75rem;
             padding: 0.25rem 0.5rem;
+        }
+
+        .attempt-info-badge {
+            font-size: 0.65rem;
+            padding: 0.25rem 0.5rem;
+            width: 100%;
+            justify-content: center;
+            margin-top: 0.5rem;
+        }
+
+        .last-attempt-badge {
+            font-size: 0.65rem;
+            padding: 0.2rem 0.4rem;
+            margin-left: 0.25rem;
         }
 
         .question-details-content {
@@ -1108,7 +1162,13 @@
             <div class="timer" id="timer">0:00</div>
             <button class="hide-timer-btn" onclick="toggleTimer()"><i class="fas fa-eye-slash"></i> <span id="timer-btn-text">Hide</span></button>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
+            <!-- Attempt Info Badge -->
+            <div class="attempt-info-badge" id="attemptInfo" style="display: none;">
+                <i class="fas fa-history"></i>
+                <span id="attemptCount">0</span> attempts
+                <span id="lastAttemptTime" style="margin-left: 0.5rem;"></span>
+            </div>
             <button class="show-details-btn" onclick="toggleQuestionDetails()">
                 <i class="fas fa-info-circle"></i> Show Details
             </button>
@@ -1373,6 +1433,53 @@ function toggleTimer() {
             btnText.textContent = 'Show';
             btnIcon.className = 'fas fa-eye';
         }
+    }
+}
+
+function updateAttemptInfo(question) {
+    const attemptInfo = document.getElementById('attemptInfo');
+    const attemptCount = document.getElementById('attemptCount');
+    const lastAttemptTime = document.getElementById('lastAttemptTime');
+    
+    if (question.attempt_count > 0) {
+        attemptInfo.style.display = 'inline-flex';
+        attemptCount.textContent = question.attempt_count;
+        
+        if (question.last_attempt) {
+            const lastAttempt = question.last_attempt;
+            const attemptDate = new Date(lastAttempt.answered_at);
+            const now = new Date();
+            const diffMs = now - attemptDate;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+            
+            let timeAgo = '';
+            if (diffDays > 0) {
+                timeAgo = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+            } else if (diffHours > 0) {
+                timeAgo = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+            } else if (diffMins > 0) {
+                timeAgo = `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+            } else {
+                timeAgo = 'just now';
+            }
+            
+            const statusClass = lastAttempt.is_correct ? 'correct' : 'incorrect';
+            const statusIcon = lastAttempt.is_correct ? '✓' : '✗';
+            const statusText = lastAttempt.is_correct ? 'Correct' : 'Incorrect';
+            
+            lastAttemptTime.innerHTML = `
+                • Last: ${timeAgo}
+                <span class="last-attempt-badge ${statusClass}">
+                    ${statusIcon} ${statusText} (${lastAttempt.answer})
+                </span>
+            `;
+        } else {
+            lastAttemptTime.textContent = '';
+        }
+    } else {
+        attemptInfo.style.display = 'none';
     }
 }
 
@@ -1763,13 +1870,36 @@ async function loadQuestion(index) {
         // Update mastered button
         const masteredBtn = document.getElementById('mastered-btn');
         const masteredBtnText = document.getElementById('mastered-btn-text');
+        
+        // Update button state based on mastered status
         if (masteredQuestions.has(questionId)) {
             masteredBtn.classList.add('mastered');
             masteredBtnText.textContent = 'Mastered';
         } else {
             masteredBtn.classList.remove('mastered');
-            masteredBtnText.textContent = 'Mastered';
+            masteredBtnText.textContent = 'Master';
         }
+        
+        // Disable/enable button based on can_toggle_mastered
+        if (question.can_toggle_mastered === false) {
+            masteredBtn.disabled = true;
+            masteredBtn.style.opacity = '0.5';
+            masteredBtn.style.cursor = 'not-allowed';
+            masteredBtn.title = 'You can only mark as mastered after getting it wrong first and then correct.';
+        } else {
+            masteredBtn.disabled = false;
+            masteredBtn.style.opacity = '1';
+            masteredBtn.style.cursor = 'pointer';
+            
+            if (question.is_auto_mastered) {
+                masteredBtn.title = 'Auto-mastered (correct on first attempt). Click to unmark.';
+            } else {
+                masteredBtn.title = 'Mark this question as mastered';
+            }
+        }
+        
+        // Update attempt information
+        updateAttemptInfo(question);
         
         // Update navigation buttons
         document.getElementById('back-btn').disabled = index === 0;
@@ -1992,6 +2122,12 @@ async function toggleMastered() {
     const masteredBtn = document.getElementById('mastered-btn');
     const masteredBtnText = document.getElementById('mastered-btn-text');
     
+    // Check if button is disabled
+    if (masteredBtn.disabled) {
+        showAlert('You can only mark as mastered after getting it wrong first and then correct.');
+        return;
+    }
+    
     try {
         const response = await fetch('/practice/api/master-question/', {
             method: 'POST',
@@ -2008,7 +2144,7 @@ async function toggleMastered() {
         
         // Check for error
         if (data.error || data.success === false) {
-            alert(data.error || 'You must attempt this question before marking it as mastered.');
+            showAlert(data.error || 'Unable to mark as mastered.');
             return;
         }
         
@@ -2019,18 +2155,11 @@ async function toggleMastered() {
         } else {
             masteredQuestions.delete(currentQuestionId);
             masteredBtn.classList.remove('mastered');
-            masteredBtnText.textContent = 'Mastered';
+            masteredBtnText.textContent = 'Master';
         }
     } catch (error) {
         console.error('Error toggling mastered status:', error);
-        // Revert button state on error
-        if (masteredBtn.classList.contains('mastered')) {
-            masteredBtn.classList.remove('mastered');
-            masteredBtnText.textContent = 'Mastered';
-        } else {
-            masteredBtn.classList.add('mastered');
-            masteredBtnText.textContent = 'Mastered';
-        }
+        showAlert('Failed to update mastered status. Please try again.');
     }
 }
 
