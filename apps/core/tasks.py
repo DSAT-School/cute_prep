@@ -125,7 +125,7 @@ def process_ai_question_generation(self, task_id, topic, difficulty='medium'):
         # Build prompt for question generation
         prompt = f"""You are SAT Buddy, an expert SAT tutor. Generate a {difficulty} SAT practice question about {topic}.
 
-Return a JSON object with this exact structure:
+Return ONLY a valid JSON object (no markdown, no code blocks, no extra text) with this exact structure:
 {{
     "question": "The question text here",
     "options": {{
@@ -138,13 +138,21 @@ Return a JSON object with this exact structure:
     "explanation": "Detailed explanation here"
 }}
 
-CRITICAL Guidelines:
+CRITICAL JSON FORMATTING RULES:
+- Return ONLY the JSON object, nothing else
+- NO trailing commas in objects or arrays
+- Properly escape ALL quotes inside strings using backslash
+- Use double quotes for all keys and string values
+- Ensure all braces and brackets are properly closed
+- Do NOT include markdown code blocks (no ```)
+
+CONTENT Guidelines:
 - The question MUST be SELF-CONTAINED and COMPLETE - include all necessary information
 - DO NOT reference external passages, texts, or materials that aren't provided
 - If the question requires a passage (reading comprehension), INCLUDE THE FULL PASSAGE in the question text
 - For math questions, provide all given values and constraints in the question itself
 - Make the question realistic and follow SAT formatting standards
-- Provide 4 answer choices labeled A, B, C, D
+- Provide exactly 4 answer choices labeled A, B, C, D
 - Indicate the correct answer (A, B, C, or D)
 - Provide a clear, concise explanation of why the answer is correct
 - Use proper spacing in text (e.g., "$10 each" not "$10each")
@@ -160,9 +168,48 @@ CRITICAL Guidelines:
         response = model.generate_content(prompt)
         response_text = response.text.strip()
         
-        # Parse JSON response
+        # Clean response text (remove markdown code blocks if present)
+        if response_text.startswith('```'):
+            lines = response_text.split('\n')
+            # Remove first line (```json or ```) and last line (```)
+            response_text = '\n'.join(lines[1:-1]).strip()
+        
+        # Parse JSON response with error handling
         import json
-        generated_question = json.loads(response_text)
+        import re
+        
+        try:
+            generated_question = json.loads(response_text)
+        except json.JSONDecodeError as json_err:
+            logger.error(f"JSON parsing failed for task {task_id}. Error: {json_err}")
+            logger.error(f"Response text: {response_text[:1000]}")  # Log first 1000 chars
+            
+            # Try to fix common JSON issues
+            try:
+                # Remove trailing commas
+                fixed_text = re.sub(r',(\s*[}\]])', r'\1', response_text)
+                # Fix unescaped quotes in strings (basic attempt)
+                generated_question = json.loads(fixed_text)
+                logger.info(f"JSON fixed and parsed successfully for task {task_id}")
+            except:
+                # If still fails, raise the original error
+                raise json_err
+        
+        # Validate question structure
+        required_fields = ['question', 'options', 'correct_answer', 'explanation']
+        missing_fields = [field for field in required_fields if field not in generated_question]
+        
+        if missing_fields:
+            raise ValueError(f"Generated question missing required fields: {missing_fields}")
+        
+        if not isinstance(generated_question['options'], dict):
+            raise ValueError("Options must be a dictionary")
+        
+        if len(generated_question['options']) != 4:
+            raise ValueError(f"Expected 4 options, got {len(generated_question['options'])}")
+        
+        if generated_question['correct_answer'] not in generated_question['options']:
+            raise ValueError(f"Correct answer '{generated_question['correct_answer']}' not in options")
         
         # Store result in cache
         cache.set(f'ai_task_{task_id}', {
@@ -172,6 +219,16 @@ CRITICAL Guidelines:
         }, timeout=3600)
         
         logger.info(f"Question generation task {task_id} completed successfully")
+        
+    except json.JSONDecodeError as e:
+        error_msg = f"Failed to parse AI response as JSON: {str(e)}"
+        logger.error(f"JSON error in task {task_id}: {error_msg}")
+        
+        cache.set(f'ai_task_{task_id}', {
+            'status': 'failed',
+            'error': error_msg,
+            'success': False
+        }, timeout=3600)
         
     except Exception as e:
         logger.exception(f"Error in question generation task {task_id}: {e}")
