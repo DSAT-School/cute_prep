@@ -22,6 +22,7 @@ from apps.core.ai_chat_views import (
     ai_upload_image,
     ai_generate_question,
     ai_chat_history,
+    ai_task_status,
 )
 
 urlpatterns = [
@@ -42,9 +43,10 @@ urlpatterns = [
     # Practice App
     path("practice/", include("apps.practice.urls")),
     
-    # AI Chat (Ask Prof. Coco)
+    # AI Chat (SAT Buddy)
     path("ai/chat/", ai_chat_view, name="ai_chat"),
     path("ai/chat/message/", ai_chat_message, name="ai_chat_message"),
+    path("ai/task/<str:task_id>/", ai_task_status, name="ai_task_status"),
     path("ai/upload-image/", ai_upload_image, name="ai_upload_image"),
     path("ai/generate-question/", ai_generate_question, name="ai_generate_question"),
     path("ai/chat/history/", ai_chat_history, name="ai_chat_history"),

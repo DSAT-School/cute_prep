@@ -1,8 +1,9 @@
 """
-AI Chat views for Ask Prof. Coco feature.
+AI Chat views for SAT Buddy feature.
 """
 import json
 import os
+import uuid
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -10,6 +11,7 @@ from django.views.decorators.http import require_http_methods
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.conf import settings
+from django.core.cache import cache
 import google.generativeai as genai
 import logging
 
@@ -19,10 +21,10 @@ logger = logging.getLogger(__name__)
 @login_required
 def ai_chat_view(request):
     """
-    Main AI chat interface (Ask Prof. Coco).
+    Main AI chat interface (SAT Buddy).
     """
     context = {
-        'page_title': 'Ask Prof. Coco',
+        'page_title': 'SAT Buddy',
     }
     return render(request, 'ai_chat/chat.html', context)
 
@@ -31,12 +33,14 @@ def ai_chat_view(request):
 @require_http_methods(["POST"])
 def ai_chat_message(request):
     """
-    Handle AI chat messages using Google Gemini.
+    Handle AI chat messages using Google Gemini with async Celery processing.
     
     POST /ai/chat/message/
     Expected: { message: "user message", context: "optional context", images: ["image_id1", ...] }
-    Returns: { response: "AI response", success: true }
+    Returns: { task_id: "unique_id", success: true } for polling
     """
+    from apps.core.tasks import process_ai_chat_message
+    
     try:
         data = json.loads(request.body)
         user_message = data.get('message', '').strip()
@@ -50,95 +54,69 @@ def ai_chat_message(request):
                 'error': 'Message cannot be empty'
             }, status=400)
         
-        # Check if API key is configured
-        if not settings.GEMINI_API_KEY:
-            logger.error("GEMINI_API_KEY is not configured in settings")
-            return JsonResponse({
-                'success': False,
-                'error': 'AI service is not configured. Please contact administrator.'
-            }, status=500)
+        # Generate unique task ID
+        task_id = str(uuid.uuid4())
         
-        # Configure Gemini
+        # Check if Celery is available
+        celery_available = False
         try:
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-            # Use gemini-2.5-flash (latest stable model)
-            model = genai.GenerativeModel('gemini-2.5-flash')
-        except Exception as config_error:
-            logger.error(f"Failed to configure Gemini: {config_error}")
-            return JsonResponse({
-                'success': False,
-                'error': f'Failed to initialize AI service: {str(config_error)}'
-            }, status=500)
+            from celery import current_app
+            # Try to inspect Celery to see if workers are running
+            inspect = current_app.control.inspect()
+            stats = inspect.stats()
+            celery_available = stats is not None and len(stats) > 0
+        except Exception as e:
+            logger.info(f"Celery not available: {e}")
+            celery_available = False
         
-        # Build system prompt with SAT tutor context
-        system_prompt = """You are Prof. Coco, an expert SAT tutor with a friendly and encouraging personality.
-Your role is to help students prepare for the SAT exam by:
-- Explaining concepts clearly and concisely
-- Solving math problems step-by-step
-- Teaching reading comprehension strategies
-- Providing writing tips and grammar rules
-- Generating practice questions
-
-When presenting math equations, use LaTeX notation enclosed in \\( \\) for inline math or \\[ \\] for display math.
-For example: \\(x^2 + y^2 = r^2\\) or \\[\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}\\]
-
-IMPORTANT: Keep responses SHORT and PRECISE. Be direct and clear. Avoid lengthy explanations unless specifically asked. Use bullet points when listing multiple items.
-"""
-        
-        # Build content list for multimodal input
-        content = []
-        
-        # Add system prompt
-        full_prompt = system_prompt
-        
-        # Add conversation history for context (last 5 exchanges)
-        if conversation_history:
-            full_prompt += "\n\nPrevious conversation:"
-            for msg in conversation_history[-10:]:  # Last 10 messages (5 exchanges)
-                role = "Student" if msg.get('role') == 'user' else "Prof. Coco"
-                full_prompt += f"\n{role}: {msg.get('content', '')}"
-        
-        # Add current user message
-        full_prompt += "\n\nStudent question: " + user_message
-        
-        if context_info:
-            full_prompt += f"\n\nContext: {context_info}"
-        
-        content.append(full_prompt)
-        
-        # Add images if provided
-        if image_ids:
-            for image_id in image_ids:
-                image_dir = os.path.join(settings.MEDIA_ROOT, 'ai_uploads', image_id)
-                if os.path.exists(image_dir) and os.path.isdir(image_dir):
-                    # Read image files in the directory
-                    files = os.listdir(image_dir)
-                    for file in files:
-                        full_path = os.path.join(image_dir, file)
-                        if os.path.isfile(full_path):
-                            try:
-                                import PIL.Image
-                                with open(full_path, 'rb') as img_file:
-                                    img = PIL.Image.open(img_file)
-                                    content.append(img)
-                            except Exception as img_error:
-                                print(f"Error loading image {full_path}: {img_error}")
-        
-        # Generate response from Gemini
-        try:
-            response = model.generate_content(content)
-            ai_response = response.text
-        except Exception as gen_error:
-            logger.error(f"Gemini generation error: {gen_error}")
-            return JsonResponse({
-                'success': False,
-                'error': f'AI generation failed: {str(gen_error)}'
-            }, status=500)
+        if celery_available:
+            # Initialize cache with processing status
+            cache.set(f'ai_task_{task_id}', {
+                'status': 'processing',
+                'success': True
+            }, timeout=3600)
+            
+            # Queue async task
+            process_ai_chat_message.delay(
+                task_id=task_id,
+                user_message=user_message,
+                context_info=context_info,
+                image_ids=image_ids,
+                conversation_history=conversation_history,
+                user_id=request.user.id
+            )
+            logger.info(f"Task {task_id} queued for async processing")
+        else:
+            # Process synchronously
+            logger.info(f"Processing task {task_id} synchronously (Celery unavailable)")
+            cache.set(f'ai_task_{task_id}', {
+                'status': 'processing',
+                'success': True
+            }, timeout=3600)
+            
+            try:
+                # Call the task function directly (synchronously)
+                from apps.core.tasks import process_ai_chat_message as sync_task
+                sync_task(
+                    task_id=task_id,
+                    user_message=user_message,
+                    context_info=context_info,
+                    image_ids=image_ids,
+                    conversation_history=conversation_history,
+                    user_id=request.user.id
+                )
+            except Exception as sync_error:
+                logger.error(f"Sync processing failed: {sync_error}")
+                cache.set(f'ai_task_{task_id}', {
+                    'status': 'failed',
+                    'success': False,
+                    'error': f'Processing failed: {str(sync_error)}'
+                }, timeout=3600)
         
         return JsonResponse({
             'success': True,
-            'response': ai_response,
-            'timestamp': 'now'
+            'task_id': task_id,
+            'status': 'processing'
         })
         
     except json.JSONDecodeError as e:
@@ -152,6 +130,36 @@ IMPORTANT: Keep responses SHORT and PRECISE. Be direct and clear. Avoid lengthy 
         return JsonResponse({
             'success': False,
             'error': f'Error communicating with AI: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def ai_task_status(request, task_id):
+    """
+    Poll for AI task status and result.
+    
+    GET /ai/task/<task_id>/
+    Returns: { status: "processing|completed|failed", response: "...", success: true }
+    """
+    try:
+        # Check cache for task result
+        result = cache.get(f'ai_task_{task_id}')
+        
+        if result is None:
+            return JsonResponse({
+                'success': False,
+                'status': 'not_found',
+                'error': 'Task not found or expired'
+            }, status=404)
+        
+        return JsonResponse(result)
+        
+    except Exception as e:
+        logger.exception(f"Error checking task status: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
         }, status=500)
 
 
@@ -210,11 +218,14 @@ def ai_upload_image(request):
 @require_http_methods(["POST"])
 def ai_generate_question(request):
     """
-    Generate a practice question based on user's topic/preferences using Google Gemini.
+    Generate a practice question asynchronously using Google Gemini.
     
     POST /ai/generate-question/
     Expected: { topic: "topic name", difficulty: "easy/medium/hard" }
+    Returns: { task_id: "unique_id", success: true } for polling
     """
+    from apps.core.tasks import process_ai_question_generation
+    
     try:
         data = json.loads(request.body)
         topic = data.get('topic', '').strip()
@@ -226,91 +237,68 @@ def ai_generate_question(request):
                 'error': 'Topic is required'
             }, status=400)
         
-        # Configure Gemini
+        # Check if API key is configured
         if not settings.GEMINI_API_KEY:
-            logger.error("GEMINI_API_KEY not configured")
             return JsonResponse({
                 'success': False,
-                'error': 'Gemini API key not configured. Please add GEMINI_API_KEY to .env file.'
+                'error': 'Gemini API key not configured.'
             }, status=500)
         
+        # Generate unique task ID
+        task_id = str(uuid.uuid4())
+        
+        # Check if Celery is available
+        celery_available = False
         try:
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-            # Use gemini-2.5-flash with JSON response format
-            model = genai.GenerativeModel(
-                'gemini-2.5-flash',
-                generation_config={
-                    "response_mime_type": "application/json"
-                }
+            from celery import current_app
+            inspect = current_app.control.inspect()
+            stats = inspect.stats()
+            celery_available = stats is not None and len(stats) > 0
+        except Exception as e:
+            logger.info(f"Celery not available for question generation: {e}")
+            celery_available = False
+        
+        if celery_available:
+            # Initialize cache with processing status
+            cache.set(f'ai_task_{task_id}', {
+                'status': 'processing',
+                'success': True
+            }, timeout=3600)
+            
+            # Queue async task
+            process_ai_question_generation.delay(
+                task_id=task_id,
+                topic=topic,
+                difficulty=difficulty
             )
-        except Exception as config_error:
-            logger.error(f"Failed to configure Gemini in generate_question: {config_error}")
-            return JsonResponse({
-                'success': False,
-                'error': f'Failed to configure Gemini: {str(config_error)}'
-            }, status=500)
-        
-        # Build prompt for question generation with JSON schema
-        prompt = f"""Generate a {difficulty} SAT practice question about {topic}.
-
-Return a JSON object with this exact structure:
-{{
-    "question": "The question text here",
-    "options": {{
-        "A": "Option A text",
-        "B": "Option B text", 
-        "C": "Option C text",
-        "D": "Option D text"
-    }},
-    "correct_answer": "A",
-    "explanation": "Detailed explanation here"
-}}
-
-CRITICAL Guidelines:
-- The question MUST be SELF-CONTAINED and COMPLETE - include all necessary information
-- DO NOT reference external passages, texts, or materials that aren't provided
-- If the question requires a passage (reading comprehension), INCLUDE THE FULL PASSAGE in the question text
-- For math questions, provide all given values and constraints in the question itself
-- Make the question realistic and follow SAT formatting standards
-- Provide 4 answer choices labeled A, B, C, D
-- Indicate the correct answer (A, B, C, or D)
-- Provide a clear, concise explanation of why the answer is correct
-- Use proper spacing in text (e.g., "$10 each" not "$10each")
-- For currency, use $ symbol with proper spacing
-- For math expressions in JSON: 
-  * Simple math: use × for multiply, ÷ for divide, ² ³ for exponents, ≤ ≥ for inequalities, √ for square root
-  * Complex equations: use LaTeX with DOUBLE backslashes (\\\\) for proper JSON escaping
-  * Example: "\\\\(x^2 + 2x + 1\\\\)" or "\\\\[\\\\frac{{a}}{{b}}\\\\]"
-- Keep numbers and units properly formatted with spaces
-- Keep it at {difficulty} difficulty level"""
-        
-        # Generate question
-        try:
-            response = model.generate_content(prompt)
-            response_text = response.text.strip()
-        except Exception as gen_error:
-            logger.error(f"Gemini generation error in generate_question: {gen_error}")
-            return JsonResponse({
-                'success': False,
-                'error': f'Failed to generate content from Gemini: {str(gen_error)}'
-            }, status=500)
-        
-        # Parse JSON response (should be valid JSON since we set response_mime_type)
-        response_text = response_text.strip()
-        
-        try:
-            generated_question = json.loads(response_text)
-        except json.JSONDecodeError as json_error:
-            logger.error(f"JSON parsing error in generate_question: {json_error}. Response: {response_text[:200]}")
-            return JsonResponse({
-                'success': False,
-                'error': f'Failed to parse AI response as JSON: {str(json_error)}',
-                'raw_response': response_text[:500]  # First 500 chars for debugging
-            }, status=500)
+            logger.info(f"Question generation task {task_id} queued for async processing")
+        else:
+            # Process synchronously
+            logger.info(f"Processing question generation task {task_id} synchronously (Celery unavailable)")
+            cache.set(f'ai_task_{task_id}', {
+                'status': 'processing',
+                'success': True
+            }, timeout=3600)
+            
+            try:
+                from apps.core.tasks import process_ai_question_generation as sync_task
+                sync_task(
+                    task_id=task_id,
+                    topic=topic,
+                    difficulty=difficulty
+                )
+            except Exception as sync_error:
+                logger.error(f"Sync question generation failed: {sync_error}")
+                cache.set(f'ai_task_{task_id}', {
+                    'status': 'failed',
+                    'success': False,
+                    'error': f'Question generation failed: {str(sync_error)}'
+                }, timeout=3600)
         
         return JsonResponse({
             'success': True,
-            'question': generated_question
+            'task_id': task_id,
+            'status': 'processing'
         })
         
     except json.JSONDecodeError as e:
