@@ -2006,6 +2006,12 @@ async function toggleMastered() {
         
         const data = await response.json();
         
+        // Check for error
+        if (data.error || data.success === false) {
+            alert(data.error || 'You must attempt this question before marking it as mastered.');
+            return;
+        }
+        
         if (data.mastered) {
             masteredQuestions.add(currentQuestionId);
             masteredBtn.classList.add('mastered');
