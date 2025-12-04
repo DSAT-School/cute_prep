@@ -330,7 +330,10 @@
     }
 
     .empty-state .btn {
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
         padding: 0.75rem 1.5rem;
         background: #9967b9;
         color: white;
@@ -343,6 +346,10 @@
 
     .empty-state .btn:hover {
         background: #7c4d9a;
+    }
+
+    .empty-state .btn i {
+        font-size: 0.875rem;
     }
 
     .bulk-actions {
@@ -484,11 +491,11 @@
 
     <!-- Filters -->
     <div class="filters-section">
-        <form method="get" action="{% url 'practice:mistake_log' %}">
+        <form method="get" action="{% url 'practice:mistake_log' %}" id="filterForm">
             <div class="filters-grid">
                 <div class="filter-group">
                     <label for="domain">Domain</label>
-                    <select name="domain" id="domain" onchange="this.form.submit()">
+                    <select name="domain" id="domain" onchange="handleDomainChange()">
                         <option value="">All Domains</option>
                         {% for domain in all_domains %}
                         <option value="{{ domain.domain_code }}" {% if selected_domain == domain.domain_code %}selected{% endif %}>
@@ -500,7 +507,7 @@
 
                 <div class="filter-group">
                     <label for="skill">Skill</label>
-                    <select name="skill" id="skill" onchange="this.form.submit()" {% if not selected_domain %}disabled{% endif %}>
+                    <select name="skill" id="skill" onchange="handleFilterChange()">
                         <option value="">All Skills</option>
                         {% for skill in domain_skills %}
                         <option value="{{ skill.skill_code }}" {% if selected_skill == skill.skill_code %}selected{% endif %}>
@@ -512,7 +519,7 @@
 
                 <div class="filter-group">
                     <label for="date_range">Date Range</label>
-                    <select name="date_range" id="date_range" onchange="this.form.submit()">
+                    <select name="date_range" id="date_range" onchange="handleFilterChange()">
                         <option value="all" {% if selected_date_range == 'all' %}selected{% endif %}>All Time</option>
                         <option value="week" {% if selected_date_range == 'week' %}selected{% endif %}>Last 7 Days</option>
                         <option value="month" {% if selected_date_range == 'month' %}selected{% endif %}>Last 30 Days</option>
@@ -522,12 +529,18 @@
 
                 <div class="filter-group">
                     <label for="sort">Sort By</label>
-                    <select name="sort" id="sort" onchange="this.form.submit()">
+                    <select name="sort" id="sort" onchange="handleFilterChange()">
                         <option value="recent" {% if selected_sort == 'recent' %}selected{% endif %}>Most Recent</option>
                         <option value="oldest" {% if selected_sort == 'oldest' %}selected{% endif %}>Oldest First</option>
                         <option value="domain" {% if selected_sort == 'domain' %}selected{% endif %}>By Domain</option>
                         <option value="skill" {% if selected_sort == 'skill' %}selected{% endif %}>By Skill</option>
                     </select>
+                </div>
+
+                <div class="filter-group" style="display: flex; gap: 0.5rem; align-items: end;">
+                    <button type="button" onclick="resetFilters()" class="filter-group button" style="width: 100%; padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
+                        <i class="fas fa-redo"></i> Reset
+                    </button>
                 </div>
             </div>
         </form>
@@ -575,62 +588,72 @@
                             <i class="fas fa-redo"></i> Retry
                         </button>
                         <button class="action-btn view" onclick="toggleMistakeDetails('mistake-{{ mistake.id }}')">
-                            <i class="fas fa-eye"></i> <span class="view-text">View</span>
+                            <i class="fas fa-eye"></i> <span class="view-text">Details</span>
                         </button>
                     </div>
                 </div>
 
+                <!-- Question Stem - Always Visible -->
+                <div class="question-text" style="margin-bottom: 1rem;">
+                    {{ mistake.question.stem|safe }}
+                </div>
+
+                <!-- Answer Comparison - Always Visible -->
+                <div class="answer-comparison" style="margin-bottom: 1rem;">
+                    <div class="answer-box incorrect">
+                        <div class="answer-label">
+                            <i class="fas fa-times-circle"></i> Your Answer
+                        </div>
+                        <div class="answer-text">
+                            <strong>{{ mistake.user_answer }}:</strong> 
+                            {% if mistake.question.mcq_option_list %}
+                                {{ mistake.question.mcq_option_list|get_item:mistake.user_answer|safe }}
+                            {% else %}
+                                {{ mistake.user_answer }}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="answer-box correct">
+                        <div class="answer-label">
+                            <i class="fas fa-check-circle"></i> Correct Answer
+                        </div>
+                        <div class="answer-text">
+                            <strong>{{ mistake.correct_answer }}:</strong>
+                            {% if mistake.question.mcq_option_list %}
+                                {{ mistake.question.mcq_option_list|get_item:mistake.correct_answer|safe }}
+                            {% else %}
+                                {{ mistake.correct_answer }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expandable Details Section -->
                 <div class="mistake-content" id="mistake-{{ mistake.id }}" style="display: none;">
                     {% if mistake.question.stimulus %}
-                    <div class="question-text" style="background: #f9fafb; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
-                        <strong>Context:</strong>
+                    <div class="question-text" style="background: #f9fafb; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; border-left: 4px solid #6b7280;">
+                        <strong style="color: #374151; font-size: 0.875rem;">
+                            <i class="fas fa-book-open"></i> Context/Passage:
+                        </strong>
                         <div style="margin-top: 0.5rem;">{{ mistake.question.stimulus|safe }}</div>
                     </div>
                     {% endif %}
 
-                    <div class="question-text">
-                        <strong>Question:</strong>
-                        <div style="margin-top: 0.5rem;">{{ mistake.question.stem|safe }}</div>
-                    </div>
-
-                    <div class="answer-comparison">
-                        <div class="answer-box incorrect">
-                            <div class="answer-label">
-                                <i class="fas fa-times-circle"></i> Your Answer
-                            </div>
-                            <div class="answer-text">
-                                <strong>{{ mistake.user_answer }}:</strong> 
-                                {% if mistake.question.mcq_option_list %}
-                                    {{ mistake.question.mcq_option_list|get_item:mistake.user_answer|safe }}
-                                {% else %}
-                                    {{ mistake.user_answer }}
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="answer-box correct">
-                            <div class="answer-label">
-                                <i class="fas fa-check-circle"></i> Correct Answer
-                            </div>
-                            <div class="answer-text">
-                                <strong>{{ mistake.correct_answer }}:</strong>
-                                {% if mistake.question.mcq_option_list %}
-                                    {{ mistake.question.mcq_option_list|get_item:mistake.correct_answer|safe }}
-                                {% else %}
-                                    {{ mistake.correct_answer }}
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-
                     {% if mistake.question.explanation %}
-                    <div style="margin-top: 1rem; padding: 1rem; background: #eff6ff; border-radius: 6px; border-left: 4px solid #3b82f6;">
+                    <div style="padding: 1rem; background: #eff6ff; border-radius: 6px; border-left: 4px solid #3b82f6;">
                         <strong style="color: #1e40af; font-size: 0.875rem;">
                             <i class="fas fa-lightbulb"></i> Explanation:
                         </strong>
                         <div style="margin-top: 0.5rem; font-family: 'Noto Serif', serif; font-size: 0.875rem; color: #262632;">
                             {{ mistake.question.explanation|safe }}
                         </div>
+                    </div>
+                    {% endif %}
+
+                    {% if not mistake.question.stimulus and not mistake.question.explanation %}
+                    <div style="text-align: center; padding: 1rem; color: #6b7280; font-size: 0.875rem;">
+                        <i class="fas fa-info-circle"></i> No additional details available for this question.
                     </div>
                     {% endif %}
                 </div>
@@ -670,7 +693,8 @@
             <h3>No Mistakes Found!</h3>
             <p>Great job! You haven't made any mistakes yet, or there are no mistakes matching your filters.</p>
             <a href="{% url 'practice:modules' %}" class="btn">
-                <i class="fas fa-book"></i> Start Practicing
+                <i class="fas fa-book"></i>
+                <span>Start Practicing</span>
             </a>
         </div>
     {% endif %}
@@ -685,12 +709,34 @@ function toggleMistakeDetails(id) {
     if (element.style.display === 'none') {
         element.style.display = 'block';
         viewText.textContent = 'Hide';
-        btn.querySelector('i').className = 'fas fa-eye-slash';
+        btn.querySelector('i').className = 'fas fa-chevron-up';
     } else {
         element.style.display = 'none';
-        viewText.textContent = 'View';
+        viewText.textContent = 'Details';
         btn.querySelector('i').className = 'fas fa-eye';
     }
+}
+
+function handleDomainChange() {
+    const form = document.getElementById('filterForm');
+    const domainSelect = document.getElementById('domain');
+    const skillSelect = document.getElementById('skill');
+    
+    // If domain is cleared, also clear skill
+    if (!domainSelect.value) {
+        skillSelect.value = '';
+    }
+    
+    form.submit();
+}
+
+function handleFilterChange() {
+    const form = document.getElementById('filterForm');
+    form.submit();
+}
+
+function resetFilters() {
+    window.location.href = '{% url "practice:mistake_log" %}';
 }
 
 function askAIAboutMistake(questionId, questionIdentifier) {

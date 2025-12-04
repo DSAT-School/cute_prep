@@ -13,7 +13,7 @@ from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
-from .models import Question, PracticeSession, UserAnswer, MarkedQuestion
+from .models import Question, PracticeSession, UserAnswer, MarkedQuestion, MasteredQuestion
 
 
 @login_required
@@ -64,7 +64,9 @@ def practice_modules_view(request):
         question_count=Count('id')
     ).order_by('domain_name')
     
-    # Get all skills grouped by domain with question counts (filtered)
+    # Get all skills grouped by domain with question counts and statistics (filtered)
+    from django.db.models import Avg, Q
+    
     skills_by_domain = {}
     for domain in domains:
         skills = questions.filter(
@@ -75,7 +77,54 @@ def practice_modules_view(request):
             question_count=Count('id')
         ).order_by('skill_name')
         
-        skills_by_domain[domain['domain_code']] = list(skills)
+        # Calculate statistics for each skill
+        skills_list = []
+        for skill in skills:
+            # Get all user answers for this skill
+            user_answers = UserAnswer.objects.filter(
+                user=request.user,
+                question__skill_code=skill['skill_code']
+            )
+            
+            total_attempted = user_answers.count()
+            correct_answers = user_answers.filter(is_correct=True).count()
+            
+            # Calculate accuracy and progress
+            if total_attempted > 0:
+                accuracy = round((correct_answers / total_attempted) * 100, 1)
+                progress = min(round((total_attempted / skill['question_count']) * 100), 100)
+            else:
+                accuracy = 0
+                progress = 0
+            
+            # Get last active session for this specific skill
+            last_skill_session = PracticeSession.objects.filter(
+                user=request.user,
+                skill_code=skill['skill_code'],
+                status='active'
+            ).order_by('-started_at').first()
+            
+            last_question_id = None
+            if last_skill_session:
+                # Get the last answered question in this session
+                last_answer = UserAnswer.objects.filter(
+                    session=last_skill_session
+                ).order_by('-answered_at').first()
+                
+                if last_answer:
+                    last_question_id = str(last_answer.question_id)
+            
+            skill_dict = dict(skill)
+            skill_dict['total_attempted'] = total_attempted
+            skill_dict['correct_answers'] = correct_answers
+            skill_dict['accuracy'] = accuracy
+            skill_dict['progress'] = progress
+            skill_dict['last_session'] = last_skill_session
+            skill_dict['last_question_id'] = last_question_id
+            
+            skills_list.append(skill_dict)
+        
+        skills_by_domain[domain['domain_code']] = skills_list
     
     # Get all providers for filter options (unfiltered for checkbox list)
     all_providers = Question.objects.values(
@@ -150,6 +199,7 @@ def practice_view(request):
     question_type_filter = request.GET.get('type')
     session_id_param = request.GET.get('session')
     question_id_param = request.GET.get('question')
+    resume_from_param = request.GET.get('resume_from')  # For resuming from specific question
     mistakes_mode = request.GET.get('mistakes') == 'true'
     retry_mode = request.GET.get('retry') == 'true'
     date_range = request.GET.get('date_range', 'all')
@@ -222,21 +272,76 @@ def practice_view(request):
     # Get total count
     total_questions = questions.count()
     
-    # Get all questions for navigation (IDs only)
-    question_ids = list(questions.values_list('id', flat=True))
+    # Handle resume mode with custom question ordering
+    resume_mode = request.GET.get('resume') == 'true'
+    question_ids = []
+    
+    if resume_mode and skill_filter:
+        # Custom ordering for resume: solved -> wrong attempts -> fresh questions
+        
+        # Get all answered questions for this skill (ordered by answered_at)
+        answered_correctly = UserAnswer.objects.filter(
+            user=request.user,
+            question__skill_code=skill_filter,
+            is_correct=True
+        ).values_list('question_id', flat=True).distinct()
+        
+        # Get wrong attempts for this skill
+        answered_incorrectly = UserAnswer.objects.filter(
+            user=request.user,
+            question__skill_code=skill_filter,
+            is_correct=False
+        ).values_list('question_id', flat=True).distinct()
+        
+        # Get all question IDs for this skill
+        all_skill_question_ids = set(questions.values_list('id', flat=True))
+        
+        # Get fresh questions (not attempted)
+        fresh_question_ids = all_skill_question_ids - set(answered_correctly) - set(answered_incorrectly)
+        
+        # Build custom order: answered correctly -> wrong attempts -> fresh
+        question_ids = (
+            list(answered_correctly) + 
+            list(answered_incorrectly) + 
+            list(fresh_question_ids)
+        )
+        
+        # Find last answered question to resume from
+        last_answer = UserAnswer.objects.filter(
+            user=request.user,
+            question__skill_code=skill_filter
+        ).order_by('-answered_at').first()
+        
+        if last_answer and last_answer.question_id in question_ids:
+            # Start from the question after the last answered one
+            last_index = question_ids.index(last_answer.question_id)
+            # Reorder to start from next question after last answered
+            question_ids = question_ids[last_index + 1:] + question_ids[:last_index + 1]
+    else:
+        # Normal mode: get questions in default order
+        question_ids = list(questions.values_list('id', flat=True))
     
     # Determine starting question
     first_question = None
     current_index = 1
     
-    if question_id_param and question_id_param in [str(qid) for qid in question_ids]:
-        # Start from specified question
-        first_question = questions.filter(id=question_id_param).first()
-        if first_question:
-            current_index = question_ids.index(first_question.id) + 1
+    if resume_mode:
+        # In resume mode, start from first question in custom ordered list
+        if question_ids:
+            first_question = Question.objects.filter(id=question_ids[0]).first()
+            current_index = 1
     else:
-        # Start from first question
-        first_question = questions.first() if total_questions > 0 else None
+        # Priority: resume_from > question_id > first question
+        question_param = resume_from_param or question_id_param
+        
+        if question_param and question_param in [str(qid) for qid in question_ids]:
+            # Start from specified question (for resume or direct access)
+            first_question = questions.filter(id=question_param).first()
+            if first_question:
+                current_index = question_ids.index(first_question.id) + 1
+        else:
+            # Start from first question
+            first_question = questions.first() if total_questions > 0 else None
     
     # Create or reuse session
     if not session:
@@ -358,6 +463,22 @@ def check_answer(request, question_id):
                         session.correct_answers += 1
                     session.total_time_seconds += int(time_taken)
                     session.save()
+                    
+                    # Auto-master if answered correctly on first attempt
+                    if is_correct:
+                        # Check if this is the first attempt for this question
+                        previous_attempts = UserAnswer.objects.filter(
+                            user=request.user,
+                            question=question
+                        ).exclude(id=answer.id).count()
+                        
+                        if previous_attempts == 0:
+                            # First attempt and correct - auto-master
+                            from .models import MasteredQuestion
+                            MasteredQuestion.objects.get_or_create(
+                                user=request.user,
+                                question=question
+                            )
                     
             except PracticeSession.DoesNotExist:
                 pass  # Session not found, continue without saving
@@ -550,6 +671,82 @@ def get_marked_questions(request):
         
         return JsonResponse({
             'marked_question_ids': list(marked_questions)
+        })
+    
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def master_question(request):
+    """
+    Toggle mastered status on a question.
+    User must have attempted the question before marking it as mastered.
+    
+    POST /practice/api/master-question/
+    Body: { question_id: "uuid" }
+    Returns: { mastered: true/false, error: "message" }
+    """
+    try:
+        data = json.loads(request.body)
+        question_id = data.get('question_id')
+        
+        if not question_id:
+            return JsonResponse({'error': 'Question ID is required'}, status=400)
+        
+        question = get_object_or_404(Question, id=question_id)
+        
+        # Check if user has attempted this question
+        has_attempted = UserAnswer.objects.filter(
+            user=request.user,
+            question=question
+        ).exists()
+        
+        if not has_attempted:
+            return JsonResponse({
+                'success': False,
+                'error': 'You must attempt this question before marking it as mastered.'
+            }, status=400)
+        
+        # Check if already mastered
+        mastered_question = MasteredQuestion.objects.filter(
+            user=request.user,
+            question=question
+        ).first()
+        
+        if mastered_question:
+            # Unmark mastered - remove from database
+            mastered_question.delete()
+            return JsonResponse({'mastered': False})
+        else:
+            # Mark as mastered - add to database
+            MasteredQuestion.objects.create(
+                user=request.user,
+                question=question
+            )
+            return JsonResponse({'mastered': True})
+    
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_mastered_questions(request):
+    """
+    Get list of question IDs that are mastered by the current user.
+    
+    GET /practice/api/mastered-questions/
+    Returns: { mastered_question_ids: ["uuid1", "uuid2", ...] }
+    """
+    try:
+        mastered_questions = MasteredQuestion.objects.filter(
+            user=request.user
+        ).values_list('question_id', flat=True)
+        
+        return JsonResponse({
+            'mastered_question_ids': [str(qid) for qid in mastered_questions]
         })
     
     except Exception as e:

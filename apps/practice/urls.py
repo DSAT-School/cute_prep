@@ -29,5 +29,7 @@ urlpatterns = [
     path('api/end-practice/', views.end_practice, name='end_practice'),
     path('api/mark-question/', views.mark_question_for_review, name='mark_question'),
     path('api/marked-questions/', views.get_marked_questions, name='marked_questions'),
+    path('api/master-question/', views.master_question, name='master_question'),
+    path('api/mastered-questions/', views.get_mastered_questions, name='mastered_questions'),
     path('api/session-answers/<uuid:session_id>/', views.get_session_answers, name='session_answers'),
 ]

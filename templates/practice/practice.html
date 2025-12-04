@@ -256,6 +256,39 @@
         border-color: #7c4d9a;
     }
 
+    .mastered-toggle-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        border: 2px solid #d1d5db;
+        border-radius: 6px;
+        background: white;
+        color: #6b7280;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 1rem;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .mastered-toggle-btn:hover {
+        background: #f9fafb;
+        border-color: #9ca3af;
+    }
+
+    .mastered-toggle-btn.mastered {
+        background: #10b981;
+        color: white;
+        border-color: #10b981;
+    }
+
+    .mastered-toggle-btn.mastered:hover {
+        background: #059669;
+        border-color: #059669;
+    }
+
     .question-text {
         font-size: 1.125rem;
         color: #1f2937;
@@ -559,6 +592,11 @@
         }
 
         .mark-toggle-btn {
+            font-size: 0.75rem;
+            padding: 0.375rem 0.75rem;
+        }
+
+        .mastered-toggle-btn {
             font-size: 0.75rem;
             padding: 0.375rem 0.75rem;
         }
@@ -1139,6 +1177,10 @@
                         <i class="fas fa-flag"></i>
                         <span id="mark-btn-text">Mark</span>
                     </button>
+                    <button class="mastered-toggle-btn" id="mastered-btn" onclick="toggleMastered()">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="mastered-btn-text">Mastered</span>
+                    </button>
                     <button class="nav-btn" id="show-explanation-btn" onclick="toggleExplanation()" style="display: none; background: #fdcc4c; color: #262632; padding: 0.375rem 0.75rem; font-size: 0.75rem;">
                         <i class="fas fa-lightbulb"></i> Show Explanation
                     </button>
@@ -1269,6 +1311,7 @@ let selectedAnswer = null;
 let userAnswers = {};
 let answeredCorrectly = {}; // Track which questions were answered correctly
 let markedForReview = new Set();
+let masteredQuestions = new Set(); // Track which questions are mastered
 let strikethroughOptions = {};
 let answerChecked = {}; // Track which questions have been checked
 let navigationWarningShown = false; // Track if warning tooltip was shown
@@ -1717,6 +1760,17 @@ async function loadQuestion(index) {
             markBtnText.textContent = 'Mark';
         }
         
+        // Update mastered button
+        const masteredBtn = document.getElementById('mastered-btn');
+        const masteredBtnText = document.getElementById('mastered-btn-text');
+        if (masteredQuestions.has(questionId)) {
+            masteredBtn.classList.add('mastered');
+            masteredBtnText.textContent = 'Mastered';
+        } else {
+            masteredBtn.classList.remove('mastered');
+            masteredBtnText.textContent = 'Mastered';
+        }
+        
         // Update navigation buttons
         document.getElementById('back-btn').disabled = index === 0;
         const nextBtn = document.getElementById('next-btn');
@@ -1932,6 +1986,48 @@ async function toggleMarkForReview() {
     }
 }
 
+// Toggle mastered status - saves to backend
+async function toggleMastered() {
+    const currentQuestionId = questionIds[currentIndex];
+    const masteredBtn = document.getElementById('mastered-btn');
+    const masteredBtnText = document.getElementById('mastered-btn-text');
+    
+    try {
+        const response = await fetch('/practice/api/master-question/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                question_id: currentQuestionId
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.mastered) {
+            masteredQuestions.add(currentQuestionId);
+            masteredBtn.classList.add('mastered');
+            masteredBtnText.textContent = 'Mastered';
+        } else {
+            masteredQuestions.delete(currentQuestionId);
+            masteredBtn.classList.remove('mastered');
+            masteredBtnText.textContent = 'Mastered';
+        }
+    } catch (error) {
+        console.error('Error toggling mastered status:', error);
+        // Revert button state on error
+        if (masteredBtn.classList.contains('mastered')) {
+            masteredBtn.classList.remove('mastered');
+            masteredBtnText.textContent = 'Mastered';
+        } else {
+            masteredBtn.classList.add('mastered');
+            masteredBtnText.textContent = 'Mastered';
+        }
+    }
+}
+
 // Load marked questions on page load
 async function loadMarkedQuestions() {
     try {
@@ -1943,6 +2039,20 @@ async function loadMarkedQuestions() {
         }
     } catch (error) {
         console.error('Error loading marked questions:', error);
+    }
+}
+
+// Load mastered questions on page load
+async function loadMasteredQuestions() {
+    try {
+        const response = await fetch('/practice/api/mastered-questions/');
+        const data = await response.json();
+        
+        if (data.mastered_question_ids) {
+            masteredQuestions = new Set(data.mastered_question_ids);
+        }
+    } catch (error) {
+        console.error('Error loading mastered questions:', error);
     }
 }
 
@@ -1968,6 +2078,9 @@ async function loadSessionAnswers() {
 document.addEventListener('DOMContentLoaded', async function() {
     // Load marked questions from backend
     await loadMarkedQuestions();
+    
+    // Load mastered questions from backend
+    await loadMasteredQuestions();
     
     // Load session answers from backend (for resumed sessions)
     await loadSessionAnswers();

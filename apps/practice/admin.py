@@ -6,7 +6,7 @@ Simplified admin for single Question model.
 from django.contrib import admin
 from django.utils.html import format_html, strip_tags
 
-from .models import Question, PracticeSession, UserAnswer, MarkedQuestion
+from .models import Question, PracticeSession, UserAnswer, MarkedQuestion, MasteredQuestion
 
 
 @admin.register(Question)
@@ -192,6 +192,38 @@ class MarkedQuestionAdmin(admin.ModelAdmin):
     ]
     readonly_fields = ['id', 'marked_at']
     ordering = ['-marked_at']
+    
+    def question_identifier(self, obj):
+        """Display question identifier."""
+        return obj.question.identifier_id
+    question_identifier.short_description = 'Question'
+    
+    def domain_skill(self, obj):
+        """Display domain and skill."""
+        return f"{obj.question.domain_code} - {obj.question.skill_name}"
+    domain_skill.short_description = 'Domain & Skill'
+
+
+@admin.register(MasteredQuestion)
+class MasteredQuestionAdmin(admin.ModelAdmin):
+    """Admin for MasteredQuestion model."""
+    
+    list_display = [
+        'user',
+        'question_identifier',
+        'domain_skill',
+        'mastered_at'
+    ]
+    list_filter = ['mastered_at', 'user']
+    search_fields = [
+        'user__email',
+        'user__username',
+        'question__identifier_id',
+        'question__domain_name',
+        'question__skill_name'
+    ]
+    readonly_fields = ['id', 'mastered_at']
+    ordering = ['-mastered_at']
     
     def question_identifier(self, obj):
         """Display question identifier."""

@@ -373,3 +373,48 @@ class MarkedQuestion(models.Model):
     
     def __str__(self):
         return f"{self.user.email} - {self.question.identifier_id}"
+
+
+class MasteredQuestion(models.Model):
+    """
+    Questions marked as mastered by users.
+    
+    Tracks questions that users have fully understood and mastered.
+    """
+    
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        help_text=_("Unique identifier")
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='mastered_questions',
+        help_text=_("User who mastered the question")
+    )
+    question = models.ForeignKey(
+        Question,
+        on_delete=models.CASCADE,
+        related_name='mastered_by_users',
+        help_text=_("Question that was mastered")
+    )
+    mastered_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text=_("When the question was marked as mastered")
+    )
+    
+    class Meta:
+        db_table = 'practice_mastered_questions'
+        verbose_name = _("Mastered Question")
+        verbose_name_plural = _("Mastered Questions")
+        ordering = ['-mastered_at']
+        unique_together = [['user', 'question']]
+        indexes = [
+            models.Index(fields=['user', 'mastered_at']),
+            models.Index(fields=['question']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.email} - {self.question.identifier_id}"

@@ -7,21 +7,21 @@
 <div class="min-h-screen bg-gray-50">
     <!-- Header -->
     <div class="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div class="max-w-[1920px] mx-auto px-8 py-4">
-            <div class="flex items-center justify-between">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h1 class="text-xl font-bold text-gray-900">Practice</h1>
-                    <p class="text-sm text-gray-500 mt-1">Choose your practice module</p>
+                    <h1 class="text-lg sm:text-xl font-bold text-gray-900">Practice</h1>
+                    <p class="text-xs sm:text-sm text-gray-500 mt-1">Choose your practice module</p>
                 </div>
-                <div class="flex items-center gap-3">
-                    <button id="filterBtn" class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                    <button id="filterBtn" class="flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 flex-1 sm:flex-none justify-center">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
                         </svg>
-                        Filters
+                        <span class="hidden sm:inline">Filters</span>
                     </button>
-                    <a href="{% url 'practice:practice' %}" class="px-4 py-2 text-sm font-semibold text-white bg-primary rounded-lg hover:bg-purple-700">
-                        Start Random Practice
+                    <a href="{% url 'practice:practice' %}" class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-primary rounded-lg hover:bg-purple-700 flex-1 sm:flex-none text-center whitespace-nowrap">
+                        Random Practice
                     </a>
                 </div>
             </div>
@@ -30,8 +30,8 @@
 
     <!-- Filter Panel (Hidden by default) -->
     <div id="filterPanel" class="hidden bg-white border-b border-gray-200">
-        <div class="max-w-[1920px] mx-auto px-8 py-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <!-- Provider Filter -->
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-2">Provider</label>
@@ -89,25 +89,29 @@
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-[1920px] mx-auto px-8 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <!-- Resume Last Session Card -->
         {% if last_session %}
-        <div class="bg-gradient-to-r from-primary to-purple-600 rounded-lg p-6 mb-6 text-white">
-            <div class="flex items-center justify-between">
-                <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-gradient-to-r from-primary to-purple-600 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6 text-white shadow-lg">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div class="flex-1 w-full">
+                    <div class="flex items-center gap-2 mb-3">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                        <h3 class="text-lg font-bold">Resume Last Session</h3>
+                        <h3 class="text-base sm:text-lg font-bold">Resume Last Session</h3>
                     </div>
-                    <div class="text-sm opacity-90 space-y-1">
-                        <p><strong>Domain:</strong> {{ last_session.domain_name }} • <strong>Skill:</strong> {{ last_session.skill_name }}</p>
-                        <p><strong>Progress:</strong> {{ last_session.answered_count }}/{{ last_session.total_questions }} questions answered</p>
+                    <div class="text-xs sm:text-sm opacity-90 space-y-1.5">
+                        <p class="flex flex-wrap items-center gap-x-2">
+                            <span><strong>Domain:</strong> {{ last_session.domain_name }}</span>
+                            <span class="hidden sm:inline">•</span>
+                            <span><strong>Skill:</strong> {{ last_session.skill_name }}</span>
+                        </p>
+                        <p><strong>Progress:</strong> {{ last_session.answered_count }}/{{ last_session.total_questions }} questions</p>
                         <p><strong>Started:</strong> {{ last_session.started_at|timesince }} ago</p>
                     </div>
                 </div>
-                <a href="{% url 'practice:resume_session' last_session.id %}" class="px-6 py-3 bg-white text-primary rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors">
+                <a href="{% url 'practice:resume_session' last_session.id %}" class="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-primary rounded-lg text-xs sm:text-sm font-semibold hover:bg-gray-100 transition-colors text-center whitespace-nowrap shadow-md">
                     Continue Practice →
                 </a>
             </div>
@@ -115,62 +119,119 @@
         {% endif %}
 
         <!-- Category Tabs -->
-        <div class="flex items-center gap-2 mb-6">
-            <button class="category-tab {% if subject == 'reading' %}active bg-primary text-white{% else %}bg-white text-gray-700 border border-gray-300{% endif %} px-4 py-2 text-sm font-semibold rounded-lg hover:bg-gray-50" data-category="reading">
+        <div class="flex items-center gap-2 mb-4 sm:mb-6 overflow-x-auto pb-2">
+            <button class="category-tab {% if subject == 'reading' %}active bg-primary text-white{% else %}bg-white text-gray-700 border border-gray-300{% endif %} px-4 sm:px-6 py-2 text-xs sm:text-sm font-semibold rounded-lg hover:bg-gray-50 whitespace-nowrap" data-category="reading">
                 Reading & Writing
             </button>
-            <button class="category-tab {% if subject == 'math' %}active bg-primary text-white{% else %}bg-white text-gray-700 border border-gray-300{% endif %} px-4 py-2 text-sm font-semibold rounded-lg hover:bg-gray-50" data-category="math">
+            <button class="category-tab {% if subject == 'math' %}active bg-primary text-white{% else %}bg-white text-gray-700 border border-gray-300{% endif %} px-4 sm:px-6 py-2 text-xs sm:text-sm font-semibold rounded-lg hover:bg-gray-50 whitespace-nowrap" data-category="math">
                 Math
             </button>
         </div>
 
         <!-- Domains Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {% for domain in domains %}
-            <div class="domain-card bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+            {% with domain_skills=skills_by_domain|get_item:domain.domain_code %}
+            {% with total_attempted=domain_skills|sum_attr:'total_attempted' total_correct=domain_skills|sum_attr:'correct_answers' domain_accuracy=domain_skills|calculate_domain_accuracy %}
+            <div class="domain-card bg-white rounded-lg border border-gray-200 p-4 hover:shadow-lg transition-all duration-200">
                 <!-- Domain Header -->
-                <div class="flex items-start justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <span class="text-lg font-bold text-primary">{{ domain.domain_code }}</span>
+                <div class="flex items-start justify-between mb-4 gap-2">
+                    <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                        <div class="w-10 h-10 flex-shrink-0 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <span class="text-sm sm:text-base font-bold text-primary">{{ domain.domain_code }}</span>
                         </div>
-                        <div>
-                            <h3 class="text-base font-bold text-gray-900">{{ domain.domain_name }}</h3>
-                            <p class="text-xs text-gray-500">{{ skills_by_domain|get_item:domain.domain_code|length }} topics available</p>
+                        <div class="min-w-0 flex-1">
+                            <h3 class="text-sm sm:text-base font-bold text-gray-900 truncate">{{ domain.domain_name }}</h3>
+                            <div class="flex items-center gap-1.5 flex-wrap text-xs text-gray-500 mt-0.5">
+                                <span>{{ domain_skills|length }} topics</span>
+                                {% if total_attempted > 0 %}
+                                    <span>•</span>
+                                    <span class="font-semibold {% if domain_accuracy >= 80 %}text-green-600{% elif domain_accuracy >= 60 %}text-yellow-600{% else %}text-orange-600{% endif %}">
+                                        {{ domain_accuracy }}% accuracy
+                                    </span>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
-                    <button class="learn-btn px-3 py-1 text-xs font-semibold text-primary border border-primary rounded-lg hover:bg-primary/5" onclick="startPractice('{{ domain.domain_code }}')">
+                    <button class="learn-btn flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-primary border border-primary rounded-lg hover:bg-primary/5 transition-colors" onclick="startPractice('{{ domain.domain_code }}')">
                         Learn
                     </button>
                 </div>
 
                 <!-- Skills List -->
-                <div class="space-y-3">
+                <div class="space-y-2 sm:space-y-3">
                     {% for skill in skills_by_domain|get_item:domain.domain_code %}
-                    <div class="skill-item p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" onclick="startSkillPractice('{{ domain.domain_code }}', '{{ skill.skill_code }}')">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <h4 class="text-sm font-semibold text-gray-900 mb-1">{{ skill.skill_name }}</h4>
-                                <p class="text-xs text-gray-500">{{ skill.question_count }} questions</p>
+                    <div class="skill-item p-3 bg-gray-50 rounded-lg transition-colors">
+                        <div class="flex items-start sm:items-center justify-between gap-2 mb-2">
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-xs sm:text-sm font-semibold text-gray-900 mb-1 line-clamp-2">{{ skill.skill_name }}</h4>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <p class="text-xs text-gray-500">{{ skill.question_count }} questions</p>
+                                    {% if skill.total_attempted > 0 %}
+                                        <span class="text-xs text-gray-400">•</span>
+                                        <p class="text-xs text-gray-500">{{ skill.total_attempted }} attempted</p>
+                                        {% if skill.accuracy > 0 %}
+                                            <span class="text-xs text-gray-400">•</span>
+                                            <p class="text-xs font-semibold {% if skill.accuracy >= 80 %}text-green-600{% elif skill.accuracy >= 60 %}text-yellow-600{% else %}text-orange-600{% endif %}">
+                                                {{ skill.accuracy }}% accuracy
+                                            </p>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                {% if skill.last_session %}
+                                <div class="mt-1">
+                                    <p class="text-xs text-blue-600 font-medium flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        Last practiced {{ skill.last_session.started_at|timesince }} ago
+                                    </p>
+                                </div>
+                                {% endif %}
                             </div>
-                            <button class="px-3 py-1 text-xs font-semibold text-white bg-primary rounded-lg hover:bg-purple-700">
-                                Continue
-                            </button>
+                            <!-- Action Buttons -->
+                            <div class="flex-shrink-0 flex gap-2">
+                                {% if skill.total_attempted > 0 %}
+                                    <!-- Resume Button -->
+                                    <button onclick="resumeSkillPractice('{{ domain.domain_code }}', '{{ skill.skill_code }}')" class="px-2.5 sm:px-3 py-1 text-xs font-semibold text-white bg-primary rounded-lg hover:bg-purple-700 transition-colors">
+                                        Resume
+                                    </button>
+                                    <!-- Start Over Button -->
+                                    <button onclick="startSkillPractice('{{ domain.domain_code }}', '{{ skill.skill_code }}')" class="px-2.5 sm:px-3 py-1 text-xs font-semibold text-primary bg-white border border-primary rounded-lg hover:bg-primary/5 transition-colors">
+                                        Start Over
+                                    </button>
+                                {% else %}
+                                    <!-- Start Button (First Time) -->
+                                    <button onclick="startSkillPractice('{{ domain.domain_code }}', '{{ skill.skill_code }}')" class="px-2.5 sm:px-3 py-1 text-xs font-semibold text-white bg-gray-600 rounded-lg hover:bg-gray-700 transition-colors">
+                                        Start
+                                    </button>
+                                {% endif %}
+                            </div>
                         </div>
-                        <!-- Progress Bar Placeholder -->
+                        <!-- Progress Bar -->
                         <div class="mt-2">
-                            <div class="w-full bg-gray-200 rounded-full h-1">
-                                <div class="bg-primary h-1 rounded-full" style="width: 0%"></div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                <div class="{% if skill.accuracy >= 80 %}bg-green-600{% elif skill.accuracy >= 60 %}bg-yellow-500{% elif skill.accuracy > 0 %}bg-orange-500{% else %}bg-primary{% endif %} h-1.5 rounded-full transition-all" style="width: {{ skill.progress }}%"></div>
                             </div>
                             <div class="flex items-center justify-between mt-1">
-                                <span class="text-xs text-gray-500">Progress</span>
-                                <span class="text-xs text-gray-500">0%</span>
+                                <span class="text-xs text-gray-500">
+                                    {% if skill.progress > 0 %}
+                                        {{ skill.correct_answers }}/{{ skill.total_attempted }} correct
+                                    {% else %}
+                                        Not started
+                                    {% endif %}
+                                </span>
+                                <span class="text-xs font-medium {% if skill.progress >= 100 %}text-green-600{% else %}text-gray-600{% endif %}">
+                                    {{ skill.progress }}%
+                                </span>
                             </div>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
             </div>
+            {% endwith %}
+            {% endwith %}
             {% endfor %}
         </div>
     </div>
@@ -282,7 +343,13 @@ function startPractice(domainCode) {
 }
 
 function startSkillPractice(domainCode, skillCode) {
+    // Start from beginning (question 1)
     window.location.href = `/practice/?domain=${domainCode}&skill=${skillCode}`;
+}
+
+function resumeSkillPractice(domainCode, skillCode) {
+    // Resume with custom ordering: solved -> wrong -> fresh
+    window.location.href = `/practice/?domain=${domainCode}&skill=${skillCode}&resume=true`;
 }
 </script>
 
@@ -291,6 +358,65 @@ function startSkillPractice(domainCode, skillCode) {
     background-color: #9967b9 !important;
     color: white !important;
     border: none;
+}
+
+.category-tab:not(.active):hover {
+    background-color: #f9fafb !important;
+}
+
+/* Better mobile scrolling for tabs */
+@media (max-width: 640px) {
+    .category-tab {
+        min-width: auto;
+    }
+}
+
+/* Line clamp utility */
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Smooth transitions */
+.domain-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.domain-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Better touch targets on mobile */
+@media (max-width: 768px) {
+    .skill-item {
+        min-height: 80px;
+    }
+    
+    button, .cursor-pointer {
+        min-height: 44px;
+        min-width: 44px;
+    }
+}
+
+/* Improved filter panel on mobile */
+@media (max-width: 640px) {
+    #filterPanel {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+}
+
+/* Better card spacing on very small screens */
+@media (max-width: 375px) {
+    .domain-card {
+        padding: 0.75rem;
+    }
+    
+    .skill-item {
+        padding: 0.625rem;
+    }
 }
 </style>
 {% endblock %}
