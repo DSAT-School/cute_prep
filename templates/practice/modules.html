@@ -7,21 +7,22 @@
 <div class="min-h-screen bg-gray-50">
     <!-- Header -->
     <div class="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                    <h1 class="text-lg sm:text-xl font-bold text-gray-900">Practice</h1>
-                    <p class="text-xs sm:text-sm text-gray-500 mt-1">Choose your practice module</p>
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex-1 min-w-0">
+                    <h1 class="text-base sm:text-xl font-bold text-gray-900">Practice</h1>
+                    <p class="text-xs text-gray-500 mt-0.5 hidden sm:block">Choose your practice module</p>
                 </div>
-                <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-                    <button id="filterBtn" class="flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 flex-1 sm:flex-none justify-center">
+                <div class="flex items-center gap-2">
+                    <button id="filterBtn" class="flex items-center gap-1.5 px-2.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
                         </svg>
                         <span class="hidden sm:inline">Filters</span>
                     </button>
-                    <a href="{% url 'practice:practice' %}" class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-primary rounded-lg hover:bg-purple-700 flex-1 sm:flex-none text-center whitespace-nowrap">
-                        Random Practice
+                    <a href="{% url 'practice:practice' %}" class="px-2.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-primary rounded-lg hover:bg-purple-700 whitespace-nowrap">
+                        <span class="hidden sm:inline">Random Practice</span>
+                        <span class="sm:hidden">Random</span>
                     </a>
                 </div>
             </div>
@@ -92,139 +93,117 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <!-- Resume Last Session Card -->
         {% if last_session %}
-        <div class="bg-gradient-to-r from-primary to-purple-600 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6 text-white shadow-lg">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <div class="flex-1 w-full">
-                    <div class="flex items-center gap-2 mb-3">
-                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-gradient-to-r from-primary to-purple-600 rounded-lg p-3 sm:p-5 mb-3 sm:mb-6 text-white shadow-lg">
+            <div class="flex items-start gap-3">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-2">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                        <h3 class="text-base sm:text-lg font-bold">Resume Last Session</h3>
+                        <h3 class="text-sm sm:text-base font-bold">Resume Session</h3>
                     </div>
-                    <div class="text-xs sm:text-sm opacity-90 space-y-1.5">
-                        <p class="flex flex-wrap items-center gap-x-2">
-                            <span><strong>Domain:</strong> {{ last_session.domain_name }}</span>
-                            <span class="hidden sm:inline">•</span>
-                            <span><strong>Skill:</strong> {{ last_session.skill_name }}</span>
-                        </p>
-                        <p><strong>Progress:</strong> {{ last_session.answered_count }}/{{ last_session.total_questions }} questions</p>
-                        <p><strong>Started:</strong> {{ last_session.started_at|timesince }} ago</p>
+                    <div class="text-xs opacity-90 space-y-1">
+                        <p class="truncate"><strong>{{ last_session.domain_name }}</strong> • {{ last_session.skill_name }}</p>
+                        <p>{{ last_session.answered_count }}/{{ last_session.total_questions }} questions • {{ last_session.started_at|timesince }} ago</p>
                     </div>
                 </div>
-                <a href="{% url 'practice:resume_session' last_session.id %}" class="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-primary rounded-lg text-xs sm:text-sm font-semibold hover:bg-gray-100 transition-colors text-center whitespace-nowrap shadow-md">
-                    Continue Practice →
+                <a href="{% url 'practice:resume_session' last_session.id %}" class="flex-shrink-0 px-3 sm:px-5 py-2 sm:py-2.5 bg-white text-primary rounded-lg text-xs sm:text-sm font-semibold hover:bg-gray-100 transition-colors whitespace-nowrap">
+                    Continue →
                 </a>
             </div>
         </div>
         {% endif %}
 
         <!-- Category Tabs -->
-        <div class="flex items-center gap-2 mb-4 sm:mb-6 overflow-x-auto pb-2">
-            <button class="category-tab {% if subject == 'reading' %}active bg-primary text-white{% else %}bg-white text-gray-700 border border-gray-300{% endif %} px-4 sm:px-6 py-2 text-xs sm:text-sm font-semibold rounded-lg hover:bg-gray-50 whitespace-nowrap" data-category="reading">
+        <div class="flex items-center gap-2 mb-3 sm:mb-5">
+            <button class="category-tab flex-1 {% if subject == 'reading' %}active bg-primary text-white{% else %}bg-white text-gray-700 border border-gray-300{% endif %} px-3 sm:px-6 py-2 text-xs sm:text-sm font-semibold rounded-lg hover:bg-gray-50" data-category="reading">
                 Reading & Writing
             </button>
-            <button class="category-tab {% if subject == 'math' %}active bg-primary text-white{% else %}bg-white text-gray-700 border border-gray-300{% endif %} px-4 sm:px-6 py-2 text-xs sm:text-sm font-semibold rounded-lg hover:bg-gray-50 whitespace-nowrap" data-category="math">
+            <button class="category-tab flex-1 {% if subject == 'math' %}active bg-primary text-white{% else %}bg-white text-gray-700 border border-gray-300{% endif %} px-3 sm:px-6 py-2 text-xs sm:text-sm font-semibold rounded-lg hover:bg-gray-50" data-category="math">
                 Math
             </button>
         </div>
 
-        <!-- Domains Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <!-- Domains Grid (Max 2 per row) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-full">
             {% for domain in domains %}
             {% with domain_skills=skills_by_domain|get_item:domain.domain_code %}
             {% with total_attempted=domain_skills|sum_attr:'total_attempted' total_correct=domain_skills|sum_attr:'correct_answers' domain_accuracy=domain_skills|calculate_domain_accuracy %}
-            <div class="domain-card bg-white rounded-lg border border-gray-200 p-4 hover:shadow-lg transition-all duration-200">
+            <div class="domain-card bg-white rounded-lg border border-gray-200 p-3 sm:p-5 hover:shadow-lg transition-all duration-200">
                 <!-- Domain Header -->
-                <div class="flex items-start justify-between mb-4 gap-2">
-                    <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                        <div class="w-10 h-10 flex-shrink-0 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <span class="text-sm sm:text-base font-bold text-primary">{{ domain.domain_code }}</span>
+                <div class="flex items-center justify-between mb-3 gap-2">
+                    <div class="flex items-center gap-2 flex-1 min-w-0">
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <span class="text-xs sm:text-sm font-bold text-primary">{{ domain.domain_code }}</span>
                         </div>
                         <div class="min-w-0 flex-1">
                             <h3 class="text-sm sm:text-base font-bold text-gray-900 truncate">{{ domain.domain_name }}</h3>
-                            <div class="flex items-center gap-1.5 flex-wrap text-xs text-gray-500 mt-0.5">
+                            <div class="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
                                 <span>{{ domain_skills|length }} topics</span>
                                 {% if total_attempted > 0 %}
                                     <span>•</span>
                                     <span class="font-semibold {% if domain_accuracy >= 80 %}text-green-600{% elif domain_accuracy >= 60 %}text-yellow-600{% else %}text-orange-600{% endif %}">
-                                        {{ domain_accuracy }}% accuracy
+                                        {{ domain_accuracy }}%
                                     </span>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
-                    <button class="learn-btn flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-primary border border-primary rounded-lg hover:bg-primary/5 transition-colors" onclick="startPractice('{{ domain.domain_code }}')">
+                    <button class="toggle-skills-btn flex-shrink-0 w-8 h-8 sm:hidden flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" data-domain="{{ domain.domain_code }}">
+                        <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <button class="learn-btn hidden sm:flex flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-primary border border-primary rounded-lg hover:bg-primary/5 transition-colors" onclick="startPractice('{{ domain.domain_code }}')">
                         Learn
                     </button>
                 </div>
 
                 <!-- Skills List -->
-                <div class="space-y-2 sm:space-y-3">
+                <div class="skills-container space-y-2 hidden sm:block" data-domain="{{ domain.domain_code }}">
                     {% for skill in skills_by_domain|get_item:domain.domain_code %}
-                    <div class="skill-item p-3 bg-gray-50 rounded-lg transition-colors">
-                        <div class="flex items-start sm:items-center justify-between gap-2 mb-2">
+                    <div class="skill-item p-2.5 sm:p-3 bg-gray-50 rounded-lg transition-colors">
+                        <!-- Skill Header -->
+                         <div class="flex items-center justify-between gap-2 mb-2">
                             <div class="flex-1 min-w-0">
-                                <h4 class="text-xs sm:text-sm font-semibold text-gray-900 mb-1 line-clamp-2">{{ skill.skill_name }}</h4>
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <p class="text-xs text-gray-500">{{ skill.question_count }} questions</p>
+                                <h4 class="text-xs sm:text-sm font-semibold text-gray-900 mb-1 line-clamp-1">{{ skill.skill_name }}</h4>
+                                <div class="flex items-center gap-1.5 text-xs text-gray-500">
+                                    <span>{{ skill.question_count }}Q</span>
                                     {% if skill.total_attempted > 0 %}
-                                        <span class="text-xs text-gray-400">•</span>
-                                        <p class="text-xs text-gray-500">{{ skill.total_attempted }} attempted</p>
-                                        {% if skill.accuracy > 0 %}
-                                            <span class="text-xs text-gray-400">•</span>
-                                            <p class="text-xs font-semibold {% if skill.accuracy >= 80 %}text-green-600{% elif skill.accuracy >= 60 %}text-yellow-600{% else %}text-orange-600{% endif %}">
-                                                {{ skill.accuracy }}% accuracy
-                                            </p>
-                                        {% endif %}
+                                        <span>•</span>
+                                        <span class="font-semibold {% if skill.accuracy >= 80 %}text-green-600{% elif skill.accuracy >= 60 %}text-yellow-600{% else %}text-orange-600{% endif %}">
+                                            {{ skill.accuracy }}%
+                                        </span>
                                     {% endif %}
                                 </div>
-                                {% if skill.last_session %}
-                                <div class="mt-1">
-                                    <p class="text-xs text-blue-600 font-medium flex items-center gap-1">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        Last practiced {{ skill.last_session.started_at|timesince }} ago
-                                    </p>
-                                </div>
-                                {% endif %}
                             </div>
                             <!-- Action Buttons -->
-                            <div class="flex-shrink-0 flex gap-2">
+                            <div class="flex-shrink-0 flex gap-1.5 sm:gap-2">
                                 {% if skill.total_attempted > 0 %}
-                                    <!-- Resume Button -->
-                                    <button onclick="resumeSkillPractice('{{ domain.domain_code }}', '{{ skill.skill_code }}')" class="px-2.5 sm:px-3 py-1 text-xs font-semibold text-white bg-primary rounded-lg hover:bg-purple-700 transition-colors">
+                                    <button onclick="resumeSkillPractice('{{ domain.domain_code }}', '{{ skill.skill_code }}')" class="px-2 sm:px-3 py-1 text-xs font-semibold text-white bg-primary rounded hover:bg-purple-700 transition-colors">
                                         Resume
                                     </button>
-                                    <!-- Start Over Button -->
-                                    <button onclick="startSkillPractice('{{ domain.domain_code }}', '{{ skill.skill_code }}')" class="px-2.5 sm:px-3 py-1 text-xs font-semibold text-primary bg-white border border-primary rounded-lg hover:bg-primary/5 transition-colors">
+                                    <button onclick="startSkillPractice('{{ domain.domain_code }}', '{{ skill.skill_code }}')" class="hidden sm:block px-3 py-1 text-xs font-semibold text-primary bg-white border border-primary rounded hover:bg-primary/5 transition-colors">
                                         Start Over
                                     </button>
                                 {% else %}
-                                    <!-- Start Button (First Time) -->
-                                    <button onclick="startSkillPractice('{{ domain.domain_code }}', '{{ skill.skill_code }}')" class="px-2.5 sm:px-3 py-1 text-xs font-semibold text-white bg-gray-600 rounded-lg hover:bg-gray-700 transition-colors">
+                                    <button onclick="startSkillPractice('{{ domain.domain_code }}', '{{ skill.skill_code }}')" class="px-2 sm:px-3 py-1 text-xs font-semibold text-white bg-gray-600 rounded hover:bg-gray-700 transition-colors">
                                         Start
                                     </button>
                                 {% endif %}
                             </div>
                         </div>
                         <!-- Progress Bar -->
-                        <div class="mt-2">
-                            <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                <div class="{% if skill.accuracy >= 80 %}bg-green-600{% elif skill.accuracy >= 60 %}bg-yellow-500{% elif skill.accuracy > 0 %}bg-orange-500{% else %}bg-primary{% endif %} h-1.5 rounded-full transition-all" style="width: {{ skill.progress }}%"></div>
-                            </div>
-                            <div class="flex items-center justify-between mt-1">
-                                <span class="text-xs text-gray-500">
-                                    {% if skill.progress > 0 %}
-                                        {{ skill.correct_answers }}/{{ skill.total_attempted }} correct
-                                    {% else %}
-                                        Not started
-                                    {% endif %}
-                                </span>
-                                <span class="text-xs font-medium {% if skill.progress >= 100 %}text-green-600{% else %}text-gray-600{% endif %}">
-                                    {{ skill.progress }}%
-                                </span>
-                            </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 sm:h-2.5">
+                            <div class="{% if skill.progress >= 80 %}bg-green-600{% elif skill.progress >= 60 %}bg-yellow-500{% elif skill.progress >= 40 %}bg-orange-500{% else %}bg-primary{% endif %} h-2 sm:h-2.5 rounded-full transition-all" style="width: {{ skill.progress }}%"></div>
+                        </div>
+                        <div class="flex items-center justify-between mt-1.5">
+                            <span class="text-xs text-gray-600 font-medium">
+                                {{ skill.mastered_count }}/{{ skill.question_count }} mastered
+                            </span>
+                            <span class="text-xs font-bold {% if skill.progress >= 100 %}text-green-600{% elif skill.progress >= 80 %}text-green-600{% elif skill.progress >= 60 %}text-yellow-600{% elif skill.progress >= 40 %}text-orange-600{% else %}text-gray-700{% endif %}">
+                                {{ skill.progress }}%
+                            </span>
                         </div>
                     </div>
                     {% endfor %}
@@ -272,6 +251,21 @@ document.addEventListener('DOMContentLoaded', function() {
 document.getElementById('filterBtn').addEventListener('click', function() {
     const panel = document.getElementById('filterPanel');
     panel.classList.toggle('hidden');
+});
+
+// Toggle skills on mobile
+document.querySelectorAll('.toggle-skills-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const domainCode = this.dataset.domain;
+        const skillsContainer = document.querySelector(`.skills-container[data-domain="${domainCode}"]`);
+        const svg = this.querySelector('svg');
+        
+        if (skillsContainer) {
+            skillsContainer.classList.toggle('hidden');
+            skillsContainer.classList.toggle('sm:block');
+            svg.classList.toggle('rotate-180');
+        }
+    });
 });
 
 // Category tabs
@@ -408,15 +402,69 @@ function resumeSkillPractice(domainCode, skillCode) {
     }
 }
 
-/* Better card spacing on very small screens */
-@media (max-width: 375px) {
+/* Ensure symmetric cards with equal heights */
+.domain-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Force maximum 2 columns in grid */
+@media (min-width: 768px) {
+    .grid.md\:grid-cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+    
     .domain-card {
-        padding: 0.75rem;
+        min-height: 350px;
+    }
+}
+
+/* Mobile optimizations */
+@media (max-width: 767px) {
+    /* Hide skills list by default on mobile */
+    .skills-container {
+        display: none;
+    }
+    
+    .skills-container.sm\:block {
+        display: block !important;
+    }
+    
+    /* Tighter spacing on mobile */
+    .domain-card {
+        padding: 0.75rem !important;
     }
     
     .skill-item {
-        padding: 0.625rem;
+        padding: 0.625rem !important;
     }
+    
+    /* Better touch targets */
+    button {
+        min-height: 36px;
+    }
+    
+    /* Compact text */
+    .line-clamp-1 {
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+}
+
+/* Smooth transitions */
+.toggle-skills-btn svg {
+    transition: transform 0.2s ease;
+}
+
+.toggle-skills-btn svg.rotate-180 {
+    transform: rotate(180deg);
+}
+
+.skills-container {
+    transition: all 0.2s ease;
 }
 </style>
 {% endblock %}

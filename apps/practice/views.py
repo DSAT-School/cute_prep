@@ -89,12 +89,22 @@ def practice_modules_view(request):
             total_attempted = user_answers.count()
             correct_answers = user_answers.filter(is_correct=True).count()
             
+            # Get mastered questions count for this skill
+            mastered_count = MasteredQuestion.objects.filter(
+                user=request.user,
+                question__skill_code=skill['skill_code']
+            ).count()
+            
             # Calculate accuracy and progress
             if total_attempted > 0:
                 accuracy = round((correct_answers / total_attempted) * 100, 1)
-                progress = min(round((total_attempted / skill['question_count']) * 100), 100)
             else:
                 accuracy = 0
+            
+            # Progress is based on mastered questions
+            if skill['question_count'] > 0:
+                progress = min(round((mastered_count / skill['question_count']) * 100), 100)
+            else:
                 progress = 0
             
             # Get last active session for this specific skill
@@ -117,6 +127,7 @@ def practice_modules_view(request):
             skill_dict = dict(skill)
             skill_dict['total_attempted'] = total_attempted
             skill_dict['correct_answers'] = correct_answers
+            skill_dict['mastered_count'] = mastered_count
             skill_dict['accuracy'] = accuracy
             skill_dict['progress'] = progress
             skill_dict['last_session'] = last_skill_session
