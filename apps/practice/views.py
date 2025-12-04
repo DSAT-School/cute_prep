@@ -421,6 +421,17 @@ def get_question(request, question_id):
             'time_taken': last_attempt.time_taken_seconds
         }
     
+    # Get all attempts history
+    all_attempts_data = []
+    for attempt in user_attempts:
+        all_attempts_data.append({
+            'answer': attempt.user_answer,
+            'is_correct': attempt.is_correct,
+            'answered_at': attempt.answered_at.isoformat(),
+            'time_taken': attempt.time_taken_seconds,
+            'session_id': str(attempt.session_id) if attempt.session_id else None
+        })
+    
     # Determine if user can toggle mastered status
     can_toggle_mastered = False
     is_auto_mastered = False
@@ -456,6 +467,7 @@ def get_question(request, question_id):
         'tutorial_link': question.tutorial_link,
         'attempt_count': attempt_count,
         'last_attempt': last_attempt_data,
+        'all_attempts': all_attempts_data,
         'can_toggle_mastered': can_toggle_mastered,
         'is_auto_mastered': is_auto_mastered,
     }

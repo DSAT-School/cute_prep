@@ -132,6 +132,164 @@
         border: 1px solid #ef4444;
     }
 
+    .history-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1rem;
+        background: white;
+        border: 1px solid #92400e;
+        border-radius: 6px;
+        cursor: pointer;
+        color: #92400e;
+        transition: all 0.2s;
+        position: relative;
+        font-size: 0.9375rem;
+        font-weight: 600;
+    }
+
+    .history-btn:hover {
+        background: #92400e;
+        color: white;
+    }
+
+    .history-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.25rem;
+        height: 1.25rem;
+        padding: 0 0.25rem;
+        background: #fdcc4c;
+        color: #78350f;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    /* Attempt History Modal */
+    .attempt-history-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 60;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .attempt-history-modal.show {
+        display: flex;
+    }
+
+    .attempt-history-content {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+        max-width: 450px;
+        width: 90%;
+        max-height: 70vh;
+        overflow-y: auto;
+        position: relative;
+    }
+
+    .attempt-history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .attempt-history-header h3 {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #262632;
+    }
+
+    .attempt-history-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.625rem;
+    }
+
+    .attempt-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: #f9fafb;
+        border-radius: 6px;
+        border: 1px solid #e5e7eb;
+    }
+
+    .attempt-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        background: #262632;
+        color: white;
+        font-weight: 700;
+        font-size: 0.8125rem;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .attempt-details {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.125rem;
+    }
+
+    .attempt-answer {
+        font-size: 0.8125rem;
+        font-weight: 600;
+    }
+
+    .attempt-answer.correct {
+        color: #065f46;
+    }
+
+    .attempt-answer.incorrect {
+        color: #991b1b;
+    }
+
+    .attempt-time {
+        font-size: 0.6875rem;
+        color: #6b7280;
+    }
+
+    .attempt-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+
+    .attempt-status-badge.correct {
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #10b981;
+    }
+
+    .attempt-status-badge.incorrect {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #ef4444;
+    }
+
     /* Question Details Modal */
     .question-details-modal {
         display: none;
@@ -441,12 +599,15 @@
     }
 
     .question-counter {
-        padding: 0.5rem 1rem;
+        padding: 0.625rem 1.25rem;
         background: #262632;
         color: white;
         border-radius: 6px;
-        font-size: 0.875rem;
+        font-size: 0.9375rem;
         font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 
     .navigation-buttons {
@@ -541,7 +702,7 @@
     @media (max-width: 768px) {
         .practice-container {
             padding: 0.75rem;
-            padding-bottom: 5rem;
+            padding-bottom: 8rem;
         }
 
         .practice-footer {
@@ -574,17 +735,43 @@
         }
 
         .attempt-info-badge {
-            font-size: 0.65rem;
-            padding: 0.25rem 0.5rem;
-            width: 100%;
-            justify-content: center;
-            margin-top: 0.5rem;
+            display: none !important;
+        }
+
+        .history-btn {
+            display: inline-flex !important;
         }
 
         .last-attempt-badge {
             font-size: 0.65rem;
             padding: 0.2rem 0.4rem;
             margin-left: 0.25rem;
+        }
+
+        .history-btn {
+            width: 1.5rem;
+            height: 1.5rem;
+            font-size: 0.75rem;
+        }
+
+        .attempt-history-content {
+            width: 95%;
+            padding: 1.25rem;
+        }
+
+        .attempt-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .attempt-number {
+            width: 2rem;
+            height: 2rem;
+            font-size: 0.75rem;
+        }
+
+        .attempt-status-badge {
+            align-self: flex-end;
         }
 
         .question-details-content {
@@ -655,6 +842,23 @@
             padding: 0.375rem 0.75rem;
         }
 
+        /* Hide certain elements on mobile */
+        .hide-on-mobile {
+            display: none !important;
+        }
+
+        /* Action buttons side by side */
+        .action-buttons-group {
+            display: flex;
+            gap: 0.5rem;
+            flex: 1;
+        }
+
+        .action-buttons-group .nav-btn {
+            flex: 1;
+            min-width: auto;
+        }
+
         .question-text {
             font-size: 1rem;
             margin-bottom: 1rem;
@@ -690,10 +894,20 @@
         }
 
         .question-counter {
-            padding: 0.375rem 0.75rem;
-            font-size: 0.75rem;
-            width: 100%;
+            padding: 0.5rem 0.875rem;
+            font-size: 0.8125rem;
+            width: auto;
             text-align: center;
+            flex: 1;
+            gap: 0.375rem;
+        }
+
+        .history-btn {
+            padding: 0.5rem 0.875rem;
+            font-size: 0.8125rem;
+            width: auto;
+            min-width: fit-content;
+            gap: 0.375rem;
         }
 
         .navigation-buttons {
@@ -762,21 +976,17 @@
     @media (max-width: 576px) {
         .practice-container {
             padding: 0.5rem;
-            padding-bottom: 6rem;
+            padding-bottom: 9rem;
         }
 
         .practice-header {
             padding: 0.5rem;
             gap: 0.5rem;
         }
-        
-        /* Make button text more compact on very small screens */
-        #check-btn-text::after {
-            content: ' Answer';
-        }
-        
-        #check-btn-text {
-            display: inline;
+
+        /* Hide certain elements on small mobile */
+        .hide-on-small-mobile {
+            display: none !important;
         }
 
         .timer {
@@ -1158,22 +1368,17 @@
 <div class="practice-container">
     <!-- Header with Timer and Controls -->
     <div class="practice-header">
-        <div class="flex items-center gap-3">
-            <div class="timer" id="timer">0:00</div>
-            <button class="hide-timer-btn" onclick="toggleTimer()"><i class="fas fa-eye-slash"></i> <span id="timer-btn-text">Hide</span></button>
-        </div>
-        <div class="flex items-center gap-2 flex-wrap">
-            <!-- Attempt Info Badge -->
-            <div class="attempt-info-badge" id="attemptInfo" style="display: none;">
-                <i class="fas fa-history"></i>
-                <span id="attemptCount">0</span> attempts
-                <span id="lastAttemptTime" style="margin-left: 0.5rem;"></span>
-            </div>
+        <div class="flex items-center gap-2">
             <button class="show-details-btn" onclick="toggleQuestionDetails()">
-                <i class="fas fa-info-circle"></i> Show Details
+                <i class="fas fa-info-circle"></i> <span>About</span>
             </button>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="timer" id="timer">0:00</div>
+        </div>
+        <div class="flex items-center gap-2">
             <button class="annotate-btn" onclick="toggleAnnotate()">
-                <i class="fas fa-pen"></i> Annotate
+                <i class="fas fa-pen"></i> <span class="hide-on-mobile">Annotate</span>
             </button>
         </div>
     </div>
@@ -1275,22 +1480,37 @@
 
     <!-- Footer with Navigation -->
     <div class="practice-footer">
-        <button class="question-counter" id="question-counter" onclick="openQuestionMap()" style="cursor: pointer;">
-            <i class="fas fa-list-ol"></i> Question <span id="current-index">1</span> of <span id="total-count">{{ total_questions }}</span>
-        </button>
-        <div class="navigation-buttons">
-            <button class="nav-btn" onclick="endPractice()" style="background: #ef4444; color: white;">
-                <i class="fas fa-stop-circle"></i> End Practice
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+            <button class="question-counter" id="question-counter" onclick="openQuestionMap()" style="cursor: pointer;">
+                <i class="fas fa-list-ol"></i> <span>Questions</span> <span id="current-index">1</span>/<span id="total-count">{{ total_questions }}</span>
             </button>
-            <button class="nav-btn back" id="back-btn" onclick="previousQuestion()" disabled>
-                <i class="fas fa-arrow-left"></i> Back
+            <!-- Attempt Info Badge -->
+            <div class="attempt-info-badge" id="attemptInfo" style="display: none;">
+                <i class="fas fa-history"></i>
+                <span id="attemptCount">0</span> <span class="attempts-text">attempts</span>
+                <span id="lastAttemptTime" class="last-attempt-time" style="margin-left: 0.5rem;"></span>
+            </div>
+            <button class="history-btn" id="history-btn" onclick="showAttemptHistory()" title="View attempt history" style="display: none;">
+                <i class="fas fa-history"></i>
+                <span class="history-btn-text">History</span>
+                <span class="history-badge" id="historyBadge">0</span>
+            </button>
+        </div>
+        <div class="navigation-buttons">
+            <button class="nav-btn end-btn" onclick="endPractice()" style="background: #ef4444; color: white;">
+                <i class="fas fa-stop-circle"></i> <span id="end-btn-text">End Practice</span>
             </button>
             <button class="nav-btn" id="check-answer-btn" onclick="checkAnswer()" style="background: #10b981; color: white;" disabled>
-                <i class="fas fa-check-circle"></i> <span id="check-btn-text">Check Answer</span>
+                <i class="fas fa-check-circle"></i> <span id="check-btn-text">Check</span>
             </button>
-            <button class="nav-btn next" id="next-btn" onclick="nextQuestion()">
-                <span id="next-btn-text">Next</span> <i class="fas fa-arrow-right"></i>
-            </button>
+            <div class="action-buttons-group">
+                <button class="nav-btn back" id="back-btn" onclick="previousQuestion()" disabled>
+                    <i class="fas fa-arrow-left"></i> <span class="hide-on-mobile">Back</span>
+                </button>
+                <button class="nav-btn next" id="next-btn" onclick="nextQuestion()">
+                    <span id="next-btn-text" class="hide-on-mobile">Next</span> <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -1359,6 +1579,21 @@
                 <button class="close-modal-btn" onclick="closeExplanationModal()"><i class="fas fa-times"></i></button>
             </div>
             <div id="explanation-modal-text" style="font-size: 1.125rem; line-height: 1.8; color: #374151; font-family: 'Noto Serif', serif;"></div>
+        </div>
+    </div>
+
+    <!-- Attempt History Modal -->
+    <div class="attempt-history-modal" id="attemptHistoryModal">
+        <div class="attempt-history-content">
+            <div class="attempt-history-header">
+                <h3><i class="fas fa-history"></i> Attempt History</h3>
+                <button class="close-modal-btn" onclick="closeAttemptHistory()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="attempt-history-list" id="attemptHistoryList">
+                <!-- Attempts will be populated by JavaScript -->
+            </div>
         </div>
     </div>
 </div>
@@ -1440,10 +1675,21 @@ function updateAttemptInfo(question) {
     const attemptInfo = document.getElementById('attemptInfo');
     const attemptCount = document.getElementById('attemptCount');
     const lastAttemptTime = document.getElementById('lastAttemptTime');
+    const historyBtn = document.getElementById('history-btn');
+    const historyBadge = document.getElementById('historyBadge');
+    
+    // Store all attempts globally for the history modal
+    window.currentQuestionAttempts = question.all_attempts || [];
     
     if (question.attempt_count > 0) {
         attemptInfo.style.display = 'inline-flex';
         attemptCount.textContent = question.attempt_count;
+        
+        // Show and update history button in footer
+        if (historyBtn && historyBadge) {
+            historyBtn.style.display = 'inline-flex';
+            historyBadge.textContent = question.attempt_count;
+        }
         
         if (question.last_attempt) {
             const lastAttempt = question.last_attempt;
@@ -1480,8 +1726,86 @@ function updateAttemptInfo(question) {
         }
     } else {
         attemptInfo.style.display = 'none';
+        window.currentQuestionAttempts = [];
+        
+        // Hide history button in footer
+        if (historyBtn) {
+            historyBtn.style.display = 'none';
+        }
     }
 }
+
+function showAttemptHistory() {
+    const modal = document.getElementById('attemptHistoryModal');
+    const listContainer = document.getElementById('attemptHistoryList');
+    
+    if (!window.currentQuestionAttempts || window.currentQuestionAttempts.length === 0) {
+        listContainer.innerHTML = '<p style="text-align: center; color: #6b7280; padding: 2rem;">No attempts yet.</p>';
+        modal.classList.add('show');
+        return;
+    }
+    
+    // Get only the last 5 attempts (most recent)
+    const recentAttempts = window.currentQuestionAttempts.slice(0, 5);
+    
+    // Sort attempts from oldest to newest for better chronological view
+    const sortedAttempts = [...recentAttempts].reverse();
+    
+    const attemptsHtml = sortedAttempts.map((attempt, index) => {
+        const attemptDate = new Date(attempt.answered_at);
+        const now = new Date();
+        const diffMs = now - attemptDate;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+        
+        let timeAgo = '';
+        if (diffDays > 0) {
+            timeAgo = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+        } else if (diffHours > 0) {
+            timeAgo = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+        } else if (diffMins > 0) {
+            timeAgo = `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+        } else {
+            timeAgo = 'just now';
+        }
+        
+        const statusClass = attempt.is_correct ? 'correct' : 'incorrect';
+        const statusIcon = attempt.is_correct ? '✓' : '✗';
+        const statusText = attempt.is_correct ? 'Correct' : 'Incorrect';
+        
+        return `
+            <div class="attempt-item">
+                <div class="attempt-number">#${index + 1}</div>
+                <div class="attempt-details">
+                    <div class="attempt-answer ${statusClass}">Answer: ${attempt.answer}</div>
+                    <div class="attempt-time">
+                        ${timeAgo} • ${attempt.time_taken}s
+                    </div>
+                </div>
+                <div class="attempt-status-badge ${statusClass}">
+                    ${statusIcon} ${statusText}
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    listContainer.innerHTML = attemptsHtml;
+    modal.classList.add('show');
+}
+
+function closeAttemptHistory() {
+    const modal = document.getElementById('attemptHistoryModal');
+    modal.classList.remove('show');
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('attemptHistoryModal');
+    if (e.target === modal) {
+        closeAttemptHistory();
+    }
+});
 
 function toggleAnnotate() {
     showAlert('Annotation feature coming soon!');
@@ -1735,7 +2059,7 @@ async function checkAnswer() {
         const checkBtnText = document.getElementById('check-btn-text');
         const checkBtnIcon = checkBtn.querySelector('i');
         if (checkBtnText) {
-            checkBtnText.textContent = 'Check Answer';
+            checkBtnText.textContent = 'Check';
         }
         if (checkBtnIcon) {
             checkBtnIcon.className = 'fas fa-check-circle';
@@ -1926,7 +2250,7 @@ async function loadQuestion(index) {
         const checkBtnIcon = checkBtn.querySelector('i');
         checkBtn.disabled = !userAnswers[questionId];
         if (checkBtnText && checkBtnIcon) {
-            checkBtnText.textContent = 'Check Answer';
+            checkBtnText.textContent = 'Check';
             checkBtnIcon.className = 'fas fa-check-circle';
             checkBtn.style.background = '#10b981';
         }
