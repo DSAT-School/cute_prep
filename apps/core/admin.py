@@ -5,6 +5,15 @@ from django.utils.translation import gettext_lazy as _
 
 from .models import User
 
+# Import Delta admin configurations
+from .admin_delta import (
+    DeltaWalletAdmin,
+    DeltaTransactionAdmin,
+    DeltaEarningRuleAdmin,
+    DeltaProductAdmin,
+    DeltaPurchaseAdmin
+)
+
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):

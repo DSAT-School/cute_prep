@@ -103,6 +103,24 @@
 
     <!-- Results Content -->
     <div class="max-w-[1920px] mx-auto px-4 py-4">
+        <!-- Delta Earned Banner (if present in URL params) -->
+        <div id="delta-earned-banner" class="hidden mb-4 bg-gradient-to-r from-primary to-secondary rounded-xl shadow-lg p-4 animate-fade-in-up">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-coins text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <div class="text-white text-lg font-bold">Delta Coins Earned!</div>
+                        <div class="text-white/90 text-sm">You earned <span id="delta-earned-amount" class="font-bold">0</span> Δ for completing this practice session</div>
+                    </div>
+                </div>
+                <button onclick="closeDeltaBanner()" class="text-white/80 hover:text-white transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
         <!-- Score Overview Section -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
             <!-- Main Score Circle -->
@@ -331,6 +349,31 @@ function filterQuestions(type) {
             event.target.classList.remove('text-gray-600');
         }
     });
+}
+
+// Check URL params for Delta earned
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const deltaEarned = urlParams.get('delta_earned');
+    
+    if (deltaEarned && parseFloat(deltaEarned) > 0) {
+        const banner = document.getElementById('delta-earned-banner');
+        const amountEl = document.getElementById('delta-earned-amount');
+        
+        if (banner && amountEl) {
+            amountEl.textContent = deltaEarned;
+            banner.classList.remove('hidden');
+            
+            // Refresh Delta balance in navbar
+            if (window.refreshDeltaBalance) {
+                window.refreshDeltaBalance();
+            }
+        }
+    }
+});
+
+function closeDeltaBanner() {
+    document.getElementById('delta-earned-banner').style.display = 'none';
 }
 </script>
 {% endblock %}

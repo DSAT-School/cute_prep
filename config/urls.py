@@ -14,6 +14,7 @@ from apps.core.views import (
     CustomLogoutView,
     CustomSignupView,
     dashboard_view,
+    delta_store_view,
     profile_view,
 )
 from apps.core.ai_chat_views import (
@@ -39,6 +40,7 @@ urlpatterns = [
     # SSR Pages (Server-Side Rendered)
     path("dashboard/", dashboard_view, name="dashboard"),
     path("profile/", profile_view, name="profile"),
+    path("delta/store/", delta_store_view, name="delta_store"),
     
     # Practice App
     path("practice/", include("apps.practice.urls")),
@@ -56,6 +58,7 @@ urlpatterns = [
     
     # API Endpoints
     path("api/", include("apps.core.urls")),
+    path("api/delta/", include("apps.core.urls_delta")),
 ]
 
 # Static and media files in development

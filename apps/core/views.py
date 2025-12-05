@@ -283,6 +283,20 @@ class CustomLogoutView(LogoutView):
 
 
 @login_required
+def delta_store_view(request):
+    """
+    Delta Store view where users can purchase items with Delta coins.
+    
+    Args:
+        request: HTTP request object
+        
+    Returns:
+        Rendered Delta store template
+    """
+    return render(request, 'delta/store.html')
+
+
+@login_required
 def dashboard_view(request):
     """
     Dashboard view for authenticated users with comprehensive analytics.

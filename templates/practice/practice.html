@@ -2366,7 +2366,12 @@ async function performEndPractice() {
         const data = await response.json();
         
         if (data.success) {
-            window.location.href = data.redirect_url;
+            // Add delta_earned to redirect URL if present
+            let redirectUrl = data.redirect_url;
+            if (data.delta_earned) {
+                redirectUrl += (redirectUrl.includes('?') ? '&' : '?') + 'delta_earned=' + data.delta_earned;
+            }
+            window.location.href = redirectUrl;
         } else {
             showAlert('Failed to end practice: ' + data.error);
         }

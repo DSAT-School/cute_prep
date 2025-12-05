@@ -606,6 +606,8 @@ def submit_answer(request):
 @require_http_methods(["POST"])
 def end_practice(request):
     """End practice session and return session ID for results."""
+    from apps.core.services_delta import DeltaService
+    
     try:
         data = json.loads(request.body)
         session_id = data.get('session_id')
@@ -635,10 +637,84 @@ def end_practice(request):
         
         session.save()
         
+        # Award Delta coins for completing practice
+        delta_earned = 0
+        try:
+            accuracy = (session.correct_answers / session.total_questions * 100) if session.total_questions > 0 else 0
+            
+            # Check if this is user's first practice session
+            is_first_practice = PracticeSession.objects.filter(
+                user=request.user,
+                status='completed'
+            ).count() == 1
+            
+            if is_first_practice:
+                # First practice bonus
+                tx = DeltaService.award_for_activity(
+                    user=request.user,
+                    activity_name='first_practice',
+                    reference_id=str(session.id),
+                    reference_type='practice_session'
+                )
+                if tx:
+                    delta_earned += tx.amount
+            
+            # Perfect practice bonus (100% accuracy)
+            if accuracy == 100:
+                tx = DeltaService.award_for_activity(
+                    user=request.user,
+                    activity_name='perfect_practice',
+                    reference_id=str(session.id),
+                    reference_type='practice_session',
+                    accuracy=accuracy
+                )
+                if tx:
+                    delta_earned += tx.amount
+            # High accuracy bonus (80%+)
+            elif accuracy >= 80:
+                tx = DeltaService.award_for_activity(
+                    user=request.user,
+                    activity_name='high_accuracy_practice',
+                    reference_id=str(session.id),
+                    reference_type='practice_session',
+                    accuracy=accuracy
+                )
+                if tx:
+                    delta_earned += tx.amount
+            
+            # Base reward for completing session
+            tx = DeltaService.award_for_activity(
+                user=request.user,
+                activity_name='complete_practice_session',
+                reference_id=str(session.id),
+                reference_type='practice_session'
+            )
+            if tx:
+                delta_earned += tx.amount
+            
+            # Award for each correct answer
+            if session.correct_answers > 0:
+                from decimal import Decimal
+                tx = DeltaService.add_delta(
+                    user=request.user,
+                    amount=Decimal('5.00') * session.correct_answers,
+                    transaction_type='earn',
+                    description=f'Answered {session.correct_answers} questions correctly',
+                    reference_id=str(session.id),
+                    reference_type='correct_answers'
+                )
+                if tx:
+                    delta_earned += tx.amount
+        
+        except Exception as delta_error:
+            # Log Delta error but don't fail the session completion
+            print(f"Delta award error: {delta_error}")
+        
         return JsonResponse({
             'success': True,
             'session_id': str(session.id),
-            'redirect_url': f'/practice/results/{session.id}/'
+            'redirect_url': f'/practice/results/{session.id}/',
+            'delta_earned': str(delta_earned) if delta_earned > 0 else None
         })
         
     except Exception as e:

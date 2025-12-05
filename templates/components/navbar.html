@@ -14,6 +14,12 @@
                 {% if user.is_authenticated %}
                     <a href="/dashboard/" class="text-gray-700 hover:text-primary font-semibold transition-colors">Dashboard</a>
                     
+                    <!-- Delta Balance Widget -->
+                    <div class="flex items-center space-x-2 bg-gradient-to-r from-primary to-secondary px-4 py-2 rounded-lg shadow-md" id="delta-balance-widget">
+                        <i class="fas fa-coins text-white text-lg"></i>
+                        <span class="text-white font-bold text-base" id="delta-balance">-- Δ</span>
+                    </div>
+                    
                     <!-- User Profile Dropdown -->
                     <div class="relative" x-data="{ open: false }">
                         <button @click="open = !open" @click.away="open = false" class="flex items-center space-x-2 text-gray-700 hover:text-primary font-semibold transition-colors focus:outline-none">

@@ -100,3 +100,13 @@ class User(AbstractUser, TimeStampedModel):
         """
         full_name = f"{self.first_name} {self.last_name}".strip()
         return full_name or self.username
+
+
+# Import Delta coin models
+from .models_delta import (  # noqa: E402, F401
+    DeltaWallet,
+    DeltaTransaction,
+    DeltaEarningRule,
+    DeltaProduct,
+    DeltaPurchase
+)

@@ -203,7 +203,36 @@
                     });
                 {% endfor %}
             {% endif %}
+            
+            // Load Delta balance for authenticated users
+            {% if user.is_authenticated %}
+            loadDeltaBalance();
+            {% endif %}
         });
+        
+        // Load and display Delta balance
+        async function loadDeltaBalance() {
+            try {
+                const response = await fetch('/api/delta/balance/', {
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const balanceElement = document.getElementById('delta-balance');
+                    if (balanceElement) {
+                        balanceElement.textContent = data.formatted_balance;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load Delta balance:', error);
+            }
+        }
+        
+        // Refresh Delta balance (call after earning)
+        window.refreshDeltaBalance = loadDeltaBalance;
 
         // Detect user's timezone and send to server
         {% if TIMEZONE_ENABLED %}

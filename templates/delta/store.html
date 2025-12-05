@@ -1,0 +1,273 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Delta Store - DSAT SCHOOL{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-6">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <i class="fas fa-store text-primary"></i>
+                Delta Store
+            </h1>
+            <p class="text-sm text-gray-600 mt-1">Use your Delta coins to unlock features and rewards</p>
+        </div>
+
+        <!-- Balance Card -->
+        <div class="bg-gradient-to-r from-primary to-secondary rounded-xl shadow-lg p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-white/80 text-sm font-semibold mb-1">Your Balance</div>
+                    <div class="text-white text-4xl font-bold" id="store-balance">-- Δ</div>
+                </div>
+                <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-coins text-white text-4xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div id="products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Products will be loaded here -->
+            <div class="col-span-full text-center py-8">
+                <i class="fas fa-spinner fa-spin text-primary text-3xl"></i>
+                <p class="text-gray-600 mt-2">Loading products...</p>
+            </div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="mt-8">
+            <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <i class="fas fa-history text-primary"></i>
+                Recent Transactions
+            </h2>
+            <div class="bg-white rounded-xl shadow-lg p-4">
+                <div id="transactions-list" class="space-y-3">
+                    <!-- Transactions will be loaded here -->
+                    <div class="text-center py-4">
+                        <i class="fas fa-spinner fa-spin text-primary text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Purchase Confirmation Modal -->
+<div id="purchase-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Confirm Purchase</h3>
+        <div id="modal-product-info" class="mb-6">
+            <!-- Product info will be inserted here -->
+        </div>
+        <div class="flex gap-3">
+            <button onclick="closePurchaseModal()" class="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition-colors">
+                Cancel
+            </button>
+            <button onclick="confirmPurchase()" class="flex-1 px-4 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors">
+                Confirm
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let products = [];
+let selectedProduct = null;
+
+// Load balance and products
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadBalance();
+    await loadProducts();
+    await loadTransactions();
+});
+
+async function loadBalance() {
+    try {
+        const response = await fetch('/api/delta/balance/', {
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            document.getElementById('store-balance').textContent = data.formatted_balance;
+        }
+    } catch (error) {
+        console.error('Failed to load balance:', error);
+    }
+}
+
+async function loadProducts() {
+    try {
+        const response = await fetch('/api/delta/products/');
+        
+        if (response.ok) {
+            products = await response.json();
+            renderProducts();
+        }
+    } catch (error) {
+        console.error('Failed to load products:', error);
+        document.getElementById('products-grid').innerHTML = '<div class="col-span-full text-center text-red-600">Failed to load products</div>';
+    }
+}
+
+function renderProducts() {
+    const grid = document.getElementById('products-grid');
+    
+    if (products.length === 0) {
+        grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-600">No products available yet</div>';
+        return;
+    }
+    
+    grid.innerHTML = products.map(product => `
+        <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <i class="${product.icon} text-2xl text-primary"></i>
+                </div>
+                <div class="text-lg font-bold text-primary">${product.formatted_price}</div>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 mb-2">${product.name}</h3>
+            <p class="text-sm text-gray-600 mb-4">${product.description}</p>
+            <button onclick="showPurchaseModal('${product.id}')" class="w-full px-4 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors">
+                <i class="fas fa-shopping-cart mr-2"></i>Purchase
+            </button>
+        </div>
+    `).join('');
+}
+
+async function loadTransactions() {
+    try {
+        const response = await fetch('/api/delta/transactions/?page_size=5');
+        
+        if (response.ok) {
+            const data = await response.json();
+            renderTransactions(data.results || []);
+        }
+    } catch (error) {
+        console.error('Failed to load transactions:', error);
+        document.getElementById('transactions-list').innerHTML = '<div class="text-center text-red-600">Failed to load transactions</div>';
+    }
+}
+
+function renderTransactions(transactions) {
+    const list = document.getElementById('transactions-list');
+    
+    if (transactions.length === 0) {
+        list.innerHTML = '<div class="text-center text-gray-600 py-4">No transactions yet</div>';
+        return;
+    }
+    
+    list.innerHTML = transactions.map(tx => {
+        const isPositive = ['earn', 'bonus', 'refund', 'reversal'].includes(tx.transaction_type);
+        const color = isPositive ? 'text-green-600' : 'text-orange-600';
+        const sign = isPositive ? '+' : '-';
+        
+        return `
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div class="flex-1">
+                    <div class="text-sm font-semibold text-gray-900">${tx.description}</div>
+                    <div class="text-xs text-gray-600 mt-1">
+                        ${new Date(tx.created_at).toLocaleDateString()} • ${tx.transaction_type_display}
+                    </div>
+                </div>
+                <div class="text-lg font-bold ${color}">${sign}${tx.formatted_amount}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function showPurchaseModal(productId) {
+    selectedProduct = products.find(p => p.id === productId);
+    
+    if (!selectedProduct) return;
+    
+    document.getElementById('modal-product-info').innerHTML = `
+        <div class="text-center">
+            <div class="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <i class="${selectedProduct.icon} text-3xl text-primary"></i>
+            </div>
+            <h4 class="text-lg font-bold text-gray-900 mb-2">${selectedProduct.name}</h4>
+            <p class="text-sm text-gray-600 mb-4">${selectedProduct.description}</p>
+            <div class="text-2xl font-bold text-primary">${selectedProduct.formatted_price}</div>
+        </div>
+    `;
+    
+    document.getElementById('purchase-modal').classList.remove('hidden');
+}
+
+function closePurchaseModal() {
+    document.getElementById('purchase-modal').classList.add('hidden');
+    selectedProduct = null;
+}
+
+async function confirmPurchase() {
+    if (!selectedProduct) return;
+    
+    try {
+        const response = await fetch('/api/delta/purchase/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                product_id: selectedProduct.id,
+                quantity: 1
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            closePurchaseModal();
+            showToast({
+                type: 'success',
+                title: 'Purchase Successful!',
+                message: `You purchased ${selectedProduct.name}`
+            });
+            
+            // Reload balance and transactions
+            await loadBalance();
+            await loadTransactions();
+            
+            // Refresh navbar balance
+            if (window.refreshDeltaBalance) {
+                window.refreshDeltaBalance();
+            }
+        } else {
+            showToast({
+                type: 'error',
+                title: 'Purchase Failed',
+                message: data.error || 'Failed to complete purchase'
+            });
+        }
+    } catch (error) {
+        console.error('Purchase error:', error);
+        showToast({
+            type: 'error',
+            title: 'Error',
+            message: 'Failed to process purchase'
+        });
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}
