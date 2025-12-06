@@ -1159,8 +1159,8 @@
     }
 
     .legend-box.current {
-        background: #9967b9;
-        border-color: #9967b9;
+        background: #7c3aed;
+        border-color: #7c3aed;
         position: relative;
     }
 
@@ -1172,26 +1172,27 @@
         left: 50%;
         transform: translate(-50%, -50%);
         font-size: 0.75rem;
+        font-weight: bold;
     }
 
     .legend-box.answered {
         background: #10b981;
-        border-color: #10b981;
+        border-color: #059669;
     }
 
     .legend-box.tried {
-        background: #fbbf24;
-        border-color: #fbbf24;
+        background: #f59e0b;
+        border-color: #d97706;
     }
 
     .legend-box.not-tried {
-        background: white;
-        border-color: #d1d5db;
+        background: #f8fafc;
+        border-color: #cbd5e1;
     }
 
     .legend-box.marked {
         background: #8b5cf6;
-        border-color: #8b5cf6;
+        border-color: #7c3aed;
     }
 
     .question-map-grid {
@@ -1205,51 +1206,73 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        border: 2px solid #d1d5db;
-        border-radius: 6px;
-        background: white;
+        border: 2px solid #cbd5e1;
+        border-radius: 8px;
+        background: #f8fafc;
         font-size: 0.875rem;
-        font-weight: 600;
-        color: #6b7280;
+        font-weight: 700;
+        color: #64748b;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.2s ease;
         position: relative;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
     .question-map-item:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        border-color: #94a3b8;
     }
 
     .question-map-item.current {
-        background: #9967b9;
-        border-color: #9967b9;
+        background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+        border-color: #6d28d9;
         color: white;
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
     }
 
     .question-map-item.current::after {
         content: '✓';
         position: absolute;
-        bottom: 2px;
-        right: 2px;
+        bottom: 3px;
+        right: 3px;
         font-size: 0.625rem;
+        font-weight: bold;
     }
 
-    .question-map-item.answered {
-        background: #10b981;
-        border-color: #10b981;
+    .question-map-item.answered,
+    .question-map-item.mastered {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-color: #059669;
         color: white;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+    }
+
+    .question-map-item.mastered::before {
+        content: '✓';
+        position: absolute;
+        top: 2px;
+        right: 3px;
+        font-size: 0.5rem;
+        font-weight: bold;
+        opacity: 0.8;
     }
 
     .question-map-item.tried {
-        background: #fbbf24;
-        border-color: #fbbf24;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        border-color: #d97706;
         color: white;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
     }
 
     .question-map-item.marked {
         border-color: #8b5cf6;
         border-width: 3px;
+        box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+    }
+
+    .question-map-item.mastered.marked {
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25), 0 0 0 2px rgba(139, 92, 246, 0.3);
     }
 
     /* Alert Modal */
@@ -1609,6 +1632,7 @@ let markedForReview = new Set();
 let masteredQuestions = new Set(); // Track which questions are mastered
 let strikethroughOptions = {};
 let answerChecked = {}; // Track which questions have been checked
+let questionAttemptCounts = {}; // Track attempt count for each question from backend
 let navigationWarningShown = false; // Track if warning tooltip was shown
 
 // Session tracking
@@ -1910,17 +1934,24 @@ function renderQuestionMap() {
         item.className = 'question-map-item';
         item.textContent = index + 1;
         
-        // Add status classes
+        // Add status classes - priority order matters
         if (index === currentIndex) {
+            // Currently viewing this question
             item.classList.add('current');
+        } else if (masteredQuestions.has(questionId)) {
+            // Question is mastered (from backend or first-attempt correct)
+            item.classList.add('mastered');
         } else if (answeredCorrectly[questionId] === true) {
-            // Question was answered correctly - show as mastered (green)
+            // Question was answered correctly in this session (but not yet mastered)
             item.classList.add('answered');
-        } else if (userAnswers[questionId]) {
-            // Question was attempted but not correct - show as tried (yellow)
+        } else if (questionAttemptCounts[questionId] > 0) {
+            // Question has been attempted before (from backend history)
+            item.classList.add('tried');
+        } else if (userAnswers[questionId] !== undefined || answerChecked[questionId]) {
+            // Question was attempted in this session
             item.classList.add('tried');
         }
-        // If no answer, it stays as not-tried (white)
+        // If none of above, it stays as not-tried (default white background)
         
         // Check if marked for review
         if (markedForReview.has(questionId)) {
@@ -2222,6 +2253,11 @@ async function loadQuestion(index) {
             }
         }
         
+        // Store attempt count for this question
+        if (question.attempt_count > 0) {
+            questionAttemptCounts[questionId] = question.attempt_count;
+        }
+        
         // Update attempt information
         updateAttemptInfo(question);
         
@@ -2520,6 +2556,29 @@ async function loadMasteredQuestions() {
     }
 }
 
+async function loadAttemptedQuestions() {
+    try {
+        const response = await fetch('/practice/api/attempted-questions/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                question_ids: questionIds
+            })
+        });
+        const data = await response.json();
+        
+        if (data.attempt_counts) {
+            // Store attempt counts for all questions
+            questionAttemptCounts = data.attempt_counts;
+        }
+    } catch (error) {
+        console.error('Error loading attempted questions:', error);
+    }
+}
+
 // Load session answers on page load
 async function loadSessionAnswers() {
     try {
@@ -2546,21 +2605,31 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Load mastered questions from backend
     await loadMasteredQuestions();
     
+    // Load attempted questions (attempt counts for all questions)
+    await loadAttemptedQuestions();
+    
     // Load session answers from backend (for resumed sessions)
     await loadSessionAnswers();
     
     // Check if there's a question ID in the URL
     const urlParams = new URLSearchParams(window.location.search);
     const questionIdParam = urlParams.get('question');
-    let initialIndex = 0;
+    let initialIndex = {{ initial_index|default:0 }};  // Use backend-calculated index
     
-    if (questionIdParam) {
+    if (questionIdParam && initialIndex === 0) {
+        // Fallback: try to find question in array if backend didn't set index
         const foundIndex = questionIds.findIndex(id => id === questionIdParam);
+        console.log('Looking for question:', questionIdParam);
+        console.log('Found at index:', foundIndex);
+        console.log('Question IDs array length:', questionIds.length);
         if (foundIndex !== -1) {
             initialIndex = foundIndex;
+        } else {
+            console.warn('Question not found in question_ids array');
         }
     }
     
+    console.log('Starting at index:', initialIndex);
     // Load the initial question (this will start the timer)
     loadQuestion(initialIndex);
     

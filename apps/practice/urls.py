@@ -29,4 +29,5 @@ urlpatterns = [
     path('api/master-question/', views.master_question, name='master_question'),
     path('api/mastered-questions/', views.get_mastered_questions, name='mastered_questions'),
     path('api/session-answers/<uuid:session_id>/', views.get_session_answers, name='session_answers'),
+    path('api/attempted-questions/', views.get_attempted_questions, name='attempted_questions'),
 ]

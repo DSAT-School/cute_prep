@@ -244,79 +244,116 @@ def practice_view(request):
     # Handle resume mode with custom question ordering
     resume_mode = request.GET.get('resume') == 'true'
     question_ids = []
+    resume_start_index = 0  # Track where to start in resume mode
     
     if resume_mode and skill_filter:
-        # Custom ordering for resume: solved -> wrong attempts -> fresh questions
+        # Custom ordering for resume: mastered -> fresh -> attempted (wrong)
         
-        # Get all answered questions for this skill (ordered by answered_at)
-        answered_correctly = UserAnswer.objects.filter(
+        # Get all question IDs for this skill (in database order)
+        all_skill_question_ids = list(questions.values_list('id', flat=True))
+        
+        # Step 1: Get mastered questions for this skill (preserve order)
+        mastered_question_objs = MasteredQuestion.objects.filter(
             user=request.user,
             question__skill_code=skill_filter,
-            is_correct=True
-        ).values_list('question_id', flat=True).distinct()
+            question__is_active=True
+        ).select_related('question')
         
-        # Get wrong attempts for this skill
-        answered_incorrectly = UserAnswer.objects.filter(
-            user=request.user,
-            question__skill_code=skill_filter,
-            is_correct=False
-        ).values_list('question_id', flat=True).distinct()
+        mastered_question_ids = []
+        mastered_set = set()
+        for mq in mastered_question_objs:
+            if mq.question_id not in mastered_set:
+                mastered_question_ids.append(mq.question_id)
+                mastered_set.add(mq.question_id)
         
-        # Get all question IDs for this skill
-        all_skill_question_ids = set(questions.values_list('id', flat=True))
-        
-        # Get fresh questions (not attempted)
-        fresh_question_ids = all_skill_question_ids - set(answered_correctly) - set(answered_incorrectly)
-        
-        # Build custom order: answered correctly -> wrong attempts -> fresh
-        question_ids = (
-            list(answered_correctly) + 
-            list(answered_incorrectly) + 
-            list(fresh_question_ids)
-        )
-        
-        # Find last answered question to resume from
-        last_answer = UserAnswer.objects.filter(
+        # Step 2: Get all attempted questions (not mastered)
+        attempted_question_objs = UserAnswer.objects.filter(
             user=request.user,
             question__skill_code=skill_filter
-        ).order_by('-answered_at').first()
+        ).values_list('question_id', flat=True).distinct()
         
-        if last_answer and last_answer.question_id in question_ids:
-            # Start from the question after the last answered one
-            last_index = question_ids.index(last_answer.question_id)
-            # Reorder to start from next question after last answered
-            question_ids = question_ids[last_index + 1:] + question_ids[:last_index + 1]
+        attempted_not_mastered_ids = []
+        attempted_set = set()
+        for qid in attempted_question_objs:
+            if qid not in mastered_set and qid not in attempted_set:
+                attempted_not_mastered_ids.append(qid)
+                attempted_set.add(qid)
+        
+        # Step 3: Get fresh questions (never attempted, not mastered)
+        all_processed_set = mastered_set | attempted_set
+        fresh_question_ids = []
+        for qid in all_skill_question_ids:
+            if qid not in all_processed_set:
+                fresh_question_ids.append(qid)
+        
+        # Build the ordered list: mastered -> fresh -> attempted
+        question_ids = mastered_question_ids + fresh_question_ids + attempted_not_mastered_ids
+        
+        # Set resume start index to first fresh question (right after mastered)
+        # Only if we have fresh questions and no specific question requested
+        if not question_id_param and len(mastered_question_ids) < len(question_ids):
+            resume_start_index = len(mastered_question_ids)
     else:
         # Normal mode: get questions in default order
         question_ids = list(questions.values_list('id', flat=True))
     
-    # Determine starting question
+    # Determine starting question and index
     first_question = None
-    current_index = 1
+    current_index = 0  # JavaScript uses 0-based indexing
     
-    # Priority: question parameter > resume_from > first question
+    # Priority: question parameter > resume start index > first question
     question_param = question_id_param or resume_from_param
     
     if question_param and question_ids:
         # Try to find and start from the specified question
         try:
             question_uuid = uuid.UUID(question_param)
-            if question_uuid in question_ids:
+            # Convert question_ids to set for faster lookup
+            question_ids_set = set(question_ids)
+            if question_uuid in question_ids_set:
                 first_question = Question.objects.filter(id=question_uuid).first()
                 if first_question:
-                    current_index = question_ids.index(question_uuid) + 1
+                    current_index = question_ids.index(question_uuid)
             else:
-                # Question not in filtered list, start from first
-                first_question = Question.objects.filter(id=question_ids[0]).first() if question_ids else None
-                current_index = 1
+                # Question not in filtered list - this might happen if:
+                # 1. Question doesn't match current filters (domain/skill)
+                # 2. Question is not active
+                # Try to add it to the list if it matches filters
+                question_obj = Question.objects.filter(id=question_uuid, is_active=True).first()
+                if question_obj:
+                    # Check if question matches the filters
+                    matches_filter = True
+                    if skill_filter and question_obj.skill_code != skill_filter:
+                        matches_filter = False
+                    if domain_filter and question_obj.domain_code != domain_filter:
+                        matches_filter = False
+                    
+                    if matches_filter:
+                        # Add question to the list at the beginning
+                        question_ids.insert(0, question_uuid)
+                        first_question = question_obj
+                        current_index = 0
+                    else:
+                        # Question doesn't match filters, start from first
+                        first_question = Question.objects.filter(id=question_ids[0]).first() if question_ids else None
+                        current_index = 0
+                else:
+                    # Question doesn't exist or not active, start from first
+                    first_question = Question.objects.filter(id=question_ids[0]).first() if question_ids else None
+                    current_index = 0
         except (ValueError, AttributeError):
             # Invalid UUID, start from first
             first_question = Question.objects.filter(id=question_ids[0]).first() if question_ids else None
-            current_index = 1
+            current_index = 0
     elif question_ids:
-        # No question parameter, start from first in list
-        first_question = Question.objects.filter(id=question_ids[0]).first()
-        current_index = 1
+        # No question parameter - use resume start index if in resume mode
+        if resume_mode and resume_start_index > 0 and resume_start_index < len(question_ids):
+            current_index = resume_start_index
+            first_question = Question.objects.filter(id=question_ids[resume_start_index]).first()
+        else:
+            # Start from first question
+            current_index = 0
+            first_question = Question.objects.filter(id=question_ids[0]).first()
     else:
         # No questions available
         first_question = None
@@ -348,7 +385,7 @@ def practice_view(request):
         'first_question': first_question,
         'question_ids': json.dumps([str(qid) for qid in question_ids]),
         'filters': filter_context,
-        'current_index': current_index,
+        'initial_index': current_index,  # 0-based index for JavaScript
         'session_id': str(session.id),
         'session_key': session_key,
     }
@@ -945,6 +982,53 @@ def get_session_answers(request, session_id):
         
         return JsonResponse({
             'answers': answers_dict
+        })
+    
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def get_attempted_questions(request):
+    """
+    Get attempt counts for a list of question IDs.
+    
+    POST /practice/api/attempted-questions/
+    Body: { question_ids: ["uuid1", "uuid2", ...] }
+    Returns: { 
+        attempt_counts: {
+            "question_id": 3,
+            ...
+        }
+    }
+    """
+    try:
+        data = json.loads(request.body)
+        question_ids = data.get('question_ids', [])
+        
+        if not question_ids:
+            return JsonResponse({'attempt_counts': {}})
+        
+        # Convert string UUIDs to UUID objects
+        uuid_list = [uuid.UUID(qid) for qid in question_ids]
+        
+        # Get attempt counts for each question
+        from django.db.models import Count
+        attempt_data = UserAnswer.objects.filter(
+            user=request.user,
+            question_id__in=uuid_list
+        ).values('question_id').annotate(
+            count=Count('id')
+        )
+        
+        # Build response dict
+        attempt_counts = {}
+        for item in attempt_data:
+            attempt_counts[str(item['question_id'])] = item['count']
+        
+        return JsonResponse({
+            'attempt_counts': attempt_counts
         })
     
     except Exception as e:
