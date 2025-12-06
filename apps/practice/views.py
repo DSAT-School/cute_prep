@@ -147,29 +147,6 @@ def practice_modules_view(request):
     # Get count of marked questions for the user
     marked_count = MarkedQuestion.objects.filter(user=request.user).count()
     
-    # Get last active session for this user
-    last_session = PracticeSession.objects.filter(
-        user=request.user,
-        status='active'
-    ).order_by('-started_at').first()
-    
-    # If there's an active session, get additional details
-    if last_session:
-        # Count answered questions in this session
-        answered_count = UserAnswer.objects.filter(session=last_session).count()
-        last_session.answered_count = answered_count
-        
-        # Get domain and skill names
-        if last_session.domain_code:
-            domain = Question.objects.filter(domain_code=last_session.domain_code).first()
-            if domain:
-                last_session.domain_name = domain.domain_name
-        
-        if last_session.skill_code:
-            skill = Question.objects.filter(skill_code=last_session.skill_code).first()
-            if skill:
-                last_session.skill_name = skill.skill_name
-    
     context = {
         'domains': domains,
         'skills_by_domain': skills_by_domain,
@@ -181,7 +158,6 @@ def practice_modules_view(request):
         'selected_difficulty': selected_difficulty,
         'marked_for_review_only': marked_for_review_only,
         'marked_count': marked_count,
-        'last_session': last_session,
     }
     
     return render(request, 'practice/modules.html', context)
@@ -363,13 +339,12 @@ def practice_view(request):
         # No questions available
         first_question = None
     
-    # Create or reuse session
-    if not session:
-        # Generate unique session key with UUID for uniqueness
-        session_key = f"session_{uuid.uuid4().hex[:12]}_{timezone.now().strftime('%Y%m%d%H%M%S')}"
+    # Create new session
+    # Generate unique session key with UUID for uniqueness
+    session_key = f"session_{uuid.uuid4().hex[:12]}_{timezone.now().strftime('%Y%m%d%H%M%S')}"
         
         # Create new session
-        session = PracticeSession.objects.create(
+    session = PracticeSession.objects.create(
             user=request.user,
             session_key=session_key,
             status='active',
@@ -995,62 +970,6 @@ def get_session_answers(request, session_id):
     
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-
-
-@login_required
-def resume_session(request, session_id):
-    """
-    Resume a previous practice session.
-    
-    GET /practice/resume/<session_id>/
-    Redirects to practice interface with the session's questions and last answered position.
-    """
-    # Get the session
-    session = get_object_or_404(PracticeSession, id=session_id, user=request.user)
-    
-    # Get all answered questions in this session to find the last one
-    last_answer = UserAnswer.objects.filter(session=session).order_by('-answered_at').first()
-    
-    # Build the practice URL with session ID and filters
-    params = {'session': str(session.id)}
-    
-    if session.domain_code:
-        params['domain'] = session.domain_code
-    if session.skill_code:
-        params['skill'] = session.skill_code
-    if session.provider_code:
-        params['provider'] = session.provider_code
-    
-    # If there was a last answered question, start from the NEXT question
-    # (since they already answered the last one)
-    if last_answer:
-        # Get the question after the last answered one
-        questions = Question.objects.filter(is_active=True)
-        if session.domain_code:
-            questions = questions.filter(domain_code=session.domain_code)
-        if session.skill_code:
-            questions = questions.filter(skill_code=session.skill_code)
-        if session.provider_code:
-            questions = questions.filter(provider_code=session.provider_code)
-        
-        question_ids = list(questions.values_list('id', flat=True))
-        try:
-            last_index = question_ids.index(last_answer.question.id)
-            # Get next question if available
-            if last_index + 1 < len(question_ids):
-                next_question_id = question_ids[last_index + 1]
-                params['question'] = str(next_question_id)
-        except ValueError:
-            # Last answered question not in current filtered list
-            pass
-    
-    # Build query string
-    from urllib.parse import urlencode
-    query_string = urlencode(params)
-    
-    # Redirect to practice interface with session context
-    from django.shortcuts import redirect
-    return redirect(f"/practice/?{query_string}")
 
 
 @login_required

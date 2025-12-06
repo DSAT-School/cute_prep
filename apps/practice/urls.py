@@ -16,9 +16,6 @@ urlpatterns = [
     # Results page
     path('results/<uuid:session_id>/', views.practice_results, name='results'),
     
-    # Resume session
-    path('resume/<uuid:session_id>/', views.resume_session, name='resume_session'),
-    
     # Mistake log
     path('mistake-log/', views.mistake_log_view, name='mistake_log'),
     

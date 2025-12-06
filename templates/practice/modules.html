@@ -92,28 +92,6 @@
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <!-- Resume Last Session Card -->
-        {% if last_session %}
-        <div class="bg-gradient-to-r from-primary to-purple-600 rounded-lg p-3 sm:p-5 mb-3 sm:mb-6 text-white shadow-lg">
-            <div class="flex items-start gap-3">
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 mb-2">
-                        <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <h3 class="text-sm sm:text-base font-bold">Resume Session</h3>
-                    </div>
-                    <div class="text-xs opacity-90 space-y-1">
-                        <p class="truncate"><strong>{{ last_session.domain_name }}</strong> • {{ last_session.skill_name }}</p>
-                        <p>{{ last_session.answered_count }}/{{ last_session.total_questions }} questions • {{ last_session.started_at|timesince }} ago</p>
-                    </div>
-                </div>
-                <a href="{% url 'practice:resume_session' last_session.id %}" class="flex-shrink-0 px-3 sm:px-5 py-2 sm:py-2.5 bg-white text-primary rounded-lg text-xs sm:text-sm font-semibold hover:bg-gray-100 transition-colors whitespace-nowrap">
-                    Continue →
-                </a>
-            </div>
-        </div>
-        {% endif %}
-
         <!-- Category Tabs -->
         <div class="flex items-center gap-2 mb-3 sm:mb-5">
             <button class="category-tab flex-1 {% if subject == 'reading' %}active bg-primary text-white{% else %}bg-white text-gray-700 border border-gray-300{% endif %} px-3 sm:px-6 py-2 text-xs sm:text-sm font-semibold rounded-lg hover:bg-gray-50" data-category="reading">
