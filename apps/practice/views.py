@@ -336,23 +336,32 @@ def practice_view(request):
     first_question = None
     current_index = 1
     
-    if resume_mode:
-        # In resume mode, start from first question in custom ordered list
-        if question_ids:
-            first_question = Question.objects.filter(id=question_ids[0]).first()
+    # Priority: question parameter > resume_from > first question
+    question_param = question_id_param or resume_from_param
+    
+    if question_param and question_ids:
+        # Try to find and start from the specified question
+        try:
+            question_uuid = uuid.UUID(question_param)
+            if question_uuid in question_ids:
+                first_question = Question.objects.filter(id=question_uuid).first()
+                if first_question:
+                    current_index = question_ids.index(question_uuid) + 1
+            else:
+                # Question not in filtered list, start from first
+                first_question = Question.objects.filter(id=question_ids[0]).first() if question_ids else None
+                current_index = 1
+        except (ValueError, AttributeError):
+            # Invalid UUID, start from first
+            first_question = Question.objects.filter(id=question_ids[0]).first() if question_ids else None
             current_index = 1
+    elif question_ids:
+        # No question parameter, start from first in list
+        first_question = Question.objects.filter(id=question_ids[0]).first()
+        current_index = 1
     else:
-        # Priority: resume_from > question_id > first question
-        question_param = resume_from_param or question_id_param
-        
-        if question_param and question_param in [str(qid) for qid in question_ids]:
-            # Start from specified question (for resume or direct access)
-            first_question = questions.filter(id=question_param).first()
-            if first_question:
-                current_index = question_ids.index(first_question.id) + 1
-        else:
-            # Start from first question
-            first_question = questions.first() if total_questions > 0 else None
+        # No questions available
+        first_question = None
     
     # Create or reuse session
     if not session:
