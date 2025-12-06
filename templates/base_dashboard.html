@@ -174,7 +174,7 @@
 
     <div class="flex h-screen overflow-hidden" x-data="sidebarManager()">
         <!-- Mobile Header (Hidden in Practice Mode) -->
-        <div class="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-30 px-4 py-3 flex items-center justify-between {% if '/practice/' in request.path and 'modules' not in request.path %}hidden{% endif %}">
+        <div class="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-30 px-4 py-3 flex items-center justify-between {% if request.path == '/practice/' %}hidden{% endif %}">
             <a href="/" class="flex items-center">
                 <img src="https://static.dsatschool.com/practice-site/logo%20main%20w%20text.png" alt="DSAT SCHOOL" class="h-8">
             </a>
@@ -192,7 +192,7 @@
         <div x-show="mobileMenuOpen" @click="mobileMenuOpen = false" class="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40" x-transition:enter="transition-opacity ease-linear duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity ease-linear duration-300" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"></div>
 
         <!-- Sidebar (Hidden in Practice Mode) -->
-        <aside :class="sidebarOpen ? 'w-64' : 'w-20'" class="bg-white border-r border-gray-200 flex flex-col transition-all duration-300 relative hidden md:flex" {% if '/practice/' in request.path and 'modules' not in request.path %}style="display: none !important;"{% endif %}>
+        <aside :class="sidebarOpen ? 'w-64' : 'w-20'" class="bg-white border-r border-gray-200 flex flex-col transition-all duration-300 relative hidden md:flex" {% if request.path == '/practice/' %}style="display: none !important;"{% endif %}>
             <!-- Toggle & Lock Buttons (Outside Sidebar - Desktop Only) -->
             <div class="absolute -right-3 top-6 flex flex-col space-y-2 z-10 hidden md:flex">
                 <!-- Lock/Unlock Button -->
@@ -532,7 +532,7 @@
         </aside>
         
         <!-- Main Content (Full Width in Practice Mode) -->
-        <main class="flex-1 overflow-y-auto {% if '/practice/' in request.path and 'modules' not in request.path %}w-full pt-0{% else %}pt-16 md:pt-0{% endif %}">
+        <main class="flex-1 overflow-y-auto {% if request.path == '/practice/' %}w-full pt-0{% else %}pt-16 md:pt-0{% endif %}">
             <!-- Page Content -->
             {% block content %}{% endblock %}
         </main>
