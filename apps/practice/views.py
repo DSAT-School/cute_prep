@@ -184,29 +184,11 @@ def practice_view(request):
     skill_filter = request.GET.get('skill')
     provider_filter = request.GET.get('provider')
     question_type_filter = request.GET.get('type')
-    session_id_param = request.GET.get('session')
     question_id_param = request.GET.get('question')
     resume_from_param = request.GET.get('resume_from')  # For resuming from specific question
     mistakes_mode = request.GET.get('mistakes') == 'true'
     retry_mode = request.GET.get('retry') == 'true'
     date_range = request.GET.get('date_range', 'all')
-    
-    # Check if resuming an existing session
-    session = None
-    if session_id_param:
-        try:
-            session = PracticeSession.objects.get(
-                id=session_id_param,
-                user=request.user,
-                status='active'
-            )
-            # Use session's filters if resuming
-            domain_filter = session.domain_code or domain_filter
-            skill_filter = session.skill_code or skill_filter
-            provider_filter = session.provider_code or provider_filter
-        except PracticeSession.DoesNotExist:
-            # Session not found, will create new one
-            session = None
     
     # Build query
     questions = Question.objects.filter(is_active=True)
@@ -342,19 +324,16 @@ def practice_view(request):
     # Create new session
     # Generate unique session key with UUID for uniqueness
     session_key = f"session_{uuid.uuid4().hex[:12]}_{timezone.now().strftime('%Y%m%d%H%M%S')}"
-        
-        # Create new session
+    
     session = PracticeSession.objects.create(
-            user=request.user,
-            session_key=session_key,
-            status='active',
-            domain_code=domain_filter or '',
-            skill_code=skill_filter or '',
-            provider_code=provider_filter or '',
-            total_questions=total_questions
-        )
-    else:
-        session_key = session.session_key
+        user=request.user,
+        session_key=session_key,
+        status='active',
+        domain_code=domain_filter or '',
+        skill_code=skill_filter or '',
+        provider_code=provider_filter or '',
+        total_questions=total_questions
+    )
     
     # Prepare filter context
     filter_context = {
