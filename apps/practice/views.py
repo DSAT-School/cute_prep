@@ -317,21 +317,32 @@ def practice_view(request):
     resume_start_index = 0  # Track where to start in resume mode
     
     if adaptive_mode:
-        # Adaptive mode: Start with easy questions, adjust based on performance
+        # Adaptive mode: Only include non-mastered questions
         # Order: Easy (unattempted) -> Medium (unattempted) -> Hard (unattempted)
-        # Then include previously attempted questions by difficulty
+        # Then include attempted but not mastered questions by difficulty
         
-        # Get all questions with difficulty field, ordered by difficulty
-        all_question_ids = list(questions.exclude(difficulty__isnull=True).values_list('id', 'difficulty'))
+        # Get mastered question IDs for this user
+        mastered_question_ids = set(
+            MasteredQuestion.objects.filter(user=request.user)
+            .values_list('question_id', flat=True)
+        )
+        
+        # Get all questions with difficulty field, excluding mastered ones
+        all_question_ids = list(
+            questions.exclude(difficulty__isnull=True)
+            .exclude(id__in=mastered_question_ids)
+            .values_list('id', 'difficulty')
+        )
         
         # Separate by difficulty level
         easy_questions = []
         medium_questions = []
         hard_questions = []
         
-        # Get user's attempted questions
+        # Get user's attempted questions (excluding mastered)
         attempted_question_ids = set(
             UserAnswer.objects.filter(user=request.user)
+            .exclude(question_id__in=mastered_question_ids)
             .values_list('question_id', flat=True)
             .distinct()
         )
@@ -351,7 +362,7 @@ def practice_view(request):
         # 1. Unattempted easy questions first
         # 2. Unattempted medium questions
         # 3. Unattempted hard questions
-        # 4. Attempted questions (maintaining difficulty order)
+        # 4. Attempted but not mastered questions (maintaining difficulty order)
         
         question_ids = []
         
@@ -360,7 +371,7 @@ def practice_view(request):
         question_ids.extend([q_id for q_id, attempted in medium_questions if not attempted])
         question_ids.extend([q_id for q_id, attempted in hard_questions if not attempted])
         
-        # Add attempted questions by difficulty (for review/retry)
+        # Add attempted but not mastered questions by difficulty
         question_ids.extend([q_id for q_id, attempted in easy_questions if attempted])
         question_ids.extend([q_id for q_id, attempted in medium_questions if attempted])
         question_ids.extend([q_id for q_id, attempted in hard_questions if attempted])
@@ -502,6 +513,19 @@ def practice_view(request):
         'adaptive': adaptive_mode,
     }
     
+    # Calculate mastered stats for adaptive mode
+    mastered_count = 0
+    not_mastered_count = total_questions
+    
+    if adaptive_mode:
+        # Count mastered questions from the original question pool (before filtering)
+        total_available = questions.count()
+        mastered_count = MasteredQuestion.objects.filter(
+            user=request.user,
+            question__in=questions
+        ).count()
+        not_mastered_count = len(question_ids)  # Questions actually in the adaptive session
+    
     context = {
         'total_questions': total_questions,
         'first_question': first_question,
@@ -511,6 +535,8 @@ def practice_view(request):
         'session_id': str(session.id),
         'session_key': session_key,
         'adaptive_mode': adaptive_mode,
+        'mastered_count': mastered_count,
+        'not_mastered_count': not_mastered_count,
     }
     
     return render(request, 'practice/practice.html', context)

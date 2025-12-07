@@ -103,6 +103,45 @@
         border: 1px solid #ef4444;
     }
 
+    .adaptive-stats {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.375rem 0.75rem;
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: 1px solid #d1d5db;
+    }
+
+    .adaptive-stats .mastered-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        color: #059669;
+    }
+
+    .adaptive-stats .mastered-count i {
+        font-size: 0.875rem;
+    }
+
+    .adaptive-stats .separator {
+        color: #9ca3af;
+        font-weight: 400;
+    }
+
+    .adaptive-stats .remaining-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        color: #6366f1;
+    }
+
+    .adaptive-stats .remaining-count i {
+        font-size: 0.625rem;
+    }
+
     .adaptive-feedback {
         position: fixed;
         top: 5rem;
@@ -1575,6 +1614,17 @@
                 <i class="fas fa-signal"></i>
                 <span id="difficulty-text">Easy</span>
             </div>
+            {% if adaptive_mode %}
+            <div class="adaptive-stats">
+                <span class="mastered-count" title="Questions you've mastered">
+                    <i class="fas fa-check-circle"></i> {{ mastered_count }}
+                </span>
+                <span class="separator">|</span>
+                <span class="remaining-count" title="Questions remaining to master">
+                    <i class="fas fa-circle"></i> {{ not_mastered_count }}
+                </span>
+            </div>
+            {% endif %}
             <div class="timer" id="timer">0:00</div>
         </div>
         <div class="flex items-center gap-2">
