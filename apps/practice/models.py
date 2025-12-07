@@ -224,6 +224,20 @@ class PracticeSession(models.Model):
         help_text=_("Filtered provider code")
     )
     
+    # Adaptive mode tracking
+    is_adaptive = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text=_("Whether this is an adaptive practice session")
+    )
+    current_difficulty_level = models.CharField(
+        max_length=1,
+        blank=True,
+        null=True,
+        choices=[('E', 'Easy'), ('M', 'Medium'), ('H', 'Hard')],
+        help_text=_("Current difficulty level in adaptive mode")
+    )
+    
     # Session stats
     total_questions = models.IntegerField(
         default=0,

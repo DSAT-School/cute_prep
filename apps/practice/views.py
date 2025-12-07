@@ -243,6 +243,7 @@ def practice_view(request):
     - type: Filter by question_type (e.g., ?type=mcq)
     - session: Resume existing session by ID
     - question: Start from specific question by ID
+    - adaptive: Enable adaptive practice mode (e.g., ?adaptive=true)
     
     Multiple filters can be combined (e.g., ?domain=CAS&skill=CTC)
     """
@@ -256,6 +257,7 @@ def practice_view(request):
     mistakes_mode = request.GET.get('mistakes') == 'true'
     retry_mode = request.GET.get('retry') == 'true'
     date_range = request.GET.get('date_range', 'all')
+    adaptive_mode = request.GET.get('adaptive') == 'true'  # New adaptive mode parameter
     
     # Build query
     questions = Question.objects.filter(is_active=True)
@@ -308,12 +310,62 @@ def practice_view(request):
     # Get total count
     total_questions = questions.count()
     
+    # Handle adaptive mode with intelligent difficulty-based ordering
     # Handle resume mode with custom question ordering
     resume_mode = request.GET.get('resume') == 'true'
     question_ids = []
     resume_start_index = 0  # Track where to start in resume mode
     
-    if resume_mode and skill_filter:
+    if adaptive_mode:
+        # Adaptive mode: Start with easy questions, adjust based on performance
+        # Order: Easy (unattempted) -> Medium (unattempted) -> Hard (unattempted)
+        # Then include previously attempted questions by difficulty
+        
+        # Get all questions with difficulty field, ordered by difficulty
+        all_question_ids = list(questions.exclude(difficulty__isnull=True).values_list('id', 'difficulty'))
+        
+        # Separate by difficulty level
+        easy_questions = []
+        medium_questions = []
+        hard_questions = []
+        
+        # Get user's attempted questions
+        attempted_question_ids = set(
+            UserAnswer.objects.filter(user=request.user)
+            .values_list('question_id', flat=True)
+            .distinct()
+        )
+        
+        # Categorize questions by difficulty and attempt status
+        for q_id, difficulty in all_question_ids:
+            is_attempted = q_id in attempted_question_ids
+            
+            if difficulty == 'E':
+                easy_questions.append((q_id, is_attempted))
+            elif difficulty == 'M':
+                medium_questions.append((q_id, is_attempted))
+            elif difficulty == 'H':
+                hard_questions.append((q_id, is_attempted))
+        
+        # Build adaptive question order:
+        # 1. Unattempted easy questions first
+        # 2. Unattempted medium questions
+        # 3. Unattempted hard questions
+        # 4. Attempted questions (maintaining difficulty order)
+        
+        question_ids = []
+        
+        # Add unattempted questions by difficulty
+        question_ids.extend([q_id for q_id, attempted in easy_questions if not attempted])
+        question_ids.extend([q_id for q_id, attempted in medium_questions if not attempted])
+        question_ids.extend([q_id for q_id, attempted in hard_questions if not attempted])
+        
+        # Add attempted questions by difficulty (for review/retry)
+        question_ids.extend([q_id for q_id, attempted in easy_questions if attempted])
+        question_ids.extend([q_id for q_id, attempted in medium_questions if attempted])
+        question_ids.extend([q_id for q_id, attempted in hard_questions if attempted])
+        
+    elif resume_mode and skill_filter:
         # Custom ordering for resume: mastered -> fresh -> attempted (wrong)
         
         # Get all question IDs for this skill (in database order)
@@ -436,7 +488,9 @@ def practice_view(request):
         domain_code=domain_filter or '',
         skill_code=skill_filter or '',
         provider_code=provider_filter or '',
-        total_questions=total_questions
+        total_questions=total_questions,
+        is_adaptive=adaptive_mode,
+        current_difficulty_level='E' if adaptive_mode else None
     )
     
     # Prepare filter context
@@ -445,6 +499,7 @@ def practice_view(request):
         'skill': skill_filter,
         'provider': provider_filter,
         'type': question_type_filter,
+        'adaptive': adaptive_mode,
     }
     
     context = {
@@ -455,6 +510,7 @@ def practice_view(request):
         'initial_index': current_index,  # 0-based index for JavaScript
         'session_id': str(session.id),
         'session_key': session_key,
+        'adaptive_mode': adaptive_mode,
     }
     
     return render(request, 'practice/practice.html', context)
@@ -533,6 +589,7 @@ def get_question(request, question_id):
         'mcq_options': question.mcq_option_list or {},
         'spr_answer': question.spr_answer,
         'tutorial_link': question.tutorial_link,
+        'difficulty': question.difficulty,
         'attempt_count': attempt_count,
         'last_attempt': last_attempt_data,
         'all_attempts': all_attempts_data,
@@ -673,6 +730,110 @@ def submit_answer(request):
         }
         
         return JsonResponse(response_data)
+        
+    except Exception as e:
+        return JsonResponse({
+            'error': str(e)
+        }, status=400)
+
+
+@login_required
+@require_http_methods(["POST"])
+def get_next_adaptive_question(request):
+    """
+    Get the next question in adaptive mode based on user performance.
+    
+    POST /practice/api/next-adaptive-question/
+    Body: {
+        'session_id': session UUID,
+        'current_question_id': current question UUID,
+        'last_answer_correct': boolean
+    }
+    
+    Returns: Next question ID or indication that session is complete
+    """
+    try:
+        data = json.loads(request.body)
+        session_id = data.get('session_id')
+        current_question_id = data.get('current_question_id')
+        last_answer_correct = data.get('last_answer_correct')
+        
+        session = get_object_or_404(PracticeSession, id=session_id, user=request.user, is_adaptive=True)
+        
+        # Get all answers in this session to track performance
+        session_answers = UserAnswer.objects.filter(
+            session=session
+        ).order_by('-answered_at')
+        
+        # Calculate consecutive correct/incorrect for difficulty adjustment
+        consecutive_correct = 0
+        consecutive_incorrect = 0
+        
+        for answer in session_answers[:5]:  # Check last 5 answers
+            if answer.is_correct:
+                consecutive_correct += 1
+                if consecutive_incorrect > 0:
+                    break
+            else:
+                consecutive_incorrect += 1
+                if consecutive_correct > 0:
+                    break
+        
+        # Determine current difficulty level
+        current_difficulty = session.current_difficulty_level or 'E'
+        
+        # Adjust difficulty based on performance (2 consecutive threshold)
+        new_difficulty = current_difficulty
+        if consecutive_correct >= 2 and current_difficulty != 'H':
+            # Increase difficulty
+            new_difficulty = 'M' if current_difficulty == 'E' else 'H'
+        elif consecutive_incorrect >= 2 and current_difficulty != 'E':
+            # Decrease difficulty
+            new_difficulty = 'M' if current_difficulty == 'H' else 'E'
+        
+        # Update session difficulty if changed
+        if new_difficulty != current_difficulty:
+            session.current_difficulty_level = new_difficulty
+            session.save()
+        
+        # Get questions - we'll use all questions that match difficulty
+        # In adaptive mode, we typically don't filter by specific domain/skill
+        # to allow the system to adapt across the entire question bank
+        questions = Question.objects.filter(is_active=True, difficulty__isnull=False)
+        
+        # Get already answered questions in this session
+        answered_question_ids = set(
+            UserAnswer.objects.filter(session=session)
+            .values_list('question_id', flat=True)
+        )
+        
+        # Find next question at current difficulty that hasn't been answered
+        next_question = questions.filter(
+            difficulty=new_difficulty
+        ).exclude(
+            id__in=answered_question_ids
+        ).first()
+        
+        # If no unanswered questions at this difficulty, try any difficulty
+        if not next_question:
+            next_question = questions.exclude(
+                id__in=answered_question_ids
+            ).first()
+        
+        # If no more questions, session is complete
+        if not next_question:
+            return JsonResponse({
+                'complete': True,
+                'message': 'No more questions available'
+            })
+        
+        return JsonResponse({
+            'complete': False,
+            'next_question_id': str(next_question.id),
+            'difficulty': new_difficulty,
+            'difficulty_changed': new_difficulty != current_difficulty,
+            'total_answered': len(answered_question_ids)
+        })
         
     except Exception as e:
         return JsonResponse({

@@ -48,6 +48,130 @@
         color: #1e40af;
     }
 
+    /* Adaptive Mode Styles */
+    .adaptive-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: white;
+        box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .adaptive-badge i {
+        font-size: 0.875rem;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
+    }
+
+    .difficulty-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .difficulty-indicator.easy {
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #10b981;
+    }
+
+    .difficulty-indicator.medium {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #f59e0b;
+    }
+
+    .difficulty-indicator.hard {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #ef4444;
+    }
+
+    .adaptive-feedback {
+        position: fixed;
+        top: 5rem;
+        left: 50%;
+        transform: translateX(-50%) translateY(-100px);
+        background: white;
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        opacity: 0;
+        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        pointer-events: none;
+        max-width: 90%;
+        text-align: center;
+    }
+
+    .adaptive-feedback.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+
+    .adaptive-feedback.success {
+        border-left: 4px solid #10b981;
+    }
+
+    .adaptive-feedback.struggle {
+        border-left: 4px solid #f59e0b;
+    }
+
+    .adaptive-feedback-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        margin-bottom: 0.5rem;
+    }
+
+    .adaptive-feedback.success .adaptive-feedback-icon {
+        background: #d1fae5;
+        color: #10b981;
+    }
+
+    .adaptive-feedback.struggle .adaptive-feedback-icon {
+        background: #fef3c7;
+        color: #f59e0b;
+    }
+
+    .adaptive-feedback-title {
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .adaptive-feedback.success .adaptive-feedback-title {
+        color: #065f46;
+    }
+
+    .adaptive-feedback.struggle .adaptive-feedback-title {
+        color: #92400e;
+    }
+
+    .adaptive-feedback-message {
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+
     .hide-timer-btn {
         padding: 0.375rem 0.75rem;
         font-size: 0.875rem;
@@ -1424,14 +1548,33 @@
 
 {% block content %}
 <div class="practice-container">
+    <!-- Adaptive Feedback Notification -->
+    <div class="adaptive-feedback" id="adaptive-feedback">
+        <div class="adaptive-feedback-icon">
+            <i class="fas fa-trophy"></i>
+        </div>
+        <div class="adaptive-feedback-title" id="adaptive-feedback-title">Great job!</div>
+        <div class="adaptive-feedback-message" id="adaptive-feedback-message">Moving to harder questions</div>
+    </div>
+
     <!-- Header with Timer and Controls -->
     <div class="practice-header">
         <div class="flex items-center gap-2">
             <button class="show-details-btn" onclick="toggleQuestionDetails()">
                 <i class="fas fa-info-circle"></i> <span>About</span>
             </button>
+            {% if adaptive_mode %}
+            <span class="adaptive-badge">
+                <i class="fas fa-brain"></i>
+                <span>Adaptive Mode</span>
+            </span>
+            {% endif %}
         </div>
         <div class="flex items-center gap-2">
+            <div class="difficulty-indicator" id="difficulty-indicator">
+                <i class="fas fa-signal"></i>
+                <span id="difficulty-text">Easy</span>
+            </div>
             <div class="timer" id="timer">0:00</div>
         </div>
         <div class="flex items-center gap-2">
@@ -1547,9 +1690,11 @@
         
         <!-- Center: Question Map and Info -->
         <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; justify-content: center;">
+            {% if not adaptive_mode %}
             <button class="question-counter" id="question-counter" onclick="openQuestionMap()" style="cursor: pointer;">
                 <i class="fas fa-list-ol"></i> <span>Questions</span> <span id="current-index">1</span>/<span id="total-count">{{ total_questions }}</span>
             </button>
+            {% endif %}
             <!-- Attempt Info Badge -->
             <div class="attempt-info-badge" id="attemptInfo" style="display: none;">
                 <i class="fas fa-history"></i>
@@ -1676,6 +1821,11 @@ let strikethroughOptions = {};
 let answerChecked = {}; // Track which questions have been checked
 let questionAttemptCounts = {}; // Track attempt count for each question from backend
 let navigationWarningShown = false; // Track if warning tooltip was shown
+
+// Adaptive mode tracking
+const adaptiveMode = {{ adaptive_mode|lower }};
+let currentDifficulty = 'E'; // Start with Easy
+let questionDifficulties = {}; // Store difficulty for each question
 
 // Session tracking
 const sessionId = '{{ session_id }}';
@@ -2054,6 +2204,88 @@ function handleSprInput(event) {
     }
 }
 
+// Adaptive Mode Functions - Backend Driven
+function updateDifficultyFromBackend(difficulty, difficultyChanged) {
+    currentDifficulty = difficulty;
+    updateDifficultyIndicator();
+    
+    if (difficultyChanged) {
+        // Show feedback based on difficulty change
+        let feedbackType = 'success';
+        if (difficulty === 'E') {
+            feedbackType = 'struggle';
+        }
+        showAdaptiveFeedback(difficulty, feedbackType);
+    }
+}
+
+function updateDifficultyIndicator() {
+    const indicator = document.getElementById('difficulty-indicator');
+    const text = document.getElementById('difficulty-text');
+    
+    if (!indicator || !text) return;
+    
+    // Remove all difficulty classes
+    indicator.classList.remove('easy', 'medium', 'hard');
+    
+    // Add appropriate class and update text based on current difficulty
+    if (currentDifficulty === 'E') {
+        indicator.classList.add('easy');
+        text.textContent = 'Easy';
+    } else if (currentDifficulty === 'M') {
+        indicator.classList.add('medium');
+        text.textContent = 'Medium';
+    } else if (currentDifficulty === 'H') {
+        indicator.classList.add('hard');
+        text.textContent = 'Hard';
+    }
+}
+
+function showAdaptiveFeedback(difficulty, type) {
+    const feedback = document.getElementById('adaptive-feedback');
+    const title = document.getElementById('adaptive-feedback-title');
+    const message = document.getElementById('adaptive-feedback-message');
+    const icon = feedback.querySelector('.adaptive-feedback-icon i');
+    
+    if (!feedback) return;
+    
+    // Remove previous classes
+    feedback.classList.remove('success', 'struggle', 'show');
+    
+    // Set feedback content based on type and difficulty
+    if (type === 'success' || difficulty === 'M' || difficulty === 'H') {
+        feedback.classList.add('success');
+        icon.className = 'fas fa-trophy';
+        title.textContent = 'Great job! 🎉';
+        
+        if (difficulty === 'M') {
+            message.textContent = 'You\'re doing well! Moving to medium difficulty questions';
+        } else if (difficulty === 'H') {
+            message.textContent = 'Excellent! Moving to hard difficulty questions';
+        }
+    } else if (type === 'struggle' || difficulty === 'E') {
+        feedback.classList.add('struggle');
+        icon.className = 'fas fa-lightbulb';
+        title.textContent = 'Let\'s adjust 💡';
+        
+        if (difficulty === 'M') {
+            message.textContent = 'Let\'s try medium difficulty questions for better practice';
+        } else if (difficulty === 'E') {
+            message.textContent = 'Let\'s build confidence with easier questions';
+        }
+    }
+    
+    // Show feedback with animation
+    setTimeout(() => {
+        feedback.classList.add('show');
+    }, 100);
+    
+    // Hide after 4 seconds
+    setTimeout(() => {
+        feedback.classList.remove('show');
+    }, 4000);
+}
+
 // Check answer with backend validation
 async function checkAnswer() {
     // Get current question ID and type
@@ -2258,6 +2490,14 @@ async function loadQuestion(index) {
         document.getElementById('modal-skill-name').textContent = question.skill_name;
         document.getElementById('modal-question-number').textContent = `${index + 1} of ${questionIds.length}`;
         
+        // Track and display question difficulty
+        if (question.difficulty) {
+            questionDifficulties[questionId] = question.difficulty;
+            // Update difficulty indicator with actual question difficulty
+            currentDifficulty = question.difficulty;
+            updateDifficultyIndicator();
+        }
+        
         // Update stimulus and toggle layout
         const practiceContent = document.querySelector('.practice-content');
         const hasStimulus = question.stimulus && question.stimulus.trim().length > 2;
@@ -2329,7 +2569,12 @@ async function loadQuestion(index) {
         
         // Update question number
         document.getElementById('question-number').textContent = index + 1;
-        document.getElementById('current-index').textContent = index + 1;
+        
+        // Update current index in question counter (only exists in non-adaptive mode)
+        const currentIndexEl = document.getElementById('current-index');
+        if (currentIndexEl) {
+            currentIndexEl.textContent = index + 1;
+        }
         
         // Update mark for review button
         const markBtn = document.getElementById('mark-for-review');
@@ -2382,7 +2627,8 @@ async function loadQuestion(index) {
         updateAttemptInfo(question);
         
         // Update navigation buttons
-        document.getElementById('back-btn').disabled = index === 0;
+        // In adaptive mode, disable back button (no going back)
+        document.getElementById('back-btn').disabled = adaptiveMode ? true : (index === 0);
         const nextBtn = document.getElementById('next-btn');
         const nextBtnText = document.getElementById('next-btn-text');
         const nextBtnIcon = nextBtn.querySelector('i');
@@ -2473,10 +2719,74 @@ function previousQuestion() {
     }
 }
 
-function nextQuestion() {
+async function nextQuestion() {
     const currentQuestionId = questionIds[currentIndex];
     
-    // Check if user selected an answer but hasn't checked it
+    // In adaptive mode, require answer to be checked before proceeding
+    if (adaptiveMode) {
+        if (!answerChecked[currentQuestionId]) {
+            showAlert('Please check your answer before proceeding to the next question.');
+            return;
+        }
+        
+        // Get next question from backend
+        try {
+            const response = await fetch('/practice/api/next-adaptive-question/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    session_id: sessionId,
+                    current_question_id: currentQuestionId,
+                    last_answer_correct: answeredCorrectly[currentQuestionId] || false
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            if (data.complete) {
+                // No more questions - end practice
+                showAlert(
+                    'You have completed all available questions. Do you want to finish the practice session and view your results?',
+                    () => endPractice()
+                );
+                return;
+            }
+            
+            // Update difficulty indicator if changed
+            if (data.difficulty_changed) {
+                updateDifficultyFromBackend(data.difficulty, true);
+            } else {
+                currentDifficulty = data.difficulty;
+                updateDifficultyIndicator();
+            }
+            
+            // Find the index of next question in our array
+            const nextIndex = questionIds.indexOf(data.next_question_id);
+            if (nextIndex !== -1) {
+                loadQuestion(nextIndex);
+            } else {
+                // Question not in current list, reload page with new question
+                window.location.href = `/practice/?question=${data.next_question_id}&adaptive=true`;
+            }
+        } catch (error) {
+            console.error('Error getting next adaptive question:', error);
+            showAlert('Error loading next question. Please try again.');
+        }
+        return;
+    }
+    
+    // Normal mode - check if user selected an answer but hasn't checked it
     if (userAnswers[currentQuestionId] && !answerChecked[currentQuestionId]) {
         if (!navigationWarningShown) {
             // First click - show warning tooltip

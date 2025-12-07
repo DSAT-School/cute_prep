@@ -23,6 +23,7 @@ urlpatterns = [
     path('api/question/<uuid:question_id>/', views.get_question, name='get_question'),
     path('api/check-answer/<uuid:question_id>/', views.check_answer, name='check_answer'),
     path('api/submit-answer/', views.submit_answer, name='submit_answer'),
+    path('api/next-adaptive-question/', views.get_next_adaptive_question, name='next_adaptive_question'),
     path('api/end-practice/', views.end_practice, name='end_practice'),
     path('api/mark-question/', views.mark_question_for_review, name='mark_question'),
     path('api/marked-questions/', views.get_marked_questions, name='marked_questions'),
