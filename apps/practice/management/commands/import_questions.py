@@ -130,6 +130,7 @@ class Command(BaseCommand):
                     'mcq_answer': question_data.get('mcq_answer', ''),
                     'mcq_option_list': question_data.get('mcq_option_list', None),
                     'tutorial_link': question_data.get('questionTutorialLink', ''),
+                    'difficulty': question_data.get('difficulty', None),
                     'is_active': True
                 }
 

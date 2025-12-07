@@ -115,6 +115,21 @@ class Question(models.Model):
         blank=True,
         help_text=_("Optional tutorial link")
     )
+    
+    # Difficulty level
+    DIFFICULTY_CHOICES = [
+        ('E', _('Easy')),
+        ('M', _('Medium')),
+        ('H', _('Hard')),
+    ]
+    difficulty = models.CharField(
+        max_length=1,
+        choices=DIFFICULTY_CHOICES,
+        blank=True,
+        null=True,
+        db_index=True,
+        help_text=_("Question difficulty level (E=Easy, M=Medium, H=Hard)")
+    )
 
     # Status
     is_active = models.BooleanField(
