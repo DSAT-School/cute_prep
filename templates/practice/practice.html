@@ -499,6 +499,41 @@
         gap: 0.75rem;
     }
 
+    .spr-input-container {
+        padding: 1.5rem;
+        background: #f9fafb;
+        border-radius: 8px;
+        border: 2px solid #e5e7eb;
+    }
+
+    .spr-answer-input {
+        width: 100%;
+        max-width: 300px;
+        padding: 0.75rem 1rem;
+        font-size: 1.125rem;
+        font-weight: 600;
+        border: 2px solid #d1d5db;
+        border-radius: 8px;
+        background: white;
+        transition: all 0.2s;
+    }
+
+    .spr-answer-input:focus {
+        outline: none;
+        border-color: #9967b9;
+        box-shadow: 0 0 0 3px rgba(153, 103, 185, 0.1);
+    }
+
+    .spr-answer-input.correct {
+        border-color: #10b981;
+        background: #f0fdf4;
+    }
+
+    .spr-answer-input.incorrect {
+        border-color: #ef4444;
+        background: #fef2f2;
+    }
+
     .answer-option {
         display: flex;
         align-items: center;
@@ -1503,7 +1538,15 @@
 
     <!-- Footer with Navigation -->
     <div class="practice-footer">
-        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+        <!-- Left: End Practice Button -->
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <button class="nav-btn end-btn" onclick="endPractice()" style="background: #ef4444; color: white;">
+                <i class="fas fa-stop-circle"></i> <span id="end-btn-text">End Practice</span>
+            </button>
+        </div>
+        
+        <!-- Center: Question Map and Info -->
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; justify-content: center;">
             <button class="question-counter" id="question-counter" onclick="openQuestionMap()" style="cursor: pointer;">
                 <i class="fas fa-list-ol"></i> <span>Questions</span> <span id="current-index">1</span>/<span id="total-count">{{ total_questions }}</span>
             </button>
@@ -1519,10 +1562,9 @@
                 <span class="history-badge" id="historyBadge">0</span>
             </button>
         </div>
+        
+        <!-- Right: Check and Navigation Buttons -->
         <div class="navigation-buttons">
-            <button class="nav-btn end-btn" onclick="endPractice()" style="background: #ef4444; color: white;">
-                <i class="fas fa-stop-circle"></i> <span id="end-btn-text">End Practice</span>
-            </button>
             <button class="nav-btn" id="check-answer-btn" onclick="checkAnswer()" style="background: #10b981; color: white;" disabled>
                 <i class="fas fa-check-circle"></i> <span id="check-btn-text">Check</span>
             </button>
@@ -1995,14 +2037,40 @@ function selectAnswer(answer) {
     document.getElementById('check-answer-btn').disabled = false;
 }
 
+// Handle SPR input
+function handleSprInput(event) {
+    const input = event.target;
+    const value = input.value.trim();
+    
+    const currentQuestionId = questionIds[currentIndex];
+    
+    if (value) {
+        selectedAnswer = value;
+        userAnswers[currentQuestionId] = value;
+        document.getElementById('check-answer-btn').disabled = false;
+    } else {
+        selectedAnswer = null;
+        document.getElementById('check-answer-btn').disabled = true;
+    }
+}
+
 // Check answer with backend validation
 async function checkAnswer() {
+    // Get current question ID and type
+    const currentQuestionId = questionIds[currentIndex];
+    
+    // For SPR questions, get answer from input field
+    const sprInput = document.getElementById('spr-answer-input');
+    if (sprInput) {
+        selectedAnswer = sprInput.value.trim();
+    }
+    
+    // Check if answer is provided
     if (!selectedAnswer) {
-        showAlert('Please select an answer first!');
+        showAlert('Please provide an answer first!');
         return;
     }
     
-    const currentQuestionId = questionIds[currentIndex];
     const checkBtn = document.getElementById('check-answer-btn');
     
     // Calculate time taken for this question
@@ -2040,20 +2108,44 @@ async function checkAnswer() {
         answerChecked[currentQuestionId] = true;
         
         // Update UI based on correctness
-        document.querySelectorAll('.answer-option').forEach(option => {
-            const optionAnswer = option.dataset.answer;
-            
-            if (data.is_correct && optionAnswer === selectedAnswer) {
-                option.classList.add('correct');
-            } else if (!data.is_correct && optionAnswer === selectedAnswer) {
-                option.classList.add('incorrect');
+        const sprInput = document.getElementById('spr-answer-input');
+        if (sprInput) {
+            // SPR question - update input field styling
+            if (data.is_correct) {
+                sprInput.classList.add('correct');
+                sprInput.classList.remove('incorrect');
+            } else {
+                sprInput.classList.add('incorrect');
+                sprInput.classList.remove('correct');
+                // Show correct answer below input
+                const container = sprInput.closest('.spr-input-container');
+                let correctAnswerDiv = container.querySelector('.correct-answer-display');
+                if (!correctAnswerDiv) {
+                    correctAnswerDiv = document.createElement('div');
+                    correctAnswerDiv.className = 'correct-answer-display';
+                    correctAnswerDiv.style.cssText = 'margin-top: 0.5rem; padding: 0.5rem; background: #dcfce7; border-radius: 6px; color: #166534; font-weight: 600;';
+                    container.appendChild(correctAnswerDiv);
+                }
+                correctAnswerDiv.innerHTML = `<i class="fas fa-check-circle"></i> Correct answer: ${data.correct_answer}`;
             }
-            
-            // Show correct answer if user was wrong
-            if (!data.is_correct && optionAnswer === data.correct_answer) {
-                option.classList.add('correct');
-            }
-        });
+            sprInput.disabled = true;
+        } else {
+            // MCQ question - update option styling
+            document.querySelectorAll('.answer-option').forEach(option => {
+                const optionAnswer = option.dataset.answer;
+                
+                if (data.is_correct && optionAnswer === selectedAnswer) {
+                    option.classList.add('correct');
+                } else if (!data.is_correct && optionAnswer === selectedAnswer) {
+                    option.classList.add('incorrect');
+                }
+                
+                // Show correct answer if user was wrong
+                if (!data.is_correct && optionAnswer === data.correct_answer) {
+                    option.classList.add('correct');
+                }
+            });
+        }
         
         // Store explanation in modal but don't show it yet
         if (data.explanation) {
@@ -2181,20 +2273,48 @@ async function loadQuestion(index) {
         // Update question stem
         document.getElementById('question-stem').innerHTML = question.stem;
         
-        // Update answer options
-        const optionsHtml = Object.entries(question.mcq_options || {}).map(([key, value]) => `
-            <div class="answer-option ${userAnswers[questionId] === key ? 'selected' : ''}" 
-                 data-answer="${key}" 
-                 onclick="selectAnswer('${key}')"
-                 style="${strikethroughOptions[questionId]?.has(key) ? 'opacity: 0.5; text-decoration: line-through;' : ''}">
-                <span class="option-label">${key}:</span>
-                <span class="option-text">${value}</span>
-                <button class="strikethrough-btn ${strikethroughOptions[questionId]?.has(key) ? 'active' : ''}" 
-                        onclick="toggleStrikethrough(event, this)">
-                    <i class="fas fa-ban"></i>
-                </button>
-            </div>
-        `).join('');
+        // Update answer options based on question type
+        console.log('Question Type:', question.question_type);
+        console.log('Question Data:', question);
+        let optionsHtml = '';
+        
+        if (question.question_type === 'spr' || question.question_type === 'grid_in') {
+            console.log('Rendering SPR input field');
+            // SPR (Student Produced Response) - Show input field
+            optionsHtml = `
+                <div class="spr-input-container">
+                    <label class="text-sm font-semibold text-gray-700 mb-2 block">Enter your answer:</label>
+                    <input 
+                        type="text" 
+                        id="spr-answer-input" 
+                        class="spr-answer-input" 
+                        placeholder="Enter numerical answer" 
+                        value="${userAnswers[questionId] || ''}" 
+                        oninput="handleSprInput(event)"
+                        autocomplete="off"
+                    />
+                    <p class="text-xs text-gray-500 mt-2">
+                        <i class="fas fa-info-circle"></i> Enter your answer as a number or fraction (e.g., 5, 2.5, 1/2)
+                    </p>
+                </div>
+            `;
+        } else {
+            console.log('Rendering MCQ options');
+            // MCQ - Show multiple choice options
+            optionsHtml = Object.entries(question.mcq_options || {}).map(([key, value]) => `
+                <div class="answer-option ${userAnswers[questionId] === key ? 'selected' : ''}" 
+                     data-answer="${key}" 
+                     onclick="selectAnswer('${key}')"
+                     style="${strikethroughOptions[questionId]?.has(key) ? 'opacity: 0.5; text-decoration: line-through;' : ''}">
+                    <span class="option-label">${key}:</span>
+                    <span class="option-text">${value}</span>
+                    <button class="strikethrough-btn ${strikethroughOptions[questionId]?.has(key) ? 'active' : ''}" 
+                            onclick="toggleStrikethrough(event, this)">
+                        <i class="fas fa-ban"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
         
         document.getElementById('answer-options').innerHTML = optionsHtml;
         
@@ -2295,6 +2415,18 @@ async function loadQuestion(index) {
         document.querySelectorAll('.answer-option').forEach(option => {
             option.classList.remove('correct', 'incorrect');
         });
+        
+        // Reset SPR input if present
+        const sprInput = document.getElementById('spr-answer-input');
+        if (sprInput) {
+            sprInput.classList.remove('correct', 'incorrect');
+            sprInput.disabled = false;
+            // Remove correct answer display if it exists
+            const correctAnswerDiv = document.querySelector('.correct-answer-display');
+            if (correctAnswerDiv) {
+                correctAnswerDiv.remove();
+            }
+        }
         
         // Hide explanation and reset button
         document.getElementById('explanation-panel').classList.remove('show');

@@ -69,3 +69,4 @@ yarn.lock
 .DS_Store
 Thumbs.db
 .github/instructions/copilot-instructions.md
+questions.json

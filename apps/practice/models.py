@@ -103,6 +103,13 @@ class Question(models.Model):
         help_text=_("MCQ options as JSON {A: text, B: text, C: text, D: text}")
     )
 
+    # SPR specific fields
+    spr_answer = models.JSONField(
+        blank=True,
+        null=True,
+        help_text=_("Correct answer(s) for SPR questions as JSON list e.g., ['2.5', '5/2']")
+    )
+
     # Optional fields
     tutorial_link = models.URLField(
         blank=True,

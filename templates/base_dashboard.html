@@ -245,7 +245,7 @@
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2.5">
                             <div class="bg-white bg-opacity-20 rounded-full p-2">
-                                <img src="https://static.dsatschool.com/practice-site/triangle.png" alt="Δ" class="w-5 h-5">
+                                <img src="{% static 'triangle.png' %}" alt="Δ" class="w-5 h-5">
                             </div>
                             <div>
                                 <p class="text-white text-xl font-bold tracking-tight" x-text="balance"></p>
@@ -256,7 +256,7 @@
                 
                 <!-- Collapsed Widget (Icon Only) -->
                 <div x-show="!sidebarOpen" class="relative overflow-hidden rounded-lg p-2.5 shadow-md transition-all duration-300 hover:shadow-lg flex items-center justify-center" style="background: linear-gradient(135deg, #9967b9 0%, #7c4d9a 100%);" :title="'Delta: ' + balance">
-                    <img src="https://static.dsatschool.com/practice-site/triangle.png" alt="Δ" class="w-6 h-6">
+                    <img src="{% static 'triangle.png' %}" alt="Δ" class="w-6 h-6">
                     <div class="absolute -top-1 -right-1 bg-secondary text-dark text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-md" x-text="balance.split('.')[0]" x-show="balance !== '0'"></div>
                 </div>
             </div>
@@ -407,7 +407,7 @@
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2.5">
                             <div class="bg-white bg-opacity-20 rounded-full p-2">
-                                <img src="https://static.dsatschool.com/practice-site/triangle.png" alt="Δ" class="w-5 h-5">
+                                <img src="{% static 'triangle.png' %}" alt="Δ" class="w-5 h-5">
                             </div>
                             <div>
                                 <p class="text-white text-xl font-bold tracking-tight" x-text="balance"></p>

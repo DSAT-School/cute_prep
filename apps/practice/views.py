@@ -5,6 +5,8 @@ Handles practice modules/filter page and practice session interface.
 """
 import json
 import uuid
+from fractions import Fraction
+from decimal import Decimal, InvalidOperation
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
@@ -14,6 +16,57 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
 from .models import Question, PracticeSession, UserAnswer, MarkedQuestion, MasteredQuestion
+
+
+def check_spr_answer(user_answer, correct_answers):
+    """
+    Check if SPR (Student Produced Response) answer is correct.
+    Handles various formats: integers, decimals, fractions.
+    
+    Args:
+        user_answer: String answer from user
+        correct_answers: List of acceptable correct answers or single string
+    
+    Returns:
+        Boolean indicating if answer is correct
+    """
+    try:
+        # Ensure correct_answers is a list
+        if isinstance(correct_answers, str):
+            correct_answers = [correct_answers]
+        elif not correct_answers:
+            return False
+        
+        # Remove whitespace from user answer
+        user_answer = user_answer.strip()
+        
+        # Helper function to convert answer to decimal
+        def to_decimal(ans):
+            ans = ans.strip()
+            # Handle fractions (e.g., "1/2", "3/4")
+            if '/' in ans:
+                frac = Fraction(ans)
+                return float(frac)
+            # Handle decimals and integers
+            else:
+                return float(ans)
+        
+        # Convert user answer to decimal
+        user_value = to_decimal(user_answer)
+        
+        # Check against all acceptable answers
+        tolerance = 0.0001
+        for correct_answer in correct_answers:
+            correct_value = to_decimal(correct_answer)
+            if abs(user_value - correct_value) < tolerance:
+                return True
+        
+        return False
+        
+    except (ValueError, ZeroDivisionError, InvalidOperation):
+        # If conversion fails, do string comparison as fallback
+        user_answer_lower = user_answer.lower()
+        return any(user_answer_lower == ans.strip().lower() for ans in correct_answers)
 
 
 @login_required
@@ -54,8 +107,22 @@ def practice_modules_view(request):
     if selected_providers:
         questions = questions.filter(provider_code__in=selected_providers)
     
-    # Note: Status and Difficulty filters require user progress tracking
-    # which we can implement later with a UserProgress model
+    # Filter by status if selected
+    if selected_status:
+        if 'mastered' in selected_status:
+            # Only mastered questions
+            mastered_question_ids = MasteredQuestion.objects.filter(
+                user=request.user
+            ).values_list('question_id', flat=True)
+            questions = questions.filter(id__in=mastered_question_ids)
+        elif 'not_mastered' in selected_status:
+            # Only non-mastered questions
+            mastered_question_ids = MasteredQuestion.objects.filter(
+                user=request.user
+            ).values_list('question_id', flat=True)
+            questions = questions.exclude(id__in=mastered_question_ids)
+    
+    # Note: Difficulty filters can be implemented when difficulty data is added to questions
     
     # Get all domains with question counts (filtered)
     domains = questions.values(
@@ -464,6 +531,7 @@ def get_question(request, question_id):
         'explanation': question.explanation,
         'mcq_answer': question.mcq_answer,
         'mcq_options': question.mcq_option_list or {},
+        'spr_answer': question.spr_answer,
         'tutorial_link': question.tutorial_link,
         'attempt_count': attempt_count,
         'last_attempt': last_attempt_data,
@@ -491,14 +559,23 @@ def check_answer(request, question_id):
     """
     try:
         data = json.loads(request.body)
-        user_answer = data.get('answer', '').strip().upper()
+        user_answer = data.get('answer', '').strip()
         session_id = data.get('session_id')
         time_taken = data.get('time_taken', 0)
         
         question = get_object_or_404(Question, id=question_id, is_active=True)
         
-        # Check if answer is correct
-        is_correct = user_answer == question.mcq_answer.upper()
+        # Check if answer is correct based on question type
+        if question.question_type in ['spr', 'grid_in']:
+            # For SPR questions, compare numerical values
+            is_correct = check_spr_answer(user_answer, question.spr_answer or [])
+            # Use first answer in list for display
+            correct_answer = question.spr_answer[0] if question.spr_answer else ''
+        else:
+            # For MCQ questions, compare uppercase letters
+            user_answer = user_answer.upper()
+            is_correct = user_answer == question.mcq_answer.upper()
+            correct_answer = question.mcq_answer
         
         # Save answer to database if session_id is provided
         if session_id:
@@ -512,7 +589,7 @@ def check_answer(request, question_id):
                     defaults={
                         'user': request.user,
                         'user_answer': user_answer,
-                        'correct_answer': question.mcq_answer,
+                        'correct_answer': correct_answer,
                         'is_correct': is_correct,
                         'time_taken_seconds': int(time_taken),
                     }
@@ -551,10 +628,11 @@ def check_answer(request, question_id):
         
         response_data = {
             'is_correct': is_correct,
-            'correct_answer': question.mcq_answer,
+            'correct_answer': correct_answer,
             'explanation': question.explanation,
             'tutorial_link': question.tutorial_link,
             'time_taken': time_taken,
+            'question_type': question.question_type,
         }
         
         return JsonResponse(response_data)
