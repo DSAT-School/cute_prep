@@ -345,6 +345,33 @@
                     <span class="font-bold whitespace-nowrap" x-show="sidebarOpen">Ask Prof. Coco</span>
                 </a>
                 
+                {% if is_instructor %}
+                <!-- Instructor Panel -->
+                <div class="px-4 py-1.5 mt-2" x-show="sidebarOpen">
+                    <div style="height: 1px; background: linear-gradient(to right, transparent, #3b82f6, transparent);"></div>
+                </div>
+                
+                <a href="/instructor/" class="flex items-center space-x-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors {% if '/instructor/' in request.path %}bg-blue-50 text-blue-600 border-r-4 border-blue-600{% endif %}" :class="!sidebarOpen && 'justify-center px-0'">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                    <span class="font-semibold whitespace-nowrap" x-show="sidebarOpen">Instructor Panel</span>
+                </a>
+                {% endif %}
+                
+                {% if is_admin %}
+                <!-- Admin Panel -->
+                <div class="px-4 py-1.5 mt-2" x-show="sidebarOpen">
+                    <div style="height: 1px; background: linear-gradient(to right, transparent, #ef4444, transparent);"></div>
+                </div>
+                
+                <a href="/rbac/" class="flex items-center space-x-3 px-4 py-2.5 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors {% if '/rbac/' in request.path %}bg-red-50 text-red-600 border-r-4 border-red-600{% endif %}" :class="!sidebarOpen && 'justify-center px-0'">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                    <span class="font-semibold whitespace-nowrap" x-show="sidebarOpen">Admin Panel</span>
+                </a>
+                {% endif %}
 
             </nav>
             
@@ -500,6 +527,34 @@
                     <i class="fas fa-robot text-lg flex-shrink-0"></i>
                     <span class="font-bold">Ask Prof. Coco</span>
                 </a>
+                
+                {% if is_instructor %}
+                <!-- Instructor Panel (Mobile) -->
+                <div class="px-4 py-1.5 mt-2">
+                    <div style="height: 1px; background: linear-gradient(to right, transparent, #3b82f6, transparent);"></div>
+                </div>
+                
+                <a href="/instructor/" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors {% if '/instructor/' in request.path %}bg-blue-50 text-blue-600 border-r-4 border-blue-600{% endif %}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                    <span class="font-semibold">Instructor Panel</span>
+                </a>
+                {% endif %}
+                
+                {% if is_admin %}
+                <!-- Admin Panel (Mobile) -->
+                <div class="px-4 py-1.5 mt-2">
+                    <div style="height: 1px; background: linear-gradient(to right, transparent, #ef4444, transparent);"></div>
+                </div>
+                
+                <a href="/rbac/" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-4 py-2.5 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors {% if '/rbac/' in request.path %}bg-red-50 text-red-600 border-r-4 border-red-600{% endif %}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                    <span class="font-semibold">Admin Panel</span>
+                </a>
+                {% endif %}
             </nav>
             
             <!-- User Profile Section (Mobile) -->

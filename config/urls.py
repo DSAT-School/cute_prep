@@ -17,6 +17,7 @@ from apps.core.views import (
     delta_store_view,
     profile_view,
 )
+from apps.core import views_rbac
 from apps.core.ai_chat_views import (
     ai_chat_view,
     ai_chat_message,
@@ -53,7 +54,18 @@ urlpatterns = [
     path("ai/generate-question/", ai_generate_question, name="ai_generate_question"),
     path("ai/chat/history/", ai_chat_history, name="ai_chat_history"),
     
-    # Admin
+    # RBAC Admin Panel (Simplified - Custom UI, not Django admin)
+    path("rbac/", views_rbac.rbac_dashboard, name="rbac_dashboard"),
+    path("rbac/roles/", views_rbac.role_list, name="role_list"),
+    path("rbac/roles/create/", views_rbac.role_create, name="role_create"),
+    path("rbac/roles/<uuid:role_id>/edit/", views_rbac.role_edit, name="role_edit"),
+    path("rbac/roles/<uuid:role_id>/delete/", views_rbac.role_delete, name="role_delete"),
+    path("rbac/users/", views_rbac.user_role_management, name="user_role_management"),
+    path("rbac/users/<uuid:user_id>/assign-role/", views_rbac.assign_user_role, name="assign_user_role"),
+    path("rbac/users/<uuid:user_id>/remove-role/", views_rbac.remove_user_role, name="remove_user_role"),
+    path("instructor/", views_rbac.instructor_dashboard, name="instructor_dashboard"),
+    
+    # Admin (Django admin - for superusers only)
     path("admin/", admin.site.urls),
     
     # API Endpoints

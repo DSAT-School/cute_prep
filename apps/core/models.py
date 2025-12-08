@@ -38,6 +38,47 @@ class TimeStampedModel(models.Model):
         ordering = ["-created_at"]
 
 
+class Role(TimeStampedModel):
+    """
+    Simplified role model for RBAC system.
+    
+    Roles have weights that determine access hierarchy:
+    - Higher weight = more permissions
+    - Default: User=1, Instructor=5, Admin=10
+    """
+    
+    name = models.CharField(
+        max_length=50,
+        unique=True,
+        help_text=_("Role name (e.g., User, Instructor, Admin)")
+    )
+    weight = models.IntegerField(
+        unique=True,
+        help_text=_("Role weight - higher number = more access (adjustable)")
+    )
+    description = models.TextField(
+        blank=True,
+        help_text=_("Description of what this role can do")
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text=_("Whether this role is currently active")
+    )
+    
+    class Meta:
+        db_table = "roles"
+        verbose_name = _("role")
+        verbose_name_plural = _("roles")
+        ordering = ["-weight"]
+        indexes = [
+            models.Index(fields=["weight"]),
+            models.Index(fields=["name"]),
+        ]
+    
+    def __str__(self) -> str:
+        return f"{self.name} (Weight: {self.weight})"
+
+
 class User(AbstractUser, TimeStampedModel):
     """
     Custom User model for the application.
@@ -64,6 +105,15 @@ class User(AbstractUser, TimeStampedModel):
         max_length=63,
         default="UTC",
         help_text=_("User's preferred timezone (e.g., 'America/New_York', 'Europe/London', 'Asia/Tokyo')")
+    )
+    
+    role = models.ForeignKey(
+        Role,
+        on_delete=models.PROTECT,
+        related_name="users",
+        null=True,
+        blank=True,
+        help_text=_("User's role in the system")
     )
     
     # Override id from TimeStampedModel to avoid conflicts
@@ -100,6 +150,29 @@ class User(AbstractUser, TimeStampedModel):
         """
         full_name = f"{self.first_name} {self.last_name}".strip()
         return full_name or self.username
+    
+    def get_role_weight(self) -> int:
+        """
+        Get the user's role weight.
+        
+        Returns:
+            Role weight (default 1 if no role assigned)
+        """
+        if self.is_superuser:
+            return 999  # Superuser bypasses all checks
+        return self.role.weight if self.role else 1
+    
+    def has_min_role_weight(self, min_weight: int) -> bool:
+        """
+        Check if user meets minimum role weight requirement.
+        
+        Args:
+            min_weight: Minimum weight required
+            
+        Returns:
+            True if user has sufficient weight, False otherwise
+        """
+        return self.get_role_weight() >= min_weight
 
 
 # Import Delta coin models

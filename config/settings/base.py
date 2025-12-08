@@ -78,6 +78,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.core.context_processors.user_timezone",  # Add user timezone to templates
+                "apps.core.context_processors.user_role",  # Add user role to templates
             ],
         },
     },
