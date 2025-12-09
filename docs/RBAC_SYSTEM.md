@@ -1,17 +1,17 @@
-# Role-Based Access Control (RBAC) System
+# Simplified Role-Based Access Control (RBAC) System
 
 ## Overview
-A weight-based RBAC system for managing user permissions and access control. No Django admin - all management done through custom UI.
+A simplified weight-based RBAC system for managing user access control. No Django admin - all management done through custom UI. No complex permissions - just simple role weights.
 
 ## System Architecture
 
-### Weight-Based Hierarchy
+### Weight-Based Hierarchy (Adjustable)
 - **User (Weight: 1)** - Basic access to practice features
-- **Instructor (Weight: 5)** - Can view student progress, create content
-- **Admin (Weight: 10)** - Full system access, manage roles/permissions/users
+- **Instructor (Weight: 5)** - Can view student progress, create content  
+- **Admin (Weight: 10)** - Full system access, manage roles and users
 - **Superuser (Weight: 999)** - Bypasses all checks
 
-Higher weight = More permissions
+**Key Feature:** Role weights are fully adjustable by admins. Change weight to instantly change access level.
 
 ## Core Components
 
@@ -19,34 +19,21 @@ Higher weight = More permissions
 
 #### Role Model
 - `name`: Role name (unique)
-- `weight`: Integer weight determining access level (unique)
+- `weight`: Integer weight determining access level (unique, **adjustable**)
 - `description`: What the role can do
 - `is_active`: Enable/disable role
-
-#### Permission Model
-- `name`: Permission display name
-- `codename`: Unique identifier for checking
-- `description`: What this permission allows
-- `min_role_weight`: Minimum weight required to access
-- `category`: Group permissions (practice, instructor, admin)
-- `is_active`: Enable/disable permission
 
 #### User Model Extension
 - `role`: ForeignKey to Role
 - Methods:
   - `get_role_weight()`: Returns user's role weight
-  - `has_permission(codename)`: Check if user has specific permission
   - `has_min_role_weight(min_weight)`: Check if user meets minimum weight
 
 ### Decorators (`apps/core/decorators.py`)
 
 ```python
-@require_role_weight(5)  # Requires Instructor or higher
+@require_role_weight(5)  # Requires weight 5 or higher
 def instructor_view(request):
-    ...
-
-@require_permission('manage_users')  # Checks specific permission
-def manage_users_view(request):
     ...
 
 @admin_required  # Shortcut for weight 10+
@@ -103,34 +90,34 @@ user.save()
 
 ## Admin UI Routes
 
-All routes require Admin role (weight 10):
+- `/rbac/` - RBAC Dashboard (overview) - Admin only (weight 10+)
+- `/rbac/roles/` - Manage roles (create/edit/delete, **adjust weights**) - Admin only
+- `/rbac/users/` - Assign user roles - Admin only
+- `/instructor/` - Instructor dashboard - Instructor+ (weight 5+)
 
-- `/rbac/` - RBAC Dashboard (overview)
-- `/rbac/roles/` - Manage roles
-- `/rbac/permissions/` - Manage permissions
-- `/rbac/users/` - Assign user roles
-- `/instructor/` - Instructor dashboard (weight 5+)
+## Access Levels by Role
 
-## Default Permissions
+### User (Weight: 1)
+- Access practice modules
+- View own progress
+- Use AI chat assistant
+- Earn and spend Delta coins
 
-### User Level (Weight: 1)
-- `access_practice` - Access practice modules
-- `view_own_progress` - View own statistics
-- `use_ai_chat` - Use AI chat assistant
-- `use_delta_store` - Earn and spend Delta coins
+### Instructor (Weight: 5+)
+- All User features
+- View all student progress
+- Create content
+- Manage courses
+- Export reports
 
-### Instructor Level (Weight: 5)
-- `view_all_progress` - View all student progress
-- `create_content` - Create/modify questions
-- `manage_courses` - Create courses/modules
-- `export_reports` - Export progress reports
+### Admin (Weight: 10+)
+- All Instructor features
+- Manage users
+- Manage roles (create/edit/delete)
+- **Adjust role weights**
+- System configuration
 
-### Admin Level (Weight: 10)
-- `manage_users` - Create/edit/delete users
-- `manage_roles` - Create/edit/delete roles
-- `manage_permissions` - Create/edit permissions
-- `view_system_logs` - View system logs
-- `system_config` - Modify system settings
+**Note:** Changing a role's weight instantly changes what users with that role can access. No need to manage individual permissions.
 
 ## Usage Examples
 

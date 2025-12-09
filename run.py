@@ -9,6 +9,7 @@ import os
 import sys
 import subprocess
 import socket
+import signal
 from pathlib import Path
 
 
@@ -32,6 +33,7 @@ class DevRunner:
         self.errors = []
         self.warnings = []
         self.venv_activated = False
+        self.celery_process = None
     
     def print_header(self):
         """Print application header."""
@@ -303,12 +305,62 @@ class DevRunner:
         if not self.errors and not self.warnings:
             print(f"{Colors.GREEN}✓ All checks passed!{Colors.END}")
     
+    def start_celery_worker(self):
+        """Start the Celery worker in a background process."""
+        print(f"\n{Colors.CYAN}[+] Starting Celery worker...{Colors.END}")
+        
+        log_dir = self.base_dir / 'logs'
+        log_dir.mkdir(exist_ok=True)
+        log_file_path = log_dir / 'celery.log'
+        self.celery_log = open(log_file_path, 'w')
+        
+        print(f"{Colors.CYAN}  → Logs: logs/celery.log{Colors.END}")
+        
+        # Use python -m celery to ensure we use the venv's package
+        cmd = [sys.executable, '-m', 'celery', '-A', 'config', 'worker', '-l', 'info']
+        
+        try:
+            self.celery_process = subprocess.Popen(
+                cmd,
+                stdout=self.celery_log,
+                stderr=subprocess.STDOUT,
+                cwd=str(self.base_dir),
+                preexec_fn=os.setsid  # Create new process group so signals don't propagate automatically/messily
+            )
+            print(f"{Colors.GREEN}✓ Celery worker started (PID: {self.celery_process.pid}){Colors.END}")
+            return True
+        except Exception as e:
+            print(f"{Colors.RED}✗ Failed to start Celery worker: {str(e)}{Colors.END}")
+            return False
+
+    def stop_celery_worker(self):
+        """Stop the Celery worker."""
+        if self.celery_process:
+            print(f"\n{Colors.CYAN}[-] Stopping Celery worker...{Colors.END}")
+            try:
+                # Send SIGTERM to the process group
+                os.killpg(os.getpgid(self.celery_process.pid), signal.SIGTERM)
+                self.celery_process.wait(timeout=5)
+            except (ProcessLookupError, subprocess.TimeoutExpired):
+                try:
+                    os.killpg(os.getpgid(self.celery_process.pid), signal.SIGKILL)
+                except:
+                    pass
+            
+            if hasattr(self, 'celery_log') and self.celery_log:
+                self.celery_log.close()
+                
+            print(f"{Colors.GREEN}✓ Celery worker stopped{Colors.END}")
+
     def run_server(self, host='127.0.0.1', port=7777):
         """Run the Django development server."""
         if self.errors:
             print(f"\n{Colors.RED}{Colors.BOLD}Cannot start server due to errors.{Colors.END}")
             print(f"{Colors.YELLOW}Please fix the errors above and try again.{Colors.END}\n")
             sys.exit(1)
+        
+        # Start Celery Worker
+        self.start_celery_worker()
         
         if self.warnings:
             print(f"\n{Colors.YELLOW}Starting server with warnings...{Colors.END}")
@@ -336,11 +388,13 @@ class DevRunner:
             ])
         except KeyboardInterrupt:
             print(f"\n\n{Colors.YELLOW}Server stopped by user{Colors.END}")
-            print(f"{Colors.PURPLE}Thank you for using DSAT SCHOOL Practice Portal!{Colors.END}\n")
-            sys.exit(0)
         except Exception as e:
             print(f"\n{Colors.RED}Error running server: {str(e)}{Colors.END}\n")
             sys.exit(1)
+        finally:
+            self.stop_celery_worker()
+            print(f"{Colors.PURPLE}Thank you for using DSAT SCHOOL Practice Portal!{Colors.END}\n")
+            sys.exit(0)
     
     def run(self, host='127.0.0.1', port=7777):
         """Run health checks and start the server."""

@@ -1,0 +1,337 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block title %}{{ action }} Question - Instructor Panel{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-6">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900">{{ action }} Question</h1>
+                    <p class="mt-1 text-sm text-gray-600">Fill in all required fields for SAT question</p>
+                </div>
+                <a href="{% url 'instructor_question_list' %}" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-300 transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Back to List
+                </a>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <form method="post" {% if question %}action="{% url 'instructor_question_edit' question.id %}"{% else %}action="{% url 'instructor_question_create' %}"{% endif %} class="bg-white rounded-lg shadow">
+            {% csrf_token %}
+            
+            <div class="p-6 space-y-6">
+                <!-- Identification Section -->
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Identification</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="{{ form.identifier_id.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                                {{ form.identifier_id.label }} <span class="text-red-600">*</span>
+                            </label>
+                            {{ form.identifier_id }}
+                            {% if form.identifier_id.help_text %}
+                            <p class="mt-1 text-xs text-gray-500">{{ form.identifier_id.help_text }}</p>
+                            {% endif %}
+                            {% if form.identifier_id.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.identifier_id.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        {{ form.question_id }}
+                    </div>
+                </div>
+
+                <!-- Classification Section -->
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Classification</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="{{ form.domain_name.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                                {{ form.domain_name.label }} <span class="text-red-600">*</span>
+                            </label>
+                            {{ form.domain_name }}
+                            {% if form.domain_name.help_text %}
+                            <p class="mt-1 text-xs text-gray-500">{{ form.domain_name.help_text }}</p>
+                            {% endif %}
+                            {% if form.domain_name.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.domain_name.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.domain_code.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                                {{ form.domain_code.label }} <span class="text-red-600">*</span>
+                            </label>
+                            {{ form.domain_code }}
+                            {% if form.domain_code.help_text %}
+                            <p class="mt-1 text-xs text-gray-500">{{ form.domain_code.help_text }}</p>
+                            {% endif %}
+                            {% if form.domain_code.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.domain_code.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.skill_name.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                                {{ form.skill_name.label }} <span class="text-red-600">*</span>
+                            </label>
+                            {{ form.skill_name }}
+                            {% if form.skill_name.help_text %}
+                            <p class="mt-1 text-xs text-gray-500">{{ form.skill_name.help_text }}</p>
+                            {% endif %}
+                            {% if form.skill_name.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.skill_name.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.skill_code.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                                {{ form.skill_code.label }} <span class="text-red-600">*</span>
+                            </label>
+                            {{ form.skill_code }}
+                            {% if form.skill_code.help_text %}
+                            <p class="mt-1 text-xs text-gray-500">{{ form.skill_code.help_text }}</p>
+                            {% endif %}
+                            {% if form.skill_code.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.skill_code.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.provider_name.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                                {{ form.provider_name.label }}
+                            </label>
+                            {{ form.provider_name }}
+                            {% if form.provider_name.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.provider_name.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.provider_code.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                                {{ form.provider_code.label }}
+                            </label>
+                            {{ form.provider_code }}
+                            {% if form.provider_code.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.provider_code.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question Type & Difficulty -->
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Question Properties</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="{{ form.question_type.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                                {{ form.question_type.label }} <span class="text-red-600">*</span>
+                            </label>
+                            {{ form.question_type }}
+                            {% if form.question_type.help_text %}
+                            <p class="mt-1 text-xs text-gray-500">{{ form.question_type.help_text }}</p>
+                            {% endif %}
+                            {% if form.question_type.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.question_type.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.difficulty.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                                {{ form.difficulty.label }}
+                            </label>
+                            {{ form.difficulty }}
+                            {% if form.difficulty.help_text %}
+                            <p class="mt-1 text-xs text-gray-500">{{ form.difficulty.help_text }}</p>
+                            {% endif %}
+                            {% if form.difficulty.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.difficulty.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question Content -->
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Question Content</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label for="{{ form.stimulus.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                                {{ form.stimulus.label }}
+                            </label>
+                            {{ form.stimulus }}
+                            {% if form.stimulus.help_text %}
+                            <p class="mt-1 text-xs text-gray-500">{{ form.stimulus.help_text }}</p>
+                            {% endif %}
+                            {% if form.stimulus.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.stimulus.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.stem.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                                {{ form.stem.label }} <span class="text-red-600">*</span>
+                            </label>
+                            {{ form.stem }}
+                            {% if form.stem.help_text %}
+                            <p class="mt-1 text-xs text-gray-500">{{ form.stem.help_text }}</p>
+                            {% endif %}
+                            {% if form.stem.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.stem.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.explanation.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                                {{ form.explanation.label }}
+                            </label>
+                            {{ form.explanation }}
+                            {% if form.explanation.help_text %}
+                            <p class="mt-1 text-xs text-gray-500">{{ form.explanation.help_text }}</p>
+                            {% endif %}
+                            {% if form.explanation.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.explanation.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MCQ Options -->
+                <div id="mcq-section">
+                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Multiple Choice Options</h2>
+                    <p class="text-xs text-gray-600 mb-4">Required for MCQ questions only</p>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label for="{{ form.mcq_answer.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                                {{ form.mcq_answer.label }}
+                            </label>
+                            {{ form.mcq_answer }}
+                            {% if form.mcq_answer.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.mcq_answer.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.mcq_option_list.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                                {{ form.mcq_option_list.label }}
+                            </label>
+                            {{ form.mcq_option_list }}
+                            {% if form.mcq_option_list.help_text %}
+                            <p class="mt-1 text-xs text-gray-500">{{ form.mcq_option_list.help_text }}</p>
+                            {% endif %}
+                            {% if form.mcq_option_list.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.mcq_option_list.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SPR Answer -->
+                <div id="spr-section">
+                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Student Produced Response (Grid-in)</h2>
+                    <p class="text-xs text-gray-600 mb-4">Required for SPR questions only</p>
+                    
+                    <div>
+                        <label for="{{ form.spr_answer.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                            {{ form.spr_answer.label }}
+                        </label>
+                        {{ form.spr_answer }}
+                        {% if form.spr_answer.help_text %}
+                        <p class="mt-1 text-xs text-gray-500">{{ form.spr_answer.help_text }}</p>
+                        {% endif %}
+                        {% if form.spr_answer.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.spr_answer.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Additional Settings -->
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Additional Settings</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label for="{{ form.tutorial_link.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                                {{ form.tutorial_link.label }}
+                            </label>
+                            {{ form.tutorial_link }}
+                            {% if form.tutorial_link.help_text %}
+                            <p class="mt-1 text-xs text-gray-500">{{ form.tutorial_link.help_text }}</p>
+                            {% endif %}
+                            {% if form.tutorial_link.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.tutorial_link.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="flex items-center">
+                            {{ form.is_active }}
+                            <label for="{{ form.is_active.id_for_label }}" class="ml-2 block text-sm text-gray-900">
+                                {{ form.is_active.label }}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Errors -->
+                {% if form.non_field_errors %}
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div class="flex">
+                        <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                        </svg>
+                        <div class="ml-3">
+                            <p class="text-sm text-red-800">{{ form.non_field_errors.0 }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Form Actions -->
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
+                <a href="{% url 'instructor_question_list' %}" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancel
+                </a>
+                <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-opacity-90 transition-colors">
+                    {{ action }} Question
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Show/hide MCQ and SPR sections based on question type
+document.addEventListener('DOMContentLoaded', function() {
+    const questionTypeSelect = document.getElementById('{{ form.question_type.id_for_label }}');
+    const mcqSection = document.getElementById('mcq-section');
+    const sprSection = document.getElementById('spr-section');
+    
+    function updateSections() {
+        const questionType = questionTypeSelect.value;
+        
+        if (questionType === 'mcq') {
+            mcqSection.style.display = 'block';
+            sprSection.style.display = 'none';
+        } else if (questionType === 'spr') {
+            mcqSection.style.display = 'none';
+            sprSection.style.display = 'block';
+        } else {
+            mcqSection.style.display = 'block';
+            sprSection.style.display = 'block';
+        }
+    }
+    
+    questionTypeSelect.addEventListener('change', updateSections);
+    updateSections(); // Initialize on page load
+});
+</script>
+{% endblock %}

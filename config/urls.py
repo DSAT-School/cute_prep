@@ -63,7 +63,14 @@ urlpatterns = [
     path("rbac/users/", views_rbac.user_role_management, name="user_role_management"),
     path("rbac/users/<uuid:user_id>/assign-role/", views_rbac.assign_user_role, name="assign_user_role"),
     path("rbac/users/<uuid:user_id>/remove-role/", views_rbac.remove_user_role, name="remove_user_role"),
+    
+    # Instructor Panel
     path("instructor/", views_rbac.instructor_dashboard, name="instructor_dashboard"),
+    path("instructor/questions/", views_rbac.instructor_question_list, name="instructor_question_list"),
+    path("instructor/questions/create/", views_rbac.instructor_question_create, name="instructor_question_create"),
+    path("instructor/questions/<uuid:question_id>/edit/", views_rbac.instructor_question_edit, name="instructor_question_edit"),
+    path("instructor/questions/<uuid:question_id>/delete/", views_rbac.instructor_question_delete, name="instructor_question_delete"),
+    path("instructor/questions/<uuid:question_id>/toggle/", views_rbac.instructor_question_toggle_status, name="instructor_question_toggle"),
     
     # Admin (Django admin - for superusers only)
     path("admin/", admin.site.urls),

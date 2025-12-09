@@ -1,0 +1,395 @@
+{% load static %}
+        <!-- Sidebar (Hidden in Practice Mode) -->
+        <aside :class="sidebarOpen ? 'w-64' : 'w-20'" class="bg-white border-r border-gray-200 flex flex-col transition-all duration-300 relative hidden md:flex" {% if request.path == '/practice/' %}style="display: none !important;"{% endif %}>
+            <!-- Toggle & Lock Buttons (Outside Sidebar - Desktop Only) -->
+            <div class="absolute -right-3 top-6 flex flex-col space-y-2 z-10 hidden md:flex">
+                <!-- Lock/Unlock Button -->
+                <button @click="toggleLock()" :title="sidebarLocked ? 'Unlock sidebar' : 'Lock sidebar'" class="bg-white border border-gray-200 rounded-full p-1.5 shadow-md hover:shadow-lg transition-all" :class="sidebarLocked ? 'bg-primary bg-opacity-10 border-primary' : ''">
+                    <svg x-show="!sidebarLocked" class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+                    </svg>
+                    <svg x-show="sidebarLocked" class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                </button>
+                
+                <!-- Collapse/Expand Button -->
+                <button @click="toggleSidebar()" x-show="!sidebarLocked" title="Toggle sidebar" class="bg-white border border-gray-200 rounded-full p-1.5 shadow-md hover:shadow-lg transition-all">
+                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="sidebarOpen ? 'M15 19l-7-7 7-7' : 'M9 5l7 7-7 7'"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Logo -->
+            <div class="p-6 border-b border-gray-200">
+                <!-- Expanded Logo -->
+                <a href="/" class="flex items-center justify-center" x-show="sidebarOpen">
+                    <img src="https://static.dsatschool.com/practice-site/logo%20main%20w%20text.png" alt="DSAT SCHOOL" class="h-10 w-auto">
+                </a>
+                
+                <!-- Collapsed Logo -->
+                <a href="/" class="flex items-center justify-center" x-show="!sidebarOpen">
+                    <img src="https://static.dsatschool.com/practice-site/icon%20main.png" alt="DSAT SCHOOL" class="h-8 w-auto object-contain">
+                </a>
+            </div>
+            
+            <!-- Delta Balance Widget -->
+            <div class="px-3 pt-3 pb-2" x-data="{ balance: '0' }" x-init="
+                async function fetchBalance() {
+                    try {
+                        const response = await fetch('/api/delta/balance/');
+                        const data = await response.json();
+                        balance = data.balance;
+                    } catch (error) {
+                        console.error('Error fetching Delta balance:', error);
+                    }
+                }
+                fetchBalance();
+                setInterval(fetchBalance, 30000);
+            ">
+                <!-- Expanded Widget -->
+                <div x-show="sidebarOpen" class="relative overflow-hidden rounded-lg p-3 shadow-md transition-all duration-300 hover:shadow-lg" style="background: linear-gradient(135deg, #9967b9 0%, #7c4d9a 100%);">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="bg-white bg-opacity-20 rounded-full p-2">
+                                <img src="{% static 'triangle.png' %}" alt="Δ" class="w-5 h-5">
+                            </div>
+                            <div>
+                                <p class="text-white text-xl font-bold tracking-tight" x-text="balance"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Collapsed Widget (Icon Only) -->
+                <div x-show="!sidebarOpen" class="relative overflow-hidden rounded-lg p-2.5 shadow-md transition-all duration-300 hover:shadow-lg flex items-center justify-center" style="background: linear-gradient(135deg, #9967b9 0%, #7c4d9a 100%);" :title="'Delta: ' + balance">
+                    <img src="{% static 'triangle.png' %}" alt="Δ" class="w-6 h-6">
+                    <div class="absolute -top-1 -right-1 bg-secondary text-dark text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-md" x-text="balance.split('.')[0]" x-show="balance !== '0'"></div>
+                </div>
+            </div>
+            
+            <!-- Navigation -->
+            <nav class="flex-1 overflow-y-auto py-2">
+                <a href="/dashboard/" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors {% if request.path == '/dashboard/' %}bg-primary bg-opacity-10 text-primary border-r-4 border-primary{% endif %}" :class="!sidebarOpen && 'justify-center px-0'">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                    <span class="font-normal whitespace-nowrap" x-show="sidebarOpen">Home</span>
+                </a>
+                
+                <a href="/practice/modules/" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors" :class="!sidebarOpen && 'justify-center px-0'">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                    <span class="font-normal whitespace-nowrap" x-show="sidebarOpen">Modules</span>
+                </a>
+                
+                <a href="/practice/vocab/" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors" :class="!sidebarOpen && 'justify-center px-0'">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                    </svg>
+                    <span class="font-normal whitespace-nowrap" x-show="sidebarOpen">Vocab</span>
+                </a>
+                
+                <a href="/practice/reading/" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors" :class="!sidebarOpen && 'justify-center px-0'">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                    <span class="font-normal whitespace-nowrap" x-show="sidebarOpen">Reading</span>
+                </a>
+                
+                <a href="/practice/courses/" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors" :class="!sidebarOpen && 'justify-center px-0'">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/>
+                    </svg>
+                    <span class="font-normal whitespace-nowrap" x-show="sidebarOpen">Courses</span>
+                </a>
+                
+                <a href="/practice/tracker/" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors" :class="!sidebarOpen && 'justify-center px-0'">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    <span class="font-normal whitespace-nowrap" x-show="sidebarOpen">Tracker</span>
+                </a>
+                
+                <a href="/practice/mock-exams/" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors" :class="!sidebarOpen && 'justify-center px-0'">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                    </svg>
+                    <span class="font-normal whitespace-nowrap" x-show="sidebarOpen">Mock Exams</span>
+                </a>
+                
+                <a href="/practice/study-plan/" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors" :class="!sidebarOpen && 'justify-center px-0'">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="font-normal whitespace-nowrap" x-show="sidebarOpen">Study Plan</span>
+                </a>
+                
+                <a href="/practice/challenge/" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors" :class="!sidebarOpen && 'justify-center px-0'">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    <span class="font-normal whitespace-nowrap" x-show="sidebarOpen">Challenge</span>
+                </a>
+                
+                <a href="/practice/mistake-log/" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors" :class="!sidebarOpen && 'justify-center px-0'">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="font-normal whitespace-nowrap" x-show="sidebarOpen">Mistake Log</span>
+                </a>
+                
+                <!-- Ask Prof. Coco with Special Styling -->
+                <div class="px-4 py-1.5" x-show="sidebarOpen">
+                    <div style="height: 1px; background: linear-gradient(to right, transparent, #9967b9, transparent);"></div>
+                </div>
+                
+                <a href="/ai/chat/" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-white hover:text-white transition-colors" :class="!sidebarOpen && 'justify-center px-0'" style="background: linear-gradient(135deg, #9967b9 0%, #7c4d9a 100%); border-radius: 0.5rem; margin: 0 0.5rem;">
+                    <i class="fas fa-robot text-lg flex-shrink-0"></i>
+                    <span class="font-normal whitespace-nowrap" x-show="sidebarOpen">Ask Prof. Coco</span>
+                </a>
+                
+                {% if is_instructor %}
+                <!-- Instructor Panel -->
+                <div class="px-4 py-1.5 mt-2" x-show="sidebarOpen">
+                    <div style="height: 1px; background: linear-gradient(to right, transparent, #3b82f6, transparent);"></div>
+                </div>
+                
+                <a href="/instructor/" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors {% if '/instructor/' in request.path %}bg-blue-50 text-blue-600 border-r-4 border-blue-600{% endif %}" :class="!sidebarOpen && 'justify-center px-0'">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                    <span class="font-normal whitespace-nowrap" x-show="sidebarOpen">Instructor Panel</span>
+                </a>
+                {% endif %}
+                
+                {% if is_admin %}
+                <!-- Admin Panel -->
+                <div class="px-4 py-1.5 mt-2" x-show="sidebarOpen">
+                    <div style="height: 1px; background: linear-gradient(to right, transparent, #ef4444, transparent);"></div>
+                </div>
+                
+                <a href="/rbac/" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors {% if '/rbac/' in request.path %}bg-red-50 text-red-600 border-r-4 border-red-600{% endif %}" :class="!sidebarOpen && 'justify-center px-0'">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                    <span class="font-normal whitespace-nowrap" x-show="sidebarOpen">Admin Panel</span>
+                </a>
+                {% endif %}
+
+            </nav>
+            
+            <!-- User Profile Section (Desktop) -->
+            <div class="border-t border-gray-200 p-4">
+                <div x-data="{ open: false }" class="relative">
+                    <button @click="open = !open" class="flex items-center space-x-3 w-full px-2 py-2 rounded-lg hover:bg-gray-50 transition-colors" :class="!sidebarOpen && 'justify-center px-0'">
+                        <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
+                            {{ user.email.0|upper }}{{ user.email.1|upper }}
+                        </div>
+                        <div class="flex-1 text-left overflow-hidden" x-show="sidebarOpen">
+                            <p class="text-sm font-semibold text-gray-900 truncate">{{ user.get_full_name|default:user.username }}</p>
+                            <p class="text-xs text-gray-600 truncate">{{ user.email }}</p>
+                        </div>
+                    </button>
+                    
+                    <!-- Dropdown Menu -->
+                    <div x-show="open" @click.away="open = false" x-transition class="absolute bottom-full mb-2 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50" :class="sidebarOpen ? 'left-0 right-0' : 'left-full ml-2 w-48'">
+                        <a href="/profile/" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                            Profile Settings
+                        </a>
+                        <div class="border-t border-gray-200 my-1"></div>
+                        <form method="post" action="{% url 'logout' %}" class="block">
+                            {% csrf_token %}
+                            <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                Sign Out
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+
+            </div>
+        </aside>
+
+        <!-- Mobile Sidebar -->
+        <aside x-show="mobileMenuOpen" @click.away="mobileMenuOpen = false" class="md:hidden fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 flex flex-col z-50 transform transition-transform duration-300" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in duration-300" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full">
+            <!-- Logo -->
+            <div class="p-6 border-b border-gray-200">
+                <a href="/" class="flex items-center justify-center">
+                    <img src="https://static.dsatschool.com/practice-site/logo%20main%20w%20text.png" alt="DSAT SCHOOL" class="h-10 w-auto">
+                </a>
+            </div>
+            
+            <!-- Delta Balance Widget (Mobile) -->
+            <div class="px-3 pt-3 pb-2" x-data="{ balance: '0' }" x-init="
+                async function fetchBalance() {
+                    try {
+                        const response = await fetch('/api/delta/balance/');
+                        const data = await response.json();
+                        balance = data.balance;
+                    } catch (error) {
+                        console.error('Error fetching Delta balance:', error);
+                    }
+                }
+                fetchBalance();
+                setInterval(fetchBalance, 30000);
+            ">
+                <div class="relative overflow-hidden rounded-lg p-3 shadow-md transition-all duration-300" style="background: linear-gradient(135deg, #9967b9 0%, #7c4d9a 100%);">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="bg-white bg-opacity-20 rounded-full p-2">
+                                <img src="{% static 'triangle.png' %}" alt="Δ" class="w-5 h-5">
+                            </div>
+                            <div>
+                                <p class="text-white text-xl font-bold tracking-tight" x-text="balance"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Navigation -->
+            <nav class="flex-1 overflow-y-auto py-2">
+                <a href="/dashboard/" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors {% if request.path == '/dashboard/' %}bg-primary bg-opacity-10 text-primary border-r-4 border-primary{% endif %}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                    <span class="font-normal">Home</span>
+                </a>
+                
+                <a href="/practice/modules/" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                    <span class="font-normal">Modules</span>
+                </a>
+                
+                <a href="/practice/vocab/" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                    </svg>
+                    <span class="font-normal">Vocab</span>
+                </a>
+                
+                <a href="/practice/reading/" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                    <span class="font-normal">Reading</span>
+                </a>
+                
+                <a href="/practice/courses/" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/>
+                    </svg>
+                    <span class="font-normal">Courses</span>
+                </a>
+                
+                <a href="/practice/tracker/" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    <span class="font-normal">Tracker</span>
+                </a>
+                
+                <a href="/practice/mock-exams/" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                    </svg>
+                    <span class="font-normal">Mock Exams</span>
+                </a>
+                
+                <a href="/practice/study-plan/" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="font-normal">Study Plan</span>
+                </a>
+                
+                <a href="/practice/challenge/" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    <span class="font-normal">Challenge</span>
+                </a>
+                
+                <a href="/practice/mistake-log/" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="font-normal">Mistake Log</span>
+                </a>
+                
+                <!-- Ask Prof. Coco (Mobile) -->
+                <div class="px-4 py-1.5">
+                    <div style="height: 1px; background: linear-gradient(to right, transparent, #9967b9, transparent);"></div>
+                </div>
+                
+                <a href="/ai/chat/" @click="mobileMenuOpen = false" class="mx-3 my-1.5 flex items-center space-x-3 px-3 py-1.5 text-sm text-white transition-colors rounded-lg" style="background: linear-gradient(135deg, #9967b9 0%, #7c4d9a 100%);">
+                    <i class="fas fa-robot text-lg flex-shrink-0"></i>
+                    <span class="font-normal">Ask Prof. Coco</span>
+                </a>
+                
+                {% if is_instructor %}
+                <!-- Instructor Panel (Mobile) -->
+                <div class="px-4 py-1.5 mt-2">
+                    <div style="height: 1px; background: linear-gradient(to right, transparent, #3b82f6, transparent);"></div>
+                </div>
+                
+                <a href="/instructor/" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors {% if '/instructor/' in request.path %}bg-blue-50 text-blue-600 border-r-4 border-blue-600{% endif %}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                    <span class="font-normal">Instructor Panel</span>
+                </a>
+                {% endif %}
+                
+                {% if is_admin %}
+                <!-- Admin Panel (Mobile) -->
+                <div class="px-4 py-1.5 mt-2">
+                    <div style="height: 1px; background: linear-gradient(to right, transparent, #ef4444, transparent);"></div>
+                </div>
+                
+                <a href="/rbac/" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors {% if '/rbac/' in request.path %}bg-red-50 text-red-600 border-r-4 border-red-600{% endif %}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                    <span class="font-normal">Admin Panel</span>
+                </a>
+                {% endif %}
+            </nav>
+            
+            <!-- User Profile Section (Mobile) -->
+            <div class="border-t border-gray-200 p-4" x-data="{ mobileProfileOpen: false }">
+                <button @click="mobileProfileOpen = !mobileProfileOpen" class="flex items-center space-x-3 px-2 py-2 mb-3 w-full rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="w-10 h-10 flex-shrink-0 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
+                        {{ user.email.0|upper }}{{ user.email.1|upper }}
+                    </div>
+                    <div class="flex-1 min-w-0 text-left">
+                        <p class="text-sm font-semibold text-gray-900 truncate">{{ user.get_full_name|default:user.username }}</p>
+                        <p class="text-xs text-gray-600 truncate">{{ user.email }}</p>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-400 flex-shrink-0 transition-transform" :class="mobileProfileOpen && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                
+                <div x-show="mobileProfileOpen" x-transition class="space-y-2">
+                    <a href="/profile/" @click="mobileMenuOpen = false" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg">
+                        Profile Settings
+                    </a>
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full px-4 py-2 text-sm text-center text-white bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold">
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </aside>

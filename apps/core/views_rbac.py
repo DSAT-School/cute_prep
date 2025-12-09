@@ -11,7 +11,9 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 
 from apps.core.models import Role, User
-from apps.core.decorators import admin_required
+from apps.core.decorators import admin_required, instructor_required
+from apps.core.forms_instructor import QuestionForm
+from apps.practice.models import Question
 
 
 @login_required
@@ -246,18 +248,155 @@ def remove_user_role(request, user_id):
 
 
 @login_required
-@admin_required
+@instructor_required
 def instructor_dashboard(request):
     """
     Instructor dashboard - accessible to instructors (weight 5+) and admins.
     """
-    # Check minimum weight for instructor access
-    if not request.user.has_min_role_weight(5):
-        messages.error(request, "Access denied. Instructor role or higher required.")
-        return redirect('dashboard')
-    
     context = {
         'total_students': User.objects.filter(role__weight__lte=1).count(),
         'total_instructors': User.objects.filter(role__weight__gte=5, role__weight__lt=10).count(),
+        'total_questions': Question.objects.count(),
+        'active_questions': Question.objects.filter(is_active=True).count(),
     }
     return render(request, 'admin/instructor_dashboard.html', context)
+
+
+@login_required
+@instructor_required
+def instructor_question_list(request):
+    """
+    List all questions with filtering options.
+    Accessible to instructors (weight 5+) and admins.
+    """
+    questions = Question.objects.all().order_by('-created_at')
+    
+    # Apply filters
+    domain_filter = request.GET.get('domain')
+    skill_filter = request.GET.get('skill')
+    type_filter = request.GET.get('type')
+    status_filter = request.GET.get('status')
+    search_query = request.GET.get('q')
+    
+    if domain_filter:
+        questions = questions.filter(domain_code=domain_filter)
+    
+    if skill_filter:
+        questions = questions.filter(skill_code=skill_filter)
+    
+    if type_filter:
+        questions = questions.filter(question_type=type_filter)
+    
+    if status_filter == 'active':
+        questions = questions.filter(is_active=True)
+    elif status_filter == 'inactive':
+        questions = questions.filter(is_active=False)
+    
+    if search_query:
+        questions = questions.filter(
+            Q(identifier_id__icontains=search_query) |
+            Q(domain_name__icontains=search_query) |
+            Q(skill_name__icontains=search_query) |
+            Q(stem__icontains=search_query)
+        )
+    
+    # Get unique domains and skills for filters
+    domains = Question.objects.values_list('domain_code', 'domain_name').distinct().order_by('domain_code')
+    skills = Question.objects.values_list('skill_code', 'skill_name').distinct().order_by('skill_code')
+    
+    context = {
+        'questions': questions,
+        'domains': domains,
+        'skills': skills,
+        'current_filters': {
+            'domain': domain_filter,
+            'skill': skill_filter,
+            'type': type_filter,
+            'status': status_filter,
+            'q': search_query,
+        }
+    }
+    return render(request, 'admin/instructor_question_list.html', context)
+
+
+@login_required
+@instructor_required
+def instructor_question_create(request):
+    """
+    Create a new question.
+    Accessible to instructors (weight 5+) and admins.
+    """
+    if request.method == 'POST':
+        form = QuestionForm(request.POST)
+        if form.is_valid():
+            question = form.save()
+            messages.success(request, f'Question "{question.identifier_id}" created successfully!')
+            return redirect('instructor_question_list')
+    else:
+        form = QuestionForm()
+    
+    context = {
+        'form': form,
+        'action': 'Create',
+        'form_url': 'instructor_question_create',
+    }
+    return render(request, 'admin/instructor_question_form.html', context)
+
+
+@login_required
+@instructor_required
+def instructor_question_edit(request, question_id):
+    """
+    Edit an existing question.
+    Accessible to instructors (weight 5+) and admins.
+    """
+    question = get_object_or_404(Question, id=question_id)
+    
+    if request.method == 'POST':
+        form = QuestionForm(request.POST, instance=question)
+        if form.is_valid():
+            question = form.save()
+            messages.success(request, f'Question "{question.identifier_id}" updated successfully!')
+            return redirect('instructor_question_list')
+    else:
+        form = QuestionForm(instance=question)
+    
+    context = {
+        'form': form,
+        'question': question,
+        'action': 'Edit',
+        'form_url': 'instructor_question_edit',
+    }
+    return render(request, 'admin/instructor_question_form.html', context)
+
+
+@login_required
+@instructor_required
+@require_http_methods(["POST"])
+def instructor_question_delete(request, question_id):
+    """
+    Delete a question.
+    Accessible to instructors (weight 5+) and admins.
+    """
+    question = get_object_or_404(Question, id=question_id)
+    identifier = question.identifier_id
+    question.delete()
+    messages.success(request, f'Question "{identifier}" deleted successfully!')
+    return redirect('instructor_question_list')
+
+
+@login_required
+@instructor_required
+@require_http_methods(["POST"])
+def instructor_question_toggle_status(request, question_id):
+    """
+    Toggle question active/inactive status.
+    Accessible to instructors (weight 5+) and admins.
+    """
+    question = get_object_or_404(Question, id=question_id)
+    question.is_active = not question.is_active
+    question.save()
+    
+    status = "activated" if question.is_active else "deactivated"
+    messages.success(request, f'Question "{question.identifier_id}" {status} successfully!')
+    return redirect('instructor_question_list')
