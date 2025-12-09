@@ -18,6 +18,8 @@ from apps.core.views import (
     profile_view,
 )
 from apps.core import views_rbac
+from apps.core.views_question_dashboard import question_dashboard
+from apps.core.views_ai_question_extractor import extract_question_from_image
 from apps.core.ai_chat_views import (
     ai_chat_view,
     ai_chat_message,
@@ -67,6 +69,8 @@ urlpatterns = [
     # Instructor Panel
     path("instructor/", views_rbac.instructor_dashboard, name="instructor_dashboard"),
     path("instructor/questions/", views_rbac.instructor_question_list, name="instructor_question_list"),
+    path("instructor/questions/dashboard/", question_dashboard, name="question_dashboard"),
+    path("instructor/questions/extract-from-image/", extract_question_from_image, name="extract_question_from_image"),
     path("instructor/questions/create/", views_rbac.instructor_question_create, name="instructor_question_create"),
     path("instructor/questions/create/english/", views_rbac.instructor_question_create_english, name="instructor_question_create_english"),
     path("instructor/questions/create/math/", views_rbac.instructor_question_create_math, name="instructor_question_create_math"),

@@ -39,14 +39,81 @@ window.MathJax = {
                         question
                     </p>
                 </div>
-                <a href="{% url 'instructor_question_list' %}" class="inline-flex items-center px-3 py-2 bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-300 transition-colors">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                    </svg>
-                    Back to List
-                </a>
+                <div class="flex items-center gap-3">
+                    {% if subject == 'math' %}
+                    <button type="button" onclick="openAIExtractor()" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-semibold rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all shadow-md">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                        AI Fill from Image
+                    </button>
+                    {% endif %}
+                    <a href="{% url 'instructor_question_list' %}" class="inline-flex items-center px-3 py-2 bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-300 transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                        Back to List
+                    </a>
+                </div>
             </div>
         </div>
+
+        <!-- AI Image Extractor Modal (Math Only) -->
+        {% if subject == 'math' %}
+        <div id="aiExtractorModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                    <h2 class="text-lg font-bold text-gray-900">AI Question Extractor</h2>
+                    <button type="button" onclick="closeAIExtractor()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="p-6">
+                    <div class="mb-4">
+                        <p class="text-sm text-gray-600 mb-3">Upload an image of a math question and our AI will automatically extract the stimulus, stem, and answer options.</p>
+                        
+                        <!-- Image Upload Area -->
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer" id="imageDropZone">
+                            <input type="file" id="questionImageInput" accept="image/*" class="hidden" onchange="handleImageSelect(event)">
+                            <label for="questionImageInput" class="cursor-pointer">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                <p class="mt-2 text-sm text-gray-600">Click to upload or drag and drop</p>
+                                <p class="mt-1 text-xs text-gray-500">PNG, JPG, JPEG up to 10MB</p>
+                            </label>
+                        </div>
+                        
+                        <!-- Image Preview -->
+                        <div id="imagePreview" class="hidden mt-4">
+                            <img id="previewImage" class="max-w-full h-auto rounded-lg border border-gray-200" alt="Question preview">
+                            <button type="button" onclick="clearImage()" class="mt-2 text-sm text-red-600 hover:text-red-700">Remove image</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Extract Button -->
+                    <button type="button" onclick="extractQuestion()" id="extractBtn" disabled class="w-full px-4 py-3 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
+                        <span id="extractBtnText">Extract Question Details</span>
+                        <span id="extractBtnLoading" class="hidden">
+                            <svg class="inline w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Extracting...
+                        </span>
+                    </button>
+                    
+                    <!-- Error Display -->
+                    <div id="extractError" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <p class="text-sm text-red-600"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Form -->
         <form method="post" 
@@ -581,5 +648,225 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// AI Image Extractor Functions
+let selectedImageFile = null;
+
+function openAIExtractor() {
+    document.getElementById('aiExtractorModal').classList.remove('hidden');
+}
+
+function closeAIExtractor() {
+    document.getElementById('aiExtractorModal').classList.add('hidden');
+    clearImage();
+}
+
+function handleImageSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Validate file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+        showError('File size must be less than 10MB');
+        return;
+    }
+    
+    // Validate file type
+    if (!file.type.match('image.*')) {
+        showError('Please select a valid image file');
+        return;
+    }
+    
+    selectedImageFile = file;
+    
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('previewImage').src = e.target.result;
+        document.getElementById('imagePreview').classList.remove('hidden');
+        document.getElementById('extractBtn').disabled = false;
+        hideError();
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearImage() {
+    selectedImageFile = null;
+    document.getElementById('questionImageInput').value = '';
+    document.getElementById('imagePreview').classList.add('hidden');
+    document.getElementById('extractBtn').disabled = true;
+    hideError();
+}
+
+function showError(message) {
+    const errorDiv = document.getElementById('extractError');
+    errorDiv.querySelector('p').textContent = message;
+    errorDiv.classList.remove('hidden');
+}
+
+function hideError() {
+    document.getElementById('extractError').classList.add('hidden');
+}
+
+async function extractQuestion() {
+    if (!selectedImageFile) {
+        showError('Please select an image first');
+        return;
+    }
+    
+    // Show loading state
+    const extractBtn = document.getElementById('extractBtn');
+    const extractBtnText = document.getElementById('extractBtnText');
+    const extractBtnLoading = document.getElementById('extractBtnLoading');
+    
+    extractBtn.disabled = true;
+    extractBtnText.classList.add('hidden');
+    extractBtnLoading.classList.remove('hidden');
+    hideError();
+    
+    try {
+        // Prepare form data
+        const formData = new FormData();
+        formData.append('image', selectedImageFile);
+        
+        // Send to backend
+        const response = await fetch('/instructor/questions/extract-from-image/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to extract question');
+        }
+        
+        // Fill form fields with extracted data
+        fillFormWithExtractedData(data);
+        
+        // Close modal
+        closeAIExtractor();
+        
+        // Show success notification
+        alert('Question details extracted successfully! Please review and adjust as needed.');
+        
+    } catch (error) {
+        showError(error.message || 'An error occurred while extracting the question');
+    } finally {
+        // Reset button state
+        extractBtn.disabled = false;
+        extractBtnText.classList.remove('hidden');
+        extractBtnLoading.classList.add('hidden');
+    }
+}
+
+function fillFormWithExtractedData(data) {
+    // Fill stimulus
+    if (data.stimulus) {
+        const stimulusField = document.getElementById('id_stimulus');
+        if (stimulusField) {
+            stimulusField.value = data.stimulus;
+        }
+    }
+    
+    // Fill stem
+    if (data.stem) {
+        const stemField = document.getElementById('id_stem');
+        if (stemField) {
+            stemField.value = data.stem;
+        }
+    }
+    
+    // Fill explanation
+    if (data.explanation) {
+        const explanationField = document.getElementById('id_explanation');
+        if (explanationField) {
+            explanationField.value = data.explanation;
+        }
+    }
+    
+    // Fill question type
+    if (data.question_type) {
+        const questionTypeField = document.getElementById('id_question_type');
+        if (questionTypeField) {
+            questionTypeField.value = data.question_type;
+            // Trigger change event to show/hide relevant sections
+            questionTypeField.dispatchEvent(new Event('change'));
+        }
+    }
+    
+    // Fill MCQ options if available
+    if (data.mcq_options) {
+        const options = ['A', 'B', 'C', 'D'];
+        options.forEach(option => {
+            const optionField = document.getElementById('id_mcq_option_' + option.toLowerCase());
+            if (optionField && data.mcq_options[option]) {
+                optionField.value = data.mcq_options[option];
+            }
+        });
+        
+        // Fill correct answer
+        if (data.mcq_answer) {
+            const answerField = document.getElementById('id_mcq_answer');
+            if (answerField) {
+                answerField.value = data.mcq_answer;
+            }
+        }
+    }
+    
+    // Fill SPR answer if available
+    if (data.spr_answer && Array.isArray(data.spr_answer)) {
+        const sprAnswerField = document.getElementById('id_spr_answer');
+        if (sprAnswerField) {
+            // Convert array to JSON string format expected by the field
+            sprAnswerField.value = JSON.stringify(data.spr_answer);
+        }
+    }
+    
+    // Trigger MathJax rendering for the filled content
+    if (window.MathJax && window.MathJax.typesetPromise) {
+        setTimeout(() => {
+            window.MathJax.typesetPromise().catch((err) => console.log('MathJax error:', err));
+        }, 100);
+    }
+}
+
+// Drag and drop support
+const dropZone = document.getElementById('imageDropZone');
+if (dropZone) {
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => {
+            dropZone.classList.add('border-primary', 'bg-purple-50');
+        }, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => {
+            dropZone.classList.remove('border-primary', 'bg-purple-50');
+        }, false);
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            document.getElementById('questionImageInput').files = files;
+            handleImageSelect({ target: { files: files } });
+        }
+    }, false);
+}
 </script>
 {% endblock %}

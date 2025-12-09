@@ -99,8 +99,8 @@ def practice_modules_view(request):
         reading_domains = ['CAS', 'INI', 'EOI', 'SEC']
         questions = questions.filter(domain_code__in=reading_domains)
     else:
-        # Math domains: H, P, Q, S
-        math_domains = ['H', 'P', 'Q', 'S']
+        # Math domains: H, P, Q, S (new format) + ALG, AAF, PST, GEO (old format)
+        math_domains = ['H', 'P', 'Q', 'S', 'ALG', 'AAF', 'PST', 'GEO']
         questions = questions.filter(domain_code__in=math_domains)
     
     # Filter by providers if selected

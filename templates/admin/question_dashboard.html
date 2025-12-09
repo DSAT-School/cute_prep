@@ -1,0 +1,364 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Question Management Dashboard - DSAT SCHOOL{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-4">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-xl font-bold text-gray-900 mb-2">Question Management Dashboard</h1>
+            <p class="text-sm text-gray-600">Analytics and statistics for all SAT questions in the system</p>
+        </div>
+
+        <!-- Overall Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <!-- Total Questions -->
+            <div class="bg-white rounded-lg border border-gray-200 p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Total Questions</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1">{{ total_questions }}</p>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 rounded-full p-3">
+                        <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-3 text-xs text-gray-600">
+                    <span class="text-green-600 font-semibold">{{ active_questions }}</span> active • 
+                    <span class="text-gray-400">{{ inactive_questions }}</span> inactive
+                </div>
+            </div>
+
+            <!-- English Questions -->
+            <div class="bg-white rounded-lg border border-gray-200 p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">English</p>
+                        <p class="text-2xl font-bold text-blue-600 mt-1">{{ english_count }}</p>
+                    </div>
+                    <div class="bg-blue-100 rounded-full p-3">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-3 text-xs text-gray-600">
+                    {{ english_count|floatformat:1 }}% of {{ total_questions }} total
+                </div>
+            </div>
+
+            <!-- Math Questions -->
+            <div class="bg-white rounded-lg border border-gray-200 p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Math</p>
+                        <p class="text-2xl font-bold text-green-600 mt-1">{{ math_count }}</p>
+                    </div>
+                    <div class="bg-green-100 rounded-full p-3">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-3 text-xs text-gray-600">
+                    {{ math_count|floatformat:1 }}% of {{ total_questions }} total
+                </div>
+            </div>
+
+            <!-- Question Types -->
+            <div class="bg-white rounded-lg border border-gray-200 p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Question Types</p>
+                        <p class="text-2xl font-bold text-purple-600 mt-1">MCQ + SPR</p>
+                    </div>
+                    <div class="bg-purple-100 rounded-full p-3">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-3 text-xs text-gray-600">
+                    <span class="font-semibold">{{ mcq_count }}</span> MCQ • 
+                    <span class="font-semibold">{{ spr_count }}</span> SPR
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+            <form method="get" class="space-y-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-base font-bold text-gray-900">Filters</h2>
+                    {% if subject_filter or question_type_filter or difficulty_filter or domain_filter or skill_filter or provider_filter or is_active_filter %}
+                    <a href="{% url 'core:question_dashboard' %}" class="text-xs text-primary hover:text-purple-700 font-semibold">Clear All Filters</a>
+                    {% endif %}
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <!-- Subject Filter -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Subject</label>
+                        <select name="subject" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">All Subjects</option>
+                            <option value="english" {% if subject_filter == 'english' %}selected{% endif %}>English</option>
+                            <option value="math" {% if subject_filter == 'math' %}selected{% endif %}>Math</option>
+                        </select>
+                    </div>
+
+                    <!-- Question Type Filter -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Question Type</label>
+                        <select name="question_type" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">All Types</option>
+                            <option value="MCQ" {% if question_type_filter == 'MCQ' %}selected{% endif %}>MCQ</option>
+                            <option value="SPR" {% if question_type_filter == 'SPR' %}selected{% endif %}>SPR (Grid-in)</option>
+                        </select>
+                    </div>
+
+                    <!-- Difficulty Filter -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Difficulty</label>
+                        <select name="difficulty" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">All Levels</option>
+                            <option value="easy" {% if difficulty_filter == 'easy' %}selected{% endif %}>Easy</option>
+                            <option value="medium" {% if difficulty_filter == 'medium' %}selected{% endif %}>Medium</option>
+                            <option value="hard" {% if difficulty_filter == 'hard' %}selected{% endif %}>Hard</option>
+                        </select>
+                    </div>
+
+                    <!-- Status Filter -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Status</label>
+                        <select name="is_active" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">All Status</option>
+                            <option value="true" {% if is_active_filter == 'true' %}selected{% endif %}>Active</option>
+                            <option value="false" {% if is_active_filter == 'false' %}selected{% endif %}>Inactive</option>
+                        </select>
+                    </div>
+
+                    <!-- Domain Filter -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Domain</label>
+                        <select name="domain" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">All Domains</option>
+                            {% for domain_code, domain_name in all_domains %}
+                            <option value="{{ domain_code }}" {% if domain_filter == domain_code %}selected{% endif %}>{{ domain_code }} - {{ domain_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Skill Filter -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Skill</label>
+                        <select name="skill" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">All Skills</option>
+                            {% for skill_code, skill_name in all_skills %}
+                            <option value="{{ skill_code }}" {% if skill_filter == skill_code %}selected{% endif %}>{{ skill_code }} - {{ skill_name|truncatewords:5 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Provider Filter -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Provider</label>
+                        <select name="provider" class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">All Providers</option>
+                            {% for provider_code, provider_name in all_providers %}
+                            <option value="{{ provider_code }}" {% if provider_filter == provider_code %}selected{% endif %}>{{ provider_code }} - {{ provider_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="flex items-end">
+                        <button type="submit" class="w-full px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                            Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Two Column Layout: Stats + Contributors -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Domain Statistics -->
+            <div class="bg-white rounded-lg border border-gray-200 p-4">
+                <h2 class="text-base font-bold text-gray-900 mb-4">Questions by Domain</h2>
+                <div class="space-y-3">
+                    {% for domain in domain_stats %}
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm font-semibold text-gray-700">{{ domain.domain_code }} - {{ domain.domain_name|truncatewords:4 }}</span>
+                            <span class="text-sm font-bold text-primary">{{ domain.count }}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-primary h-2 rounded-full" style="width: {% widthratio domain.count total_questions 100 %}%"></div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-gray-500">No domains found</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Difficulty Distribution -->
+            <div class="bg-white rounded-lg border border-gray-200 p-4">
+                <h2 class="text-base font-bold text-gray-900 mb-4">Difficulty Distribution</h2>
+                <div class="space-y-3">
+                    <!-- Easy -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm font-semibold text-green-600">Easy</span>
+                            <span class="text-sm font-bold text-green-600">{{ easy_count }}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: {% widthratio easy_count total_questions 100 %}%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Medium -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm font-semibold text-yellow-600">Medium</span>
+                            <span class="text-sm font-bold text-yellow-600">{{ medium_count }}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-yellow-500 h-2 rounded-full" style="width: {% widthratio medium_count total_questions 100 %}%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Hard -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm font-semibold text-red-600">Hard</span>
+                            <span class="text-sm font-bold text-red-600">{{ hard_count }}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-red-500 h-2 rounded-full" style="width: {% widthratio hard_count total_questions 100 %}%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Skills -->
+                <h2 class="text-base font-bold text-gray-900 mt-6 mb-4">Top 10 Skills</h2>
+                <div class="space-y-2">
+                    {% for skill in skill_stats %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-600">{{ skill.skill_code }} - {{ skill.skill_name|truncatewords:5 }}</span>
+                        <span class="text-xs font-bold text-primary">{{ skill.count }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-gray-500">No skills found</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Provider Statistics -->
+        <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+            <h2 class="text-base font-bold text-gray-900 mb-4">Question Sources by Provider</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Provider</th>
+                            <th class="px-4 py-2 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Total</th>
+                            <th class="px-4 py-2 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Active</th>
+                            <th class="px-4 py-2 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">MCQ</th>
+                            <th class="px-4 py-2 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">SPR</th>
+                            <th class="px-4 py-2 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">English</th>
+                            <th class="px-4 py-2 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Math</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for provider in provider_stats %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8 bg-primary bg-opacity-10 rounded-full flex items-center justify-center">
+                                        <span class="text-xs font-bold text-primary">{{ provider.provider_code|upper }}</span>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm font-semibold text-gray-900">{{ provider.provider_name }}</p>
+                                        <p class="text-xs text-gray-500">{{ provider.provider_code }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-bold text-gray-900">{{ provider.total_questions }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-right text-sm text-green-600 font-semibold">{{ provider.active_questions }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-600">{{ provider.mcq_questions }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-600">{{ provider.spr_questions }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-right text-sm text-blue-600 font-semibold">{{ provider.english_questions }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-right text-sm text-green-600 font-semibold">{{ provider.math_questions }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="px-4 py-8 text-center text-sm text-gray-500">No provider data found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Questions -->
+        <div class="bg-white rounded-lg border border-gray-200 p-4">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-base font-bold text-gray-900">Recent Questions (Latest 20)</h2>
+                <a href="{% url 'instructor_question_list' %}" class="text-sm text-primary hover:text-purple-700 font-semibold">View All →</a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">ID</th>
+                            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Domain</th>
+                            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Skill</th>
+                            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Type</th>
+                            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Difficulty</th>
+                            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Created By</th>
+                            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Created</th>
+                            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for question in recent_questions %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-900">{{ question.identifier_id }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-xs">
+                                <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded font-semibold">{{ question.domain_code }}</span>
+                            </td>
+                            <td class="px-4 py-3 text-xs text-gray-600">{{ question.skill_code }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-xs">
+                                <span class="px-2 py-1 {% if question.question_type == 'MCQ' %}bg-blue-100 text-blue-700{% else %}bg-green-100 text-green-700{% endif %} rounded font-semibold">{{ question.question_type }}</span>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-xs">
+                                <span class="px-2 py-1 {% if question.difficulty == 'easy' %}bg-green-100 text-green-700{% elif question.difficulty == 'medium' %}bg-yellow-100 text-yellow-700{% else %}bg-red-100 text-red-700{% endif %} rounded font-semibold capitalize">{{ question.difficulty }}</span>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-600">{{ question.created_by.username }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-500">{{ question.created_at|date:"M d, Y" }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                {% if question.is_active %}
+                                <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Active</span>
+                                {% else %}
+                                <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-semibold">Inactive</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="px-4 py-8 text-center text-sm text-gray-500">No questions found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
