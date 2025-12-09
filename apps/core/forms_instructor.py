@@ -8,6 +8,58 @@ from django import forms
 from apps.practice.models import Question
 
 
+# SAT Domain and Skill choices
+DOMAIN_CHOICES = [
+    ('', '-- Select Domain --'),
+    # English/Reading & Writing Domains
+    ('Information and Ideas', 'Information and Ideas (English)'),
+    ('Craft and Structure', 'Craft and Structure (English)'),
+    ('Expression of Ideas', 'Expression of Ideas (English)'),
+    ('Standard English Conventions', 'Standard English Conventions (English)'),
+    # Math Domains
+    ('Algebra', 'Algebra (Math)'),
+    ('Advanced Math', 'Advanced Math (Math)'),
+    ('Problem-Solving and Data Analysis', 'Problem-Solving and Data Analysis (Math)'),
+    ('Geometry and Trigonometry', 'Geometry and Trigonometry (Math)'),
+]
+
+SKILL_CHOICES = [
+    ('', '-- Select Skill --'),
+    # English Skills
+    ('Central Ideas and Details', 'Central Ideas and Details'),
+    ('Command of Evidence', 'Command of Evidence'),
+    ('Inferences', 'Inferences'),
+    ('Words in Context', 'Words in Context'),
+    ('Text Structure and Purpose', 'Text Structure and Purpose'),
+    ('Cross-Text Connections', 'Cross-Text Connections'),
+    ('Rhetorical Synthesis', 'Rhetorical Synthesis'),
+    ('Transitions', 'Transitions'),
+    ('Boundaries', 'Boundaries'),
+    ('Form, Structure, and Sense', 'Form, Structure, and Sense'),
+    # Math Skills
+    ('Linear equations in one variable', 'Linear equations in one variable'),
+    ('Linear equations in two variables', 'Linear equations in two variables'),
+    ('Linear functions', 'Linear functions'),
+    ('Systems of two linear equations in two variables', 'Systems of two linear equations in two variables'),
+    ('Linear inequalities in one or two variables', 'Linear inequalities in one or two variables'),
+    ('Equivalent expressions', 'Equivalent expressions'),
+    ('Nonlinear equations in one variable', 'Nonlinear equations in one variable'),
+    ('Systems of equations in two variables', 'Systems of equations in two variables'),
+    ('Nonlinear functions', 'Nonlinear functions'),
+    ('Ratios, rates, proportional relationships, and units', 'Ratios, rates, proportional relationships, and units'),
+    ('Percentages', 'Percentages'),
+    ('One-variable data: distributions and measures of center and spread', 'One-variable data: distributions and measures of center and spread'),
+    ('Two-variable data: models and scatterplots', 'Two-variable data: models and scatterplots'),
+    ('Probability and conditional probability', 'Probability and conditional probability'),
+    ('Inference from sample statistics and margin of error', 'Inference from sample statistics and margin of error'),
+    ('Evaluating statistical claims: observational studies and experiments', 'Evaluating statistical claims: observational studies and experiments'),
+    ('Area and volume', 'Area and volume'),
+    ('Lines, angles, and triangles', 'Lines, angles, and triangles'),
+    ('Right triangles and trigonometry', 'Right triangles and trigonometry'),
+    ('Circles', 'Circles'),
+]
+
+
 class QuestionForm(forms.ModelForm):
     """
     Form for creating and editing SAT questions.
@@ -19,6 +71,51 @@ class QuestionForm(forms.ModelForm):
         required=False,
         widget=forms.HiddenInput(),
         help_text="Auto-generated UUID"
+    )
+    
+    # Individual MCQ option fields (easier UX than JSON)
+    mcq_option_a = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
+            'rows': 2,
+            'placeholder': 'Option A text (supports LaTeX)',
+            'id': 'id_mcq_option_a'
+        }),
+        label='Option A'
+    )
+    
+    mcq_option_b = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
+            'rows': 2,
+            'placeholder': 'Option B text (supports LaTeX)',
+            'id': 'id_mcq_option_b'
+        }),
+        label='Option B'
+    )
+    
+    mcq_option_c = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
+            'rows': 2,
+            'placeholder': 'Option C text (supports LaTeX)',
+            'id': 'id_mcq_option_c'
+        }),
+        label='Option C'
+    )
+    
+    mcq_option_d = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
+            'rows': 2,
+            'placeholder': 'Option D text (supports LaTeX)',
+            'id': 'id_mcq_option_d'
+        }),
+        label='Option D'
     )
     
     class Meta:
@@ -49,21 +146,25 @@ class QuestionForm(forms.ModelForm):
                 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
                 'placeholder': 'e.g., JKZRJ'
             }),
-            'domain_name': forms.TextInput(attrs={
+            'domain_name': forms.Select(attrs={
                 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
-                'placeholder': 'e.g., Craft and Structure'
-            }),
+                'id': 'id_domain_name'
+            }, choices=DOMAIN_CHOICES),
             'domain_code': forms.TextInput(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
-                'placeholder': 'e.g., CAS'
+                'class': 'mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm text-sm',
+                'placeholder': 'Auto-filled',
+                'readonly': 'readonly',
+                'id': 'id_domain_code'
             }),
-            'skill_name': forms.TextInput(attrs={
+            'skill_name': forms.Select(attrs={
                 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
-                'placeholder': 'e.g., Cross-Text Connections'
-            }),
+                'id': 'id_skill_name'
+            }, choices=SKILL_CHOICES),
             'skill_code': forms.TextInput(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
-                'placeholder': 'e.g., CTC'
+                'class': 'mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm text-sm',
+                'placeholder': 'Auto-filled',
+                'readonly': 'readonly',
+                'id': 'id_skill_code'
             }),
             'provider_name': forms.TextInput(attrs={
                 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
@@ -82,17 +183,20 @@ class QuestionForm(forms.ModelForm):
             'stimulus': forms.Textarea(attrs={
                 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
                 'rows': 6,
-                'placeholder': 'Question passage or context (optional, supports HTML)'
+                'placeholder': 'Question passage or context (optional, supports HTML and LaTeX)',
+                'id': 'id_stimulus'
             }),
             'stem': forms.Textarea(attrs={
                 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
                 'rows': 4,
-                'placeholder': 'The actual question text (required, supports HTML)'
+                'placeholder': 'The actual question text (required, supports HTML and LaTeX)',
+                'id': 'id_stem'
             }),
             'explanation': forms.Textarea(attrs={
                 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
                 'rows': 4,
-                'placeholder': 'Detailed explanation of the answer (supports HTML)'
+                'placeholder': 'Detailed explanation of the answer (supports HTML and LaTeX)',
+                'id': 'id_explanation'
             }),
             'mcq_answer': forms.Select(attrs={
                 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm'
@@ -106,7 +210,8 @@ class QuestionForm(forms.ModelForm):
             'mcq_option_list': forms.Textarea(attrs={
                 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm font-mono',
                 'rows': 6,
-                'placeholder': '{\n  "A": "Option A text",\n  "B": "Option B text",\n  "C": "Option C text",\n  "D": "Option D text"\n}'
+                'placeholder': '{\n  "A": "Option A text",\n  "B": "Option B text",\n  "C": "Option C text",\n  "D": "Option D text"\n}',
+                'id': 'id_mcq_option_list'
             }),
             'spr_answer': forms.Textarea(attrs={
                 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm font-mono',
@@ -166,6 +271,15 @@ class QuestionForm(forms.ModelForm):
         # Auto-generate question_id if creating new question
         if not self.instance.pk:
             self.fields['question_id'].initial = uuid.uuid4()
+        
+        # Populate individual MCQ fields if editing existing question
+        if self.instance.pk and self.instance.mcq_option_list:
+            options = self.instance.mcq_option_list
+            if isinstance(options, dict):
+                self.fields['mcq_option_a'].initial = options.get('A', '')
+                self.fields['mcq_option_b'].initial = options.get('B', '')
+                self.fields['mcq_option_c'].initial = options.get('C', '')
+                self.fields['mcq_option_d'].initial = options.get('D', '')
     
     def clean_identifier_id(self):
         """Ensure identifier_id is unique."""
@@ -189,31 +303,32 @@ class QuestionForm(forms.ModelForm):
         if question_type == 'mcq':
             # Validate MCQ fields
             mcq_answer = cleaned_data.get('mcq_answer')
-            mcq_option_list = cleaned_data.get('mcq_option_list')
+            mcq_option_a = cleaned_data.get('mcq_option_a', '').strip()
+            mcq_option_b = cleaned_data.get('mcq_option_b', '').strip()
+            mcq_option_c = cleaned_data.get('mcq_option_c', '').strip()
+            mcq_option_d = cleaned_data.get('mcq_option_d', '').strip()
             
             if not mcq_answer:
-                self.add_error('mcq_answer', 'MCQ questions must have a correct answer selected.')
+                self.add_error('mcq_answer', 'Please select the correct answer.')
             
-            if not mcq_option_list:
-                self.add_error('mcq_option_list', 'MCQ questions must have answer options.')
-            else:
-                # Validate JSON structure
-                import json
-                try:
-                    if isinstance(mcq_option_list, str):
-                        options = json.loads(mcq_option_list)
-                    else:
-                        options = mcq_option_list
-                    
-                    if not isinstance(options, dict):
-                        self.add_error('mcq_option_list', 'Options must be a JSON object.')
-                    elif not all(k in options for k in ['A', 'B', 'C', 'D']):
-                        self.add_error('mcq_option_list', 'Options must include A, B, C, and D keys.')
-                    
-                    # Store as dict for saving
-                    cleaned_data['mcq_option_list'] = options
-                except json.JSONDecodeError:
-                    self.add_error('mcq_option_list', 'Invalid JSON format.')
+            # Check that all options are filled
+            if not mcq_option_a:
+                self.add_error('mcq_option_a', 'Option A is required for MCQ questions.')
+            if not mcq_option_b:
+                self.add_error('mcq_option_b', 'Option B is required for MCQ questions.')
+            if not mcq_option_c:
+                self.add_error('mcq_option_c', 'Option C is required for MCQ questions.')
+            if not mcq_option_d:
+                self.add_error('mcq_option_d', 'Option D is required for MCQ questions.')
+            
+            # Build the mcq_option_list from individual fields
+            if mcq_option_a and mcq_option_b and mcq_option_c and mcq_option_d:
+                cleaned_data['mcq_option_list'] = {
+                    'A': mcq_option_a,
+                    'B': mcq_option_b,
+                    'C': mcq_option_c,
+                    'D': mcq_option_d
+                }
         
         elif question_type == 'spr':
             # Validate SPR fields
@@ -249,6 +364,10 @@ class QuestionForm(forms.ModelForm):
         # Ensure question_id is set
         if not instance.question_id:
             instance.question_id = uuid.uuid4()
+        
+        # Build mcq_option_list from individual fields if MCQ question
+        if instance.question_type == 'mcq':
+            instance.mcq_option_list = self.cleaned_data.get('mcq_option_list')
         
         if commit:
             instance.save()

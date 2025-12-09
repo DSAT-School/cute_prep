@@ -266,9 +266,11 @@ def instructor_dashboard(request):
 @instructor_required
 def instructor_question_list(request):
     """
-    List all questions with filtering options.
+    List all questions with filtering options and pagination.
     Accessible to instructors (weight 5+) and admins.
     """
+    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+    
     questions = Question.objects.all().order_by('-created_at')
     
     # Apply filters
@@ -300,12 +302,23 @@ def instructor_question_list(request):
             Q(stem__icontains=search_query)
         )
     
+    # Pagination
+    paginator = Paginator(questions, 25)  # 25 questions per page
+    page = request.GET.get('page')
+    
+    try:
+        questions_page = paginator.page(page)
+    except PageNotAnInteger:
+        questions_page = paginator.page(1)
+    except EmptyPage:
+        questions_page = paginator.page(paginator.num_pages)
+    
     # Get unique domains and skills for filters
     domains = Question.objects.values_list('domain_code', 'domain_name').distinct().order_by('domain_code')
     skills = Question.objects.values_list('skill_code', 'skill_name').distinct().order_by('skill_code')
     
     context = {
-        'questions': questions,
+        'questions': questions_page,
         'domains': domains,
         'skills': skills,
         'current_filters': {

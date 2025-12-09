@@ -3,17 +3,31 @@
 
 {% block title %}{{ action }} Question - Instructor Panel{% endblock %}
 
+{% block extra_head %}
+<!-- MathJax for LaTeX rendering -->
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']]
+  }
+};
+</script>
+{% endblock %}
+
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-6">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gray-50 py-4">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
-        <div class="mb-6">
+        <div class="mb-4">
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-xl font-bold text-gray-900">{{ action }} Question</h1>
                     <p class="mt-1 text-sm text-gray-600">Fill in all required fields for SAT question</p>
                 </div>
-                <a href="{% url 'instructor_question_list' %}" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-300 transition-colors">
+                <a href="{% url 'instructor_question_list' %}" class="inline-flex items-center px-3 py-2 bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-300 transition-colors">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                     </svg>
@@ -26,11 +40,13 @@
         <form method="post" {% if question %}action="{% url 'instructor_question_edit' question.id %}"{% else %}action="{% url 'instructor_question_create' %}"{% endif %} class="bg-white rounded-lg shadow">
             {% csrf_token %}
             
-            <div class="p-6 space-y-6">
-                <!-- Identification Section -->
-                <div>
-                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Identification</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Two Column Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 p-4">
+                <!-- LEFT COLUMN -->
+                <div class="space-y-4">
+                    <!-- Identification Section -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h2 class="text-base font-bold text-gray-900 mb-3 pb-2 border-b border-gray-200">Identification</h2>
                         <div>
                             <label for="{{ form.identifier_id.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
                                 {{ form.identifier_id.label }} <span class="text-red-600">*</span>
@@ -45,200 +61,293 @@
                         </div>
                         {{ form.question_id }}
                     </div>
-                </div>
 
-                <!-- Classification Section -->
-                <div>
-                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Classification</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="{{ form.domain_name.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
-                                {{ form.domain_name.label }} <span class="text-red-600">*</span>
+                    <!-- Classification Section -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h2 class="text-base font-bold text-gray-900 mb-3 pb-2 border-b border-gray-200">Classification</h2>
+                        
+                        <!-- Domain Fields -->
+                        <div class="mb-3">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">
+                                Domain <span class="text-red-600">*</span>
                             </label>
-                            {{ form.domain_name }}
-                            {% if form.domain_name.help_text %}
-                            <p class="mt-1 text-xs text-gray-500">{{ form.domain_name.help_text }}</p>
-                            {% endif %}
+                            <div class="flex gap-2">
+                                <div class="flex-1">
+                                    {{ form.domain_name }}
+                                </div>
+                                <div class="w-20">
+                                    {{ form.domain_code }}
+                                </div>
+                            </div>
                             {% if form.domain_name.errors %}
                             <p class="mt-1 text-xs text-red-600">{{ form.domain_name.errors.0 }}</p>
                             {% endif %}
                         </div>
                         
-                        <div>
-                            <label for="{{ form.domain_code.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
-                                {{ form.domain_code.label }} <span class="text-red-600">*</span>
+                        <!-- Skill Fields -->
+                        <div class="mb-3">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">
+                                Skill <span class="text-red-600">*</span>
                             </label>
-                            {{ form.domain_code }}
-                            {% if form.domain_code.help_text %}
-                            <p class="mt-1 text-xs text-gray-500">{{ form.domain_code.help_text }}</p>
-                            {% endif %}
-                            {% if form.domain_code.errors %}
-                            <p class="mt-1 text-xs text-red-600">{{ form.domain_code.errors.0 }}</p>
-                            {% endif %}
-                        </div>
-                        
-                        <div>
-                            <label for="{{ form.skill_name.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
-                                {{ form.skill_name.label }} <span class="text-red-600">*</span>
-                            </label>
-                            {{ form.skill_name }}
-                            {% if form.skill_name.help_text %}
-                            <p class="mt-1 text-xs text-gray-500">{{ form.skill_name.help_text }}</p>
-                            {% endif %}
+                            <div class="flex gap-2">
+                                <div class="flex-1">
+                                    {{ form.skill_name }}
+                                </div>
+                                <div class="w-20">
+                                    {{ form.skill_code }}
+                                </div>
+                            </div>
                             {% if form.skill_name.errors %}
                             <p class="mt-1 text-xs text-red-600">{{ form.skill_name.errors.0 }}</p>
                             {% endif %}
                         </div>
                         
-                        <div>
-                            <label for="{{ form.skill_code.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
-                                {{ form.skill_code.label }} <span class="text-red-600">*</span>
-                            </label>
-                            {{ form.skill_code }}
-                            {% if form.skill_code.help_text %}
-                            <p class="mt-1 text-xs text-gray-500">{{ form.skill_code.help_text }}</p>
-                            {% endif %}
-                            {% if form.skill_code.errors %}
-                            <p class="mt-1 text-xs text-red-600">{{ form.skill_code.errors.0 }}</p>
-                            {% endif %}
+                        <!-- Provider Fields -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label for="{{ form.provider_name.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                                    {{ form.provider_name.label }}
+                                </label>
+                                {{ form.provider_name }}
+                            </div>
+                            <div>
+                                <label for="{{ form.provider_code.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                                    {{ form.provider_code.label }}
+                                </label>
+                                {{ form.provider_code }}
+                            </div>
                         </div>
-                        
-                        <div>
-                            <label for="{{ form.provider_name.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
-                                {{ form.provider_name.label }}
-                            </label>
-                            {{ form.provider_name }}
-                            {% if form.provider_name.errors %}
-                            <p class="mt-1 text-xs text-red-600">{{ form.provider_name.errors.0 }}</p>
-                            {% endif %}
-                        </div>
-                        
-                        <div>
-                            <label for="{{ form.provider_code.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
-                                {{ form.provider_code.label }}
-                            </label>
-                            {{ form.provider_code }}
-                            {% if form.provider_code.errors %}
-                            <p class="mt-1 text-xs text-red-600">{{ form.provider_code.errors.0 }}</p>
-                            {% endif %}
+                    </div>
+
+
+
+                    <!-- Question Properties -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h2 class="text-base font-bold text-gray-900 mb-3 pb-2 border-b border-gray-200">Question Properties</h2>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label for="{{ form.question_type.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                                    {{ form.question_type.label }} <span class="text-red-600">*</span>
+                                </label>
+                                {{ form.question_type }}
+                            </div>
+                            <div>
+                                <label for="{{ form.difficulty.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                                    {{ form.difficulty.label }}
+                                </label>
+                                {{ form.difficulty }}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Question Type & Difficulty -->
-                <div>
-                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Question Properties</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="{{ form.question_type.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
-                                {{ form.question_type.label }} <span class="text-red-600">*</span>
-                            </label>
-                            {{ form.question_type }}
-                            {% if form.question_type.help_text %}
-                            <p class="mt-1 text-xs text-gray-500">{{ form.question_type.help_text }}</p>
-                            {% endif %}
-                            {% if form.question_type.errors %}
-                            <p class="mt-1 text-xs text-red-600">{{ form.question_type.errors.0 }}</p>
-                            {% endif %}
-                        </div>
-                        
-                        <div>
-                            <label for="{{ form.difficulty.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
-                                {{ form.difficulty.label }}
-                            </label>
-                            {{ form.difficulty }}
-                            {% if form.difficulty.help_text %}
-                            <p class="mt-1 text-xs text-gray-500">{{ form.difficulty.help_text }}</p>
-                            {% endif %}
-                            {% if form.difficulty.errors %}
-                            <p class="mt-1 text-xs text-red-600">{{ form.difficulty.errors.0 }}</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
+                <!-- RIGHT COLUMN -->
+                <div class="space-y-4">
 
-                <!-- Question Content -->
-                <div>
-                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Question Content</h2>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label for="{{ form.stimulus.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
-                                {{ form.stimulus.label }}
-                            </label>
-                            {{ form.stimulus }}
-                            {% if form.stimulus.help_text %}
-                            <p class="mt-1 text-xs text-gray-500">{{ form.stimulus.help_text }}</p>
-                            {% endif %}
+                    <!-- Question Content -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h2 class="text-base font-bold text-gray-900 mb-3 pb-2 border-b border-gray-200">Question Content</h2>
+                        
+                        <!-- Stimulus -->
+                        <div class="mb-3">
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="{{ form.stimulus.id_for_label }}" class="block text-xs font-semibold text-gray-700">
+                                    {{ form.stimulus.label }}
+                                </label>
+                                <button type="button" onclick="togglePreview('stimulus')" class="text-xs text-primary hover:text-opacity-80 font-semibold flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    <span id="preview_btn_stimulus">Preview</span>
+                                </button>
+                            </div>
+                            <div id="input_stimulus">
+                                {{ form.stimulus }}
+                            </div>
+                            <div id="preview_stimulus" class="hidden p-3 bg-white border-2 border-primary rounded-lg text-sm min-h-[100px]"></div>
                             {% if form.stimulus.errors %}
                             <p class="mt-1 text-xs text-red-600">{{ form.stimulus.errors.0 }}</p>
                             {% endif %}
                         </div>
                         
-                        <div>
-                            <label for="{{ form.stem.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
-                                {{ form.stem.label }} <span class="text-red-600">*</span>
-                            </label>
-                            {{ form.stem }}
-                            {% if form.stem.help_text %}
-                            <p class="mt-1 text-xs text-gray-500">{{ form.stem.help_text }}</p>
-                            {% endif %}
+                        <!-- Stem -->
+                        <div class="mb-3">
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="{{ form.stem.id_for_label }}" class="block text-xs font-semibold text-gray-700">
+                                    {{ form.stem.label }} <span class="text-red-600">*</span>
+                                </label>
+                                <button type="button" onclick="togglePreview('stem')" class="text-xs text-primary hover:text-opacity-80 font-semibold flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    <span id="preview_btn_stem">Preview</span>
+                                </button>
+                            </div>
+                            <div id="input_stem">
+                                {{ form.stem }}
+                            </div>
+                            <div id="preview_stem" class="hidden p-3 bg-white border-2 border-primary rounded-lg text-sm min-h-[100px]"></div>
                             {% if form.stem.errors %}
                             <p class="mt-1 text-xs text-red-600">{{ form.stem.errors.0 }}</p>
                             {% endif %}
                         </div>
                         
-                        <div>
-                            <label for="{{ form.explanation.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
-                                {{ form.explanation.label }}
-                            </label>
-                            {{ form.explanation }}
-                            {% if form.explanation.help_text %}
-                            <p class="mt-1 text-xs text-gray-500">{{ form.explanation.help_text }}</p>
-                            {% endif %}
+                        <!-- Explanation -->
+                        <div class="mb-3">
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="{{ form.explanation.id_for_label }}" class="block text-xs font-semibold text-gray-700">
+                                    {{ form.explanation.label }}
+                                </label>
+                                <button type="button" onclick="togglePreview('explanation')" class="text-xs text-primary hover:text-opacity-80 font-semibold flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    <span id="preview_btn_explanation">Preview</span>
+                                </button>
+                            </div>
+                            <div id="input_explanation">
+                                {{ form.explanation }}
+                            </div>
+                            <div id="preview_explanation" class="hidden p-3 bg-white border-2 border-primary rounded-lg text-sm min-h-[100px]"></div>
                             {% if form.explanation.errors %}
                             <p class="mt-1 text-xs text-red-600">{{ form.explanation.errors.0 }}</p>
                             {% endif %}
                         </div>
                     </div>
-                </div>
 
-                <!-- MCQ Options -->
-                <div id="mcq-section">
-                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Multiple Choice Options</h2>
-                    <p class="text-xs text-gray-600 mb-4">Required for MCQ questions only</p>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label for="{{ form.mcq_answer.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
-                                {{ form.mcq_answer.label }}
+                    <!-- Additional Settings -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h2 class="text-base font-bold text-gray-900 mb-3 pb-2 border-b border-gray-200">Additional Settings</h2>
+                        <div class="mb-3">
+                            <label for="{{ form.tutorial_link.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                                {{ form.tutorial_link.label }}
                             </label>
-                            {{ form.mcq_answer }}
-                            {% if form.mcq_answer.errors %}
-                            <p class="mt-1 text-xs text-red-600">{{ form.mcq_answer.errors.0 }}</p>
+                            {{ form.tutorial_link }}
+                        </div>
+                        <div>
+                            <label class="flex items-center gap-2">
+                                {{ form.is_active }}
+                                <span class="text-xs font-semibold text-gray-700">{{ form.is_active.label }}</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FULL WIDTH SECTIONS -->
+            <div class="px-4 pb-4 space-y-4">
+                <!-- MCQ Options -->
+                <div id="mcq-section" class="bg-gray-50 p-4 rounded-lg">
+                    <h2 class="text-base font-bold text-gray-900 mb-3 pb-2 border-b border-gray-200">Multiple Choice Options</h2>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.mcq_answer.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+                            Correct Answer <span class="text-red-600">*</span>
+                        </label>
+                        {{ form.mcq_answer }}
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <!-- Option A -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="{{ form.mcq_option_a.id_for_label }}" class="block text-xs font-semibold text-gray-700">
+                                    Option A <span class="text-red-600">*</span>
+                                </label>
+                                <button type="button" onclick="togglePreview('mcq_option_a')" class="text-xs text-primary hover:text-opacity-80 font-semibold flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    <span id="preview_btn_mcq_option_a">Preview</span>
+                                </button>
+                            </div>
+                            <div id="input_mcq_option_a">
+                                {{ form.mcq_option_a }}
+                            </div>
+                            <div id="preview_mcq_option_a" class="hidden p-2 bg-white border-2 border-primary rounded text-sm min-h-[60px]"></div>
+                            {% if form.mcq_option_a.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.mcq_option_a.errors.0 }}</p>
                             {% endif %}
                         </div>
                         
+                        <!-- Option B -->
                         <div>
-                            <label for="{{ form.mcq_option_list.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
-                                {{ form.mcq_option_list.label }}
-                            </label>
-                            {{ form.mcq_option_list }}
-                            {% if form.mcq_option_list.help_text %}
-                            <p class="mt-1 text-xs text-gray-500">{{ form.mcq_option_list.help_text }}</p>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="{{ form.mcq_option_b.id_for_label }}" class="block text-xs font-semibold text-gray-700">
+                                    Option B <span class="text-red-600">*</span>
+                                </label>
+                                <button type="button" onclick="togglePreview('mcq_option_b')" class="text-xs text-primary hover:text-opacity-80 font-semibold flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    <span id="preview_btn_mcq_option_b">Preview</span>
+                                </button>
+                            </div>
+                            <div id="input_mcq_option_b">
+                                {{ form.mcq_option_b }}
+                            </div>
+                            <div id="preview_mcq_option_b" class="hidden p-2 bg-white border-2 border-primary rounded text-sm min-h-[60px]"></div>
+                            {% if form.mcq_option_b.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.mcq_option_b.errors.0 }}</p>
                             {% endif %}
-                            {% if form.mcq_option_list.errors %}
-                            <p class="mt-1 text-xs text-red-600">{{ form.mcq_option_list.errors.0 }}</p>
+                        </div>
+                        
+                        <!-- Option C -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="{{ form.mcq_option_c.id_for_label }}" class="block text-xs font-semibold text-gray-700">
+                                    Option C <span class="text-red-600">*</span>
+                                </label>
+                                <button type="button" onclick="togglePreview('mcq_option_c')" class="text-xs text-primary hover:text-opacity-80 font-semibold flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    <span id="preview_btn_mcq_option_c">Preview</span>
+                                </button>
+                            </div>
+                            <div id="input_mcq_option_c">
+                                {{ form.mcq_option_c }}
+                            </div>
+                            <div id="preview_mcq_option_c" class="hidden p-2 bg-white border-2 border-primary rounded text-sm min-h-[60px]"></div>
+                            {% if form.mcq_option_c.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.mcq_option_c.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Option D -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="{{ form.mcq_option_d.id_for_label }}" class="block text-xs font-semibold text-gray-700">
+                                    Option D <span class="text-red-600">*</span>
+                                </label>
+                                <button type="button" onclick="togglePreview('mcq_option_d')" class="text-xs text-primary hover:text-opacity-80 font-semibold flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    <span id="preview_btn_mcq_option_d">Preview</span>
+                                </button>
+                            </div>
+                            <div id="input_mcq_option_d">
+                                {{ form.mcq_option_d }}
+                            </div>
+                            <div id="preview_mcq_option_d" class="hidden p-2 bg-white border-2 border-primary rounded text-sm min-h-[60px]"></div>
+                            {% if form.mcq_option_d.errors %}
+                            <p class="mt-1 text-xs text-red-600">{{ form.mcq_option_d.errors.0 }}</p>
                             {% endif %}
                         </div>
                     </div>
                 </div>
 
                 <!-- SPR Answer -->
-                <div id="spr-section">
-                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Student Produced Response (Grid-in)</h2>
-                    <p class="text-xs text-gray-600 mb-4">Required for SPR questions only</p>
-                    
+                <div id="spr-section" class="bg-gray-50 p-4 rounded-lg">
+                    <h2 class="text-base font-bold text-gray-900 mb-3 pb-2 border-b border-gray-200">Student Produced Response (Grid-in)</h2>
                     <div>
                         <label for="{{ form.spr_answer.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
                             {{ form.spr_answer.label }}
@@ -252,36 +361,11 @@
                         {% endif %}
                     </div>
                 </div>
+            </div>
 
-                <!-- Additional Settings -->
-                <div>
-                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">Additional Settings</h2>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label for="{{ form.tutorial_link.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
-                                {{ form.tutorial_link.label }}
-                            </label>
-                            {{ form.tutorial_link }}
-                            {% if form.tutorial_link.help_text %}
-                            <p class="mt-1 text-xs text-gray-500">{{ form.tutorial_link.help_text }}</p>
-                            {% endif %}
-                            {% if form.tutorial_link.errors %}
-                            <p class="mt-1 text-xs text-red-600">{{ form.tutorial_link.errors.0 }}</p>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="flex items-center">
-                            {{ form.is_active }}
-                            <label for="{{ form.is_active.id_for_label }}" class="ml-2 block text-sm text-gray-900">
-                                {{ form.is_active.label }}
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Form Errors -->
-                {% if form.non_field_errors %}
+            <!-- Form Errors -->
+            {% if form.non_field_errors %}
+            <div class="px-4 pb-4">
                 <div class="bg-red-50 border border-red-200 rounded-lg p-4">
                     <div class="flex">
                         <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
@@ -292,8 +376,8 @@
                         </div>
                     </div>
                 </div>
-                {% endif %}
             </div>
+            {% endif %}
 
             <!-- Form Actions -->
             <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
@@ -332,6 +416,140 @@ document.addEventListener('DOMContentLoaded', function() {
     
     questionTypeSelect.addEventListener('change', updateSections);
     updateSections(); // Initialize on page load
+});
+
+// Toggle preview - replaces textarea with rendered preview inline
+function togglePreview(fieldName) {
+    const inputContainer = document.getElementById('input_' + fieldName);
+    const previewContainer = document.getElementById('preview_' + fieldName);
+    const button = document.getElementById('preview_btn_' + fieldName);
+    const field = document.getElementById('id_' + fieldName);
+    
+    if (!inputContainer || !previewContainer || !field) return;
+    
+    // Check if currently in preview mode
+    const isInPreviewMode = previewContainer.classList.contains('hidden') === false;
+    
+    if (isInPreviewMode) {
+        // Switch back to edit mode
+        inputContainer.classList.remove('hidden');
+        previewContainer.classList.add('hidden');
+        if (button) button.textContent = 'Preview';
+    } else {
+        // Switch to preview mode
+        const content = field.value.trim();
+        
+        if (!content) {
+            alert('Please enter some content first');
+            return;
+        }
+        
+        // Show preview, hide input
+        previewContainer.innerHTML = content;
+        inputContainer.classList.add('hidden');
+        previewContainer.classList.remove('hidden');
+        if (button) button.textContent = 'Edit';
+        
+        // Trigger MathJax rendering
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            window.MathJax.typesetPromise([previewContainer]).catch((err) => console.log('MathJax error:', err));
+        }
+    }
+}
+
+// Auto-fill domain/skill codes based on selection
+document.addEventListener('DOMContentLoaded', function() {
+    const domainNameSelect = document.getElementById('id_domain_name');
+    const domainCodeInput = document.getElementById('id_domain_code');
+    const skillNameSelect = document.getElementById('id_skill_name');
+    const skillCodeInput = document.getElementById('id_skill_code');
+    
+    // Domain code mapping
+    const domainCodes = {
+        'Information and Ideas': 'II',
+        'Craft and Structure': 'CAS',
+        'Expression of Ideas': 'EOI',
+        'Standard English Conventions': 'SEC',
+        'Algebra': 'ALG',
+        'Advanced Math': 'AAF',
+        'Problem-Solving and Data Analysis': 'PST',
+        'Geometry and Trigonometry': 'GEO'
+    };
+    
+    // Skill code mapping (abbreviated)
+    const skillCodes = {
+        'Central Ideas and Details': 'CID',
+        'Command of Evidence': 'COE',
+        'Inferences': 'INF',
+        'Words in Context': 'WIC',
+        'Text Structure and Purpose': 'TSP',
+        'Cross-Text Connections': 'CTC',
+        'Rhetorical Synthesis': 'RS',
+        'Transitions': 'TRN',
+        'Boundaries': 'BND',
+        'Form, Structure, and Sense': 'FSS',
+        'Linear equations in one variable': 'LE1',
+        'Linear equations in two variables': 'LE2',
+        'Linear functions': 'LF',
+        'Systems of two linear equations in two variables': 'SLE',
+        'Linear inequalities in one or two variables': 'LI',
+        'Equivalent expressions': 'EE',
+        'Nonlinear equations in one variable': 'NLE',
+        'Systems of equations in two variables': 'SE2',
+        'Nonlinear functions': 'NLF',
+        'Ratios, rates, proportional relationships, and units': 'RAT',
+        'Percentages': 'PCT',
+        'One-variable data: distributions and measures of center and spread': 'STAT1',
+        'Two-variable data: models and scatterplots': 'STAT2',
+        'Probability and conditional probability': 'PROB',
+        'Inference from sample statistics and margin of error': 'INFER',
+        'Evaluating statistical claims: observational studies and experiments': 'EVAL',
+        'Area and volume': 'AV',
+        'Lines, angles, and triangles': 'LAT',
+        'Right triangles and trigonometry': 'TRIG',
+        'Circles': 'CIR'
+    };
+    
+    if (domainNameSelect && domainCodeInput) {
+        domainNameSelect.addEventListener('change', function() {
+            const selectedDomain = this.value;
+            if (domainCodes[selectedDomain]) {
+                domainCodeInput.value = domainCodes[selectedDomain];
+            }
+        });
+    }
+    
+    if (skillNameSelect && skillCodeInput) {
+        skillNameSelect.addEventListener('change', function() {
+            const selectedSkill = this.value;
+            if (skillCodes[selectedSkill]) {
+                skillCodeInput.value = skillCodes[selectedSkill];
+            }
+        });
+    }
+    
+    // Initialize preview mode for all content fields with existing data
+    const contentFields = ['stimulus', 'stem', 'explanation', 'mcq_option_a', 'mcq_option_b', 'mcq_option_c', 'mcq_option_d'];
+    
+    contentFields.forEach(fieldName => {
+        const field = document.getElementById('id_' + fieldName);
+        const inputContainer = document.getElementById('input_' + fieldName);
+        const previewContainer = document.getElementById('preview_' + fieldName);
+        const button = document.getElementById('preview_btn_' + fieldName);
+        
+        if (field && field.value.trim() && inputContainer && previewContainer) {
+            // Field has content, show preview by default
+            previewContainer.innerHTML = field.value;
+            inputContainer.classList.add('hidden');
+            previewContainer.classList.remove('hidden');
+            if (button) button.textContent = 'Edit';
+            
+            // Trigger MathJax rendering
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise([previewContainer]).catch((err) => console.log('MathJax error:', err));
+            }
+        }
+    });
 });
 </script>
 {% endblock %}
