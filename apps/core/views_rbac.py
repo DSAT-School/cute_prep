@@ -336,7 +336,7 @@ def instructor_question_list(request):
 @instructor_required
 def instructor_question_create(request):
     """
-    Create a new question.
+    Create a new question (general - for both English and Math).
     Accessible to instructors (weight 5+) and admins.
     """
     if request.method == 'POST':
@@ -352,6 +352,57 @@ def instructor_question_create(request):
         'form': form,
         'action': 'Create',
         'form_url': 'instructor_question_create',
+        'subject': None,
+    }
+    return render(request, 'admin/instructor_question_form.html', context)
+
+
+@login_required
+@instructor_required
+def instructor_question_create_english(request):
+    """
+    Create a new English question.
+    Accessible to instructors (weight 5+) and admins.
+    """
+    if request.method == 'POST':
+        form = QuestionForm(request.POST, subject='english')
+        if form.is_valid():
+            question = form.save()
+            messages.success(request, f'English Question "{question.identifier_id}" created successfully!')
+            return redirect('instructor_question_list')
+    else:
+        form = QuestionForm(subject='english')
+    
+    context = {
+        'form': form,
+        'action': 'Create',
+        'form_url': 'instructor_question_create_english',
+        'subject': 'english',
+    }
+    return render(request, 'admin/instructor_question_form.html', context)
+
+
+@login_required
+@instructor_required
+def instructor_question_create_math(request):
+    """
+    Create a new Math question.
+    Accessible to instructors (weight 5+) and admins.
+    """
+    if request.method == 'POST':
+        form = QuestionForm(request.POST, subject='math')
+        if form.is_valid():
+            question = form.save()
+            messages.success(request, f'Math Question "{question.identifier_id}" created successfully!')
+            return redirect('instructor_question_list')
+    else:
+        form = QuestionForm(subject='math')
+    
+    context = {
+        'form': form,
+        'action': 'Create',
+        'form_url': 'instructor_question_create_math',
+        'subject': 'math',
     }
     return render(request, 'admin/instructor_question_form.html', context)
 
@@ -360,7 +411,7 @@ def instructor_question_create(request):
 @instructor_required
 def instructor_question_edit(request, question_id):
     """
-    Edit an existing question.
+    Edit an existing question (general).
     Accessible to instructors (weight 5+) and admins.
     """
     question = get_object_or_404(Question, id=question_id)
@@ -379,6 +430,63 @@ def instructor_question_edit(request, question_id):
         'question': question,
         'action': 'Edit',
         'form_url': 'instructor_question_edit',
+        'subject': None,
+    }
+    return render(request, 'admin/instructor_question_form.html', context)
+
+
+@login_required
+@instructor_required
+def instructor_question_edit_english(request, question_id):
+    """
+    Edit an existing English question.
+    Accessible to instructors (weight 5+) and admins.
+    """
+    question = get_object_or_404(Question, id=question_id)
+    
+    if request.method == 'POST':
+        form = QuestionForm(request.POST, instance=question, subject='english')
+        if form.is_valid():
+            question = form.save()
+            messages.success(request, f'English Question "{question.identifier_id}" updated successfully!')
+            return redirect('instructor_question_list')
+    else:
+        form = QuestionForm(instance=question, subject='english')
+    
+    context = {
+        'form': form,
+        'question': question,
+        'action': 'Edit',
+        'form_url': 'instructor_question_edit_english',
+        'subject': 'english',
+    }
+    return render(request, 'admin/instructor_question_form.html', context)
+
+
+@login_required
+@instructor_required
+def instructor_question_edit_math(request, question_id):
+    """
+    Edit an existing Math question.
+    Accessible to instructors (weight 5+) and admins.
+    """
+    question = get_object_or_404(Question, id=question_id)
+    
+    if request.method == 'POST':
+        form = QuestionForm(request.POST, instance=question, subject='math')
+        if form.is_valid():
+            question = form.save()
+            messages.success(request, f'Math Question "{question.identifier_id}" updated successfully!')
+            return redirect('instructor_question_list')
+    else:
+        form = QuestionForm(instance=question, subject='math')
+    
+    context = {
+        'form': form,
+        'question': question,
+        'action': 'Edit',
+        'form_url': 'instructor_question_edit_math',
+        'subject': 'math',
     }
     return render(request, 'admin/instructor_question_form.html', context)
 

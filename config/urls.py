@@ -68,7 +68,11 @@ urlpatterns = [
     path("instructor/", views_rbac.instructor_dashboard, name="instructor_dashboard"),
     path("instructor/questions/", views_rbac.instructor_question_list, name="instructor_question_list"),
     path("instructor/questions/create/", views_rbac.instructor_question_create, name="instructor_question_create"),
+    path("instructor/questions/create/english/", views_rbac.instructor_question_create_english, name="instructor_question_create_english"),
+    path("instructor/questions/create/math/", views_rbac.instructor_question_create_math, name="instructor_question_create_math"),
     path("instructor/questions/<uuid:question_id>/edit/", views_rbac.instructor_question_edit, name="instructor_question_edit"),
+    path("instructor/questions/<uuid:question_id>/edit/english/", views_rbac.instructor_question_edit_english, name="instructor_question_edit_english"),
+    path("instructor/questions/<uuid:question_id>/edit/math/", views_rbac.instructor_question_edit_math, name="instructor_question_edit_math"),
     path("instructor/questions/<uuid:question_id>/delete/", views_rbac.instructor_question_delete, name="instructor_question_delete"),
     path("instructor/questions/<uuid:question_id>/toggle/", views_rbac.instructor_question_toggle_status, name="instructor_question_toggle"),
     

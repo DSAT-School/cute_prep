@@ -23,6 +23,22 @@ DOMAIN_CHOICES = [
     ('Geometry and Trigonometry', 'Geometry and Trigonometry (Math)'),
 ]
 
+ENGLISH_DOMAIN_CHOICES = [
+    ('', '-- Select Domain --'),
+    ('Information and Ideas', 'Information and Ideas'),
+    ('Craft and Structure', 'Craft and Structure'),
+    ('Expression of Ideas', 'Expression of Ideas'),
+    ('Standard English Conventions', 'Standard English Conventions'),
+]
+
+MATH_DOMAIN_CHOICES = [
+    ('', '-- Select Domain --'),
+    ('Algebra', 'Algebra'),
+    ('Advanced Math', 'Advanced Math'),
+    ('Problem-Solving and Data Analysis', 'Problem-Solving and Data Analysis'),
+    ('Geometry and Trigonometry', 'Geometry and Trigonometry'),
+]
+
 SKILL_CHOICES = [
     ('', '-- Select Skill --'),
     # English Skills
@@ -37,6 +53,44 @@ SKILL_CHOICES = [
     ('Boundaries', 'Boundaries'),
     ('Form, Structure, and Sense', 'Form, Structure, and Sense'),
     # Math Skills
+    ('Linear equations in one variable', 'Linear equations in one variable'),
+    ('Linear equations in two variables', 'Linear equations in two variables'),
+    ('Linear functions', 'Linear functions'),
+    ('Systems of two linear equations in two variables', 'Systems of two linear equations in two variables'),
+    ('Linear inequalities in one or two variables', 'Linear inequalities in one or two variables'),
+    ('Equivalent expressions', 'Equivalent expressions'),
+    ('Nonlinear equations in one variable', 'Nonlinear equations in one variable'),
+    ('Systems of equations in two variables', 'Systems of equations in two variables'),
+    ('Nonlinear functions', 'Nonlinear functions'),
+    ('Ratios, rates, proportional relationships, and units', 'Ratios, rates, proportional relationships, and units'),
+    ('Percentages', 'Percentages'),
+    ('One-variable data: distributions and measures of center and spread', 'One-variable data: distributions and measures of center and spread'),
+    ('Two-variable data: models and scatterplots', 'Two-variable data: models and scatterplots'),
+    ('Probability and conditional probability', 'Probability and conditional probability'),
+    ('Inference from sample statistics and margin of error', 'Inference from sample statistics and margin of error'),
+    ('Evaluating statistical claims: observational studies and experiments', 'Evaluating statistical claims: observational studies and experiments'),
+    ('Area and volume', 'Area and volume'),
+    ('Lines, angles, and triangles', 'Lines, angles, and triangles'),
+    ('Right triangles and trigonometry', 'Right triangles and trigonometry'),
+    ('Circles', 'Circles'),
+]
+
+ENGLISH_SKILL_CHOICES = [
+    ('', '-- Select Skill --'),
+    ('Central Ideas and Details', 'Central Ideas and Details'),
+    ('Command of Evidence', 'Command of Evidence'),
+    ('Inferences', 'Inferences'),
+    ('Words in Context', 'Words in Context'),
+    ('Text Structure and Purpose', 'Text Structure and Purpose'),
+    ('Cross-Text Connections', 'Cross-Text Connections'),
+    ('Rhetorical Synthesis', 'Rhetorical Synthesis'),
+    ('Transitions', 'Transitions'),
+    ('Boundaries', 'Boundaries'),
+    ('Form, Structure, and Sense', 'Form, Structure, and Sense'),
+]
+
+MATH_SKILL_CHOICES = [
+    ('', '-- Select Skill --'),
     ('Linear equations in one variable', 'Linear equations in one variable'),
     ('Linear equations in two variables', 'Linear equations in two variables'),
     ('Linear functions', 'Linear functions'),
@@ -77,7 +131,7 @@ class QuestionForm(forms.ModelForm):
     mcq_option_a = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={
-            'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
+            'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-y',
             'rows': 2,
             'placeholder': 'Option A text (supports LaTeX)',
             'id': 'id_mcq_option_a'
@@ -88,7 +142,7 @@ class QuestionForm(forms.ModelForm):
     mcq_option_b = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={
-            'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
+            'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-y',
             'rows': 2,
             'placeholder': 'Option B text (supports LaTeX)',
             'id': 'id_mcq_option_b'
@@ -99,7 +153,7 @@ class QuestionForm(forms.ModelForm):
     mcq_option_c = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={
-            'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
+            'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-y',
             'rows': 2,
             'placeholder': 'Option C text (supports LaTeX)',
             'id': 'id_mcq_option_c'
@@ -110,7 +164,7 @@ class QuestionForm(forms.ModelForm):
     mcq_option_d = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={
-            'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
+            'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-y',
             'rows': 2,
             'placeholder': 'Option D text (supports LaTeX)',
             'id': 'id_mcq_option_d'
@@ -143,63 +197,63 @@ class QuestionForm(forms.ModelForm):
         
         widgets = {
             'identifier_id': forms.TextInput(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors',
                 'placeholder': 'e.g., JKZRJ'
             }),
             'domain_name': forms.Select(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors',
                 'id': 'id_domain_name'
             }, choices=DOMAIN_CHOICES),
             'domain_code': forms.TextInput(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm text-sm',
+                'class': 'block w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-600 cursor-not-allowed',
                 'placeholder': 'Auto-filled',
                 'readonly': 'readonly',
                 'id': 'id_domain_code'
             }),
             'skill_name': forms.Select(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors',
                 'id': 'id_skill_name'
             }, choices=SKILL_CHOICES),
             'skill_code': forms.TextInput(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm text-sm',
+                'class': 'block w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-600 cursor-not-allowed',
                 'placeholder': 'Auto-filled',
                 'readonly': 'readonly',
                 'id': 'id_skill_code'
             }),
             'provider_name': forms.TextInput(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors',
                 'placeholder': 'e.g., College Board'
             }),
             'provider_code': forms.TextInput(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors',
                 'placeholder': 'e.g., cb'
             }),
             'question_type': forms.Select(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm'
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors'
             }, choices=[
                 ('mcq', 'Multiple Choice Question (MCQ)'),
                 ('spr', 'Student Produced Response (Grid-in)'),
             ]),
             'stimulus': forms.Textarea(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-y',
                 'rows': 6,
                 'placeholder': 'Question passage or context (optional, supports HTML and LaTeX)',
                 'id': 'id_stimulus'
             }),
             'stem': forms.Textarea(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-y',
                 'rows': 4,
                 'placeholder': 'The actual question text (required, supports HTML and LaTeX)',
                 'id': 'id_stem'
             }),
             'explanation': forms.Textarea(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-y',
                 'rows': 4,
                 'placeholder': 'Detailed explanation of the answer (supports HTML and LaTeX)',
                 'id': 'id_explanation'
             }),
             'mcq_answer': forms.Select(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm'
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors'
             }, choices=[
                 ('', 'Select correct answer'),
                 ('A', 'A'),
@@ -208,25 +262,25 @@ class QuestionForm(forms.ModelForm):
                 ('D', 'D'),
             ]),
             'mcq_option_list': forms.Textarea(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm font-mono',
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-y',
                 'rows': 6,
                 'placeholder': '{\n  "A": "Option A text",\n  "B": "Option B text",\n  "C": "Option C text",\n  "D": "Option D text"\n}',
                 'id': 'id_mcq_option_list'
             }),
             'spr_answer': forms.Textarea(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm font-mono',
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-y',
                 'rows': 3,
                 'placeholder': '["2.5", "5/2"]'
             }),
             'tutorial_link': forms.URLInput(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm',
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors',
                 'placeholder': 'https://example.com/tutorial'
             }),
             'difficulty': forms.Select(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm'
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors'
             }),
             'is_active': forms.CheckboxInput(attrs={
-                'class': 'rounded border-gray-300 text-primary focus:ring-primary'
+                'class': 'h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors'
             }),
         }
         
@@ -266,11 +320,26 @@ class QuestionForm(forms.ModelForm):
         }
     
     def __init__(self, *args, **kwargs):
+        # Extract subject parameter if provided
+        subject = kwargs.pop('subject', None)
+        
         super().__init__(*args, **kwargs)
         
         # Auto-generate question_id if creating new question
         if not self.instance.pk:
             self.fields['question_id'].initial = uuid.uuid4()
+        
+        # Set domain and skill choices based on subject
+        if subject == 'english':
+            self.fields['domain_name'].widget.choices = ENGLISH_DOMAIN_CHOICES
+            self.fields['skill_name'].widget.choices = ENGLISH_SKILL_CHOICES
+        elif subject == 'math':
+            self.fields['domain_name'].widget.choices = MATH_DOMAIN_CHOICES
+            self.fields['skill_name'].widget.choices = MATH_SKILL_CHOICES
+        else:
+            # Use all choices for general form
+            self.fields['domain_name'].widget.choices = DOMAIN_CHOICES
+            self.fields['skill_name'].widget.choices = SKILL_CHOICES
         
         # Populate individual MCQ fields if editing existing question
         if self.instance.pk and self.instance.mcq_option_list:

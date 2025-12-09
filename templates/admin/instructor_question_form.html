@@ -24,8 +24,20 @@ window.MathJax = {
         <div class="mb-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-xl font-bold text-gray-900">{{ action }} Question</h1>
-                    <p class="mt-1 text-sm text-gray-600">Fill in all required fields for SAT question</p>
+                    <h1 class="text-xl font-bold text-gray-900">
+                        {{ action }} 
+                        {% if subject == 'english' %}
+                            <span class="text-blue-600">English</span>
+                        {% elif subject == 'math' %}
+                            <span class="text-green-600">Math</span>
+                        {% endif %}
+                        Question
+                    </h1>
+                    <p class="mt-1 text-sm text-gray-600">
+                        Fill in all required fields for SAT 
+                        {% if subject == 'english' %}English (Reading & Writing){% elif subject == 'math' %}Math{% else %}{% endif %}
+                        question
+                    </p>
                 </div>
                 <a href="{% url 'instructor_question_list' %}" class="inline-flex items-center px-3 py-2 bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-300 transition-colors">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -37,7 +49,25 @@ window.MathJax = {
         </div>
 
         <!-- Form -->
-        <form method="post" {% if question %}action="{% url 'instructor_question_edit' question.id %}"{% else %}action="{% url 'instructor_question_create' %}"{% endif %} class="bg-white rounded-lg shadow">
+        <form method="post" 
+            {% if question %}
+                {% if subject == 'english' %}
+                    action="{% url 'instructor_question_edit_english' question.id %}"
+                {% elif subject == 'math' %}
+                    action="{% url 'instructor_question_edit_math' question.id %}"
+                {% else %}
+                    action="{% url 'instructor_question_edit' question.id %}"
+                {% endif %}
+            {% else %}
+                {% if subject == 'english' %}
+                    action="{% url 'instructor_question_create_english' %}"
+                {% elif subject == 'math' %}
+                    action="{% url 'instructor_question_create_math' %}"
+                {% else %}
+                    action="{% url 'instructor_question_create' %}"
+                {% endif %}
+            {% endif %}
+            class="bg-white rounded-lg shadow">
             {% csrf_token %}
             
             <!-- Two Column Layout -->
