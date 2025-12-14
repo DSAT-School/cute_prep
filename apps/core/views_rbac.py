@@ -680,3 +680,110 @@ def toggle_onboarding(request):
     messages.success(request, f'User registration has been {status_text}! {detail_text}')
     
     return redirect('user_management')
+
+
+@login_required
+@admin_required
+@require_http_methods(["POST"])
+def change_user_role(request, user_id):
+    """
+    Change a user's role.
+    """
+    user = get_object_or_404(User, id=user_id)
+    role_id = request.POST.get('role_id')
+    
+    if role_id:
+        role = get_object_or_404(Role, id=role_id)
+        user.role = role
+        user.save()
+        messages.success(request, f'Role for {user.email} has been changed to {role.name}!')
+    else:
+        # Remove role
+        user.role = None
+        user.save()
+        messages.success(request, f'Role removed from {user.email}!')
+    
+    return redirect('user_management')
+
+
+@login_required
+@admin_required
+@require_http_methods(["POST"])
+def impersonate_user(request, user_id):
+    """
+    Impersonate another user for 10 minutes.
+    Store original user info in session.
+    """
+    import time
+    
+    # Prevent self-impersonation
+    if str(user_id) == str(request.user.id):
+        messages.error(request, 'You cannot impersonate yourself!')
+        return redirect('user_management')
+    
+    target_user = get_object_or_404(User, id=user_id)
+    
+    # Store impersonation info in session
+    request.session['impersonating'] = True
+    request.session['impersonated_user_id'] = str(target_user.id)
+    request.session['impersonated_user_email'] = target_user.email
+    request.session['original_user_id'] = str(request.user.id)
+    request.session['impersonation_start_time'] = time.time()
+    request.session.modified = True
+    
+    # Log the user out and back in as the target user
+    from django.contrib.auth import login
+    login(request, target_user, backend='django.contrib.auth.backends.ModelBackend')
+    
+    messages.success(request, f'Now impersonating {target_user.email} for 10 minutes')
+    return redirect('dashboard')
+
+
+@login_required
+@require_http_methods(["POST", "GET"])
+def stop_impersonation(request):
+    """
+    Stop impersonating and return to original admin account.
+    """
+    import time
+    
+    # Check if currently impersonating
+    if not request.session.get('impersonating'):
+        messages.error(request, 'You are not currently impersonating anyone!')
+        return redirect('dashboard')
+    
+    # Get original user
+    original_user_id = request.session.get('original_user_id')
+    if not original_user_id:
+        messages.error(request, 'Original user session not found!')
+        return redirect('login')
+    
+    try:
+        original_user = User.objects.get(id=original_user_id)
+    except User.DoesNotExist:
+        messages.error(request, 'Original user not found!')
+        return redirect('login')
+    
+    # Calculate how long the impersonation lasted
+    start_time = request.session.get('impersonation_start_time', time.time())
+    duration = int(time.time() - start_time)
+    minutes = duration // 60
+    seconds = duration % 60
+    
+    impersonated_email = request.session.get('impersonated_user_email', 'Unknown')
+    
+    # Clear impersonation session data
+    request.session.pop('impersonating', None)
+    request.session.pop('impersonated_user_id', None)
+    request.session.pop('impersonated_user_email', None)
+    request.session.pop('original_user_id', None)
+    request.session.pop('impersonation_start_time', None)
+    request.session.modified = True
+    
+    # Log back in as original user
+    from django.contrib.auth import login
+    login(request, original_user, backend='django.contrib.auth.backends.ModelBackend')
+    
+    messages.success(request, f'Stopped impersonating {impersonated_email}. Session lasted {minutes}m {seconds}s')
+    return redirect('user_management')
+

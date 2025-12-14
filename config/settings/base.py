@@ -61,6 +61,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",  # Django allauth
+    "apps.core.middleware.ImpersonationTimeoutMiddleware",  # Impersonation timeout check
     "apps.core.middleware.TimezoneMiddleware",  # User timezone detection
 ]
 

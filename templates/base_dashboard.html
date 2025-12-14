@@ -195,6 +195,68 @@
         
         <!-- Main Content (Full Width in Practice Mode) -->
         <main class="flex-1 overflow-y-auto {% if request.path == '/practice/' %}w-full pt-0{% else %}pt-16 md:pt-0{% endif %}">
+            <!-- Impersonation Banner -->
+            {% if request.session.impersonating %}
+            <div id="impersonationBanner" class="bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg sticky top-0 z-50">
+                <div class="max-w-7xl mx-auto px-4 py-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <i class="fas fa-user-secret text-2xl"></i>
+                            <div>
+                                <div class="font-bold text-lg">Impersonating User</div>
+                                <div class="text-sm opacity-90">{{ request.session.impersonated_user_email }}</div>
+                            </div>
+                            <div class="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-lg">
+                                <i class="fas fa-clock"></i>
+                                <span id="impersonationTimer" class="font-mono font-bold">10:00</span>
+                            </div>
+                        </div>
+                        <form method="post" action="{% url 'stop_impersonation' %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="px-4 py-2 bg-white text-red-600 font-semibold rounded-lg hover:bg-red-50 transition-all shadow-md">
+                                <i class="fas fa-stop mr-2"></i>Stop Impersonation
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <script>
+                // Impersonation timer
+                (function() {
+                    const timerElement = document.getElementById('impersonationTimer');
+                    const startTime = {{ request.session.impersonation_start_time }};
+                    const duration = 600; // 10 minutes in seconds
+                    
+                    function updateTimer() {
+                        const now = Date.now() / 1000;
+                        const elapsed = now - startTime;
+                        const remaining = Math.max(0, duration - elapsed);
+                        
+                        const minutes = Math.floor(remaining / 60);
+                        const seconds = Math.floor(remaining % 60);
+                        
+                        timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                        
+                        if (remaining <= 0) {
+                            // Auto-stop impersonation
+                            fetch('{% url "stop_impersonation" %}', {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRFToken': '{{ csrf_token }}'
+                                }
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            setTimeout(updateTimer, 1000);
+                        }
+                    }
+                    
+                    updateTimer();
+                })();
+            </script>
+            {% endif %}
+            
             <!-- Page Content -->
             {% block content %}{% endblock %}
         </main>

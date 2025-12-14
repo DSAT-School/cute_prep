@@ -69,6 +69,9 @@ urlpatterns = [
     # User Management (Admin only)
     path("rbac/users/management/", views_rbac.user_management, name="user_management"),
     path("rbac/users/<uuid:user_id>/edit/", views_rbac.user_edit, name="user_edit"),
+    path("rbac/users/<uuid:user_id>/change-role/", views_rbac.change_user_role, name="change_user_role"),
+    path("rbac/users/<uuid:user_id>/impersonate/", views_rbac.impersonate_user, name="impersonate_user"),
+    path("rbac/users/stop-impersonation/", views_rbac.stop_impersonation, name="stop_impersonation"),
     path("rbac/users/<uuid:user_id>/toggle-status/", views_rbac.user_toggle_status, name="user_toggle_status"),
     path("rbac/users/<uuid:user_id>/delete/", views_rbac.user_delete, name="user_delete"),
     path("rbac/users/toggle-onboarding/", views_rbac.toggle_onboarding, name="toggle_onboarding"),
