@@ -699,15 +699,23 @@ def check_answer(request, question_id):
                         total_attempts = all_attempts.count()
                         
                         # If this is the first attempt ever and it's correct - auto-master
+                        is_auto_mastered = False
                         if total_attempts == 1:
                             from .models import MasteredQuestion
                             MasteredQuestion.objects.get_or_create(
                                 user=request.user,
                                 question=question
                             )
+                            is_auto_mastered = True
                     
             except PracticeSession.DoesNotExist:
                 pass  # Session not found, continue without saving
+        
+        # Check if question is mastered (for response)
+        is_mastered = MasteredQuestion.objects.filter(
+            user=request.user,
+            question=question
+        ).exists()
         
         response_data = {
             'is_correct': is_correct,
@@ -716,6 +724,8 @@ def check_answer(request, question_id):
             'tutorial_link': question.tutorial_link,
             'time_taken': time_taken,
             'question_type': question.question_type,
+            'is_mastered': is_mastered,
+            'is_auto_mastered': is_auto_mastered if 'is_auto_mastered' in locals() else False,
         }
         
         return JsonResponse(response_data)

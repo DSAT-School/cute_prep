@@ -15,6 +15,114 @@ window.MathJax = {
   }
 };
 </script>
+<style>
+/* Custom Alert Modal */
+.alert-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+.alert-modal.show {
+    display: flex;
+}
+
+.alert-modal-content {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    animation: modalSlideIn 0.2s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.alert-modal-message {
+    font-size: 0.875rem;
+    color: #374151;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.alert-modal-buttons {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+.alert-modal-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+}
+
+.alert-modal-btn.cancel {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.alert-modal-btn.cancel:hover {
+    background: #e5e7eb;
+}
+
+.alert-modal-btn.confirm {
+    background: #9967b9;
+    color: white;
+}
+
+.alert-modal-btn.confirm:hover {
+    background: #7c4d9a;
+}
+
+.alert-modal-btn.ok {
+    background: #9967b9;
+    color: white;
+}
+
+.alert-modal-btn.ok:hover {
+    background: #7c4d9a;
+}
+
+.alert-modal-btn.error {
+    background: #ef4444;
+    color: white;
+}
+
+.alert-modal-btn.error:hover {
+    background: #dc2626;
+}
+
+.alert-modal-btn.success {
+    background: #10b981;
+    color: white;
+}
+
+.alert-modal-btn.success:hover {
+    background: #059669;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -489,7 +597,65 @@ window.MathJax = {
     </div>
 </div>
 
+<!-- Custom Alert Modal -->
+<div class="alert-modal" id="alertModal">
+    <div class="alert-modal-content">
+        <div class="alert-modal-message" id="alertMessage"></div>
+        <div class="alert-modal-buttons" id="alertButtons"></div>
+    </div>
+</div>
+
 <script>
+// Custom Alert Modal Functions
+function showAlert(message, type = 'info', onConfirm = null) {
+    const modal = document.getElementById('alertModal');
+    const messageEl = document.getElementById('alertMessage');
+    const buttonsEl = document.getElementById('alertButtons');
+    
+    messageEl.textContent = message;
+    buttonsEl.innerHTML = '';
+    
+    if (onConfirm) {
+        // Confirmation dialog with Cancel and OK buttons
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'alert-modal-btn cancel';
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.onclick = () => closeAlert();
+        
+        const confirmBtn = document.createElement('button');
+        confirmBtn.className = 'alert-modal-btn confirm';
+        confirmBtn.textContent = 'OK';
+        confirmBtn.onclick = () => {
+            closeAlert();
+            onConfirm();
+        };
+        
+        buttonsEl.appendChild(cancelBtn);
+        buttonsEl.appendChild(confirmBtn);
+    } else {
+        // Simple alert with OK button
+        const okBtn = document.createElement('button');
+        if (type === 'error') {
+            okBtn.className = 'alert-modal-btn error';
+        } else if (type === 'success') {
+            okBtn.className = 'alert-modal-btn success';
+        } else {
+            okBtn.className = 'alert-modal-btn ok';
+        }
+        okBtn.textContent = 'OK';
+        okBtn.onclick = () => closeAlert();
+        
+        buttonsEl.appendChild(okBtn);
+    }
+    
+    modal.classList.add('show');
+}
+
+function closeAlert() {
+    const modal = document.getElementById('alertModal');
+    modal.classList.remove('show');
+}
+
 // Show/hide MCQ and SPR sections based on question type
 document.addEventListener('DOMContentLoaded', function() {
     const questionTypeSelect = document.getElementById('{{ form.question_type.id_for_label }}');
@@ -537,7 +703,7 @@ function togglePreview(fieldName) {
         const content = field.value.trim();
         
         if (!content) {
-            alert('Please enter some content first');
+            showAlert('Please enter some content first', 'error');
             return;
         }
         
@@ -751,7 +917,7 @@ async function extractQuestion() {
         closeAIExtractor();
         
         // Show success notification
-        alert('Question details extracted successfully! Please review and adjust as needed.');
+        showAlert('Question details extracted successfully! Please review and adjust as needed.', 'success');
         
     } catch (error) {
         showError(error.message || 'An error occurred while extracting the question');

@@ -2442,6 +2442,28 @@ async function checkAnswer() {
             document.getElementById('show-explanation-btn').style.display = 'inline-flex';
         }
         
+        // Handle auto-mastering - update masteredQuestions Set and UI
+        if (data.is_mastered) {
+            masteredQuestions.add(currentQuestionId);
+            
+            // Update master button UI
+            const masteredBtn = document.getElementById('mastered-btn');
+            const masteredBtnText = document.getElementById('mastered-btn-text');
+            if (masteredBtn && masteredBtnText) {
+                masteredBtn.classList.add('mastered');
+                masteredBtnText.textContent = 'Mastered';
+                masteredBtn.disabled = false;
+                masteredBtn.style.opacity = '1';
+                masteredBtn.style.cursor = 'pointer';
+                
+                if (data.is_auto_mastered) {
+                    masteredBtn.title = 'Auto-mastered (correct on first attempt). Click to unmark.';
+                } else {
+                    masteredBtn.title = 'Mastered. Click to unmark.';
+                }
+            }
+        }
+        
         // Change button text with icon
         const checkBtnText = document.getElementById('check-btn-text');
         const checkBtnIcon = checkBtn.querySelector('i');
@@ -2979,10 +3001,9 @@ async function toggleMastered() {
     const masteredBtn = document.getElementById('mastered-btn');
     const masteredBtnText = document.getElementById('mastered-btn-text');
     
-    // Check if button is disabled
+    // Check if button is disabled (should not happen if properly enabled)
     if (masteredBtn.disabled) {
-        showAlert('You can only mark as mastered after getting it wrong first and then correct.');
-        return;
+        return;  // Silently return, don't show alert as button shouldn't be clickable
     }
     
     try {
