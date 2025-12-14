@@ -1,0 +1,274 @@
+{% extends "base_dashboard.html" %}
+{% load static %}
+
+{% block title %}User Management - DSAT SCHOOL Admin{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white border-b border-gray-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                        <i class="fas fa-users text-red-600"></i>
+                        User Management
+                    </h1>
+                    <p class="text-sm text-gray-600 mt-1">Manage registered users, roles, and onboarding settings</p>
+                </div>
+                <a href="{% url 'rbac_dashboard' %}" class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 hover:border-primary transition-all">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Admin
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-xl shadow-md p-4 border-l-4 border-primary">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium">Total Users</p>
+                        <p class="text-3xl font-bold text-gray-900">{{ total_users }}</p>
+                    </div>
+                    <div class="p-3 bg-primary/10 rounded-lg">
+                        <i class="fas fa-users text-2xl text-primary"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-4 border-l-4 border-green-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium">Active Users</p>
+                        <p class="text-3xl font-bold text-green-600">{{ active_users }}</p>
+                    </div>
+                    <div class="p-3 bg-green-100 rounded-lg">
+                        <i class="fas fa-user-check text-2xl text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-4 border-l-4 border-orange-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium">Inactive Users</p>
+                        <p class="text-3xl font-bold text-orange-600">{{ inactive_users }}</p>
+                    </div>
+                    <div class="p-3 bg-orange-100 rounded-lg">
+                        <i class="fas fa-user-slash text-2xl text-orange-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-4 border-l-4 border-secondary">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium">Onboarding</p>
+                        <p class="text-lg font-bold {% if onboarding_enabled %}text-green-600{% else %}text-red-600{% endif %}">
+                            {% if onboarding_enabled %}Enabled{% else %}Disabled{% endif %}
+                        </p>
+                    </div>
+                    <form method="post" action="{% url 'toggle_onboarding' %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="p-3 {% if onboarding_enabled %}bg-green-100{% else %}bg-red-100{% endif %} rounded-lg hover:scale-110 transition-transform">
+                            <i class="fas fa-{% if onboarding_enabled %}toggle-on{% else %}toggle-off{% endif %} text-2xl {% if onboarding_enabled %}text-green-600{% else %}text-red-600{% endif %}"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters and Search -->
+        <div class="bg-white rounded-xl shadow-md p-4 mb-6">
+            <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- Search -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Search Users</label>
+                    <div class="relative">
+                        <input type="text" name="search" value="{{ search_query }}" placeholder="Search by name, email, or username..." 
+                               class="w-full pl-10 pr-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <!-- Status Filter -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                    <select name="status" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Users</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Only</option>
+                        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive Only</option>
+                    </select>
+                </div>
+
+                <!-- Role Filter -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Role</label>
+                    <select name="role" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                        <option value="all" {% if role_filter == 'all' %}selected{% endif %}>All Roles</option>
+                        {% for role in roles %}
+                        <option value="{{ role.name }}" {% if role_filter == role.name %}selected{% endif %}>{{ role.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Submit -->
+                <div class="md:col-span-4 flex gap-3">
+                    <button type="submit" class="px-6 py-2 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 hover:shadow-lg transition-all">
+                        <i class="fas fa-filter mr-2"></i>Apply Filters
+                    </button>
+                    <a href="{% url 'user_management' %}" class="px-6 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-all">
+                        <i class="fas fa-times mr-2"></i>Clear
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Users Table -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">User</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Roles</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Joined</th>
+                            <th class="px-6 py-3 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for user in users %}
+                        <tr class="hover:bg-gray-50 transition-colors" x-data="{ editMode: false, editEmail: '{{ user.email }}', editFirstName: '{{ user.first_name }}', editLastName: '{{ user.last_name }}', editUsername: '{{ user.username }}' }">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white font-bold">
+                                        {{ user.email.0|upper }}{{ user.email.1|upper }}
+                                    </div>
+                                    <div class="ml-4">
+                                        <template x-if="!editMode">
+                                            <div>
+                                                <div class="text-sm font-semibold text-gray-900">
+                                                    {% if user.first_name or user.last_name %}
+                                                        {{ user.first_name }} {{ user.last_name }}
+                                                    {% else %}
+                                                        {{ user.username }}
+                                                    {% endif %}
+                                                </div>
+                                                <div class="text-sm text-gray-600">{{ user.email }}</div>
+                                            </div>
+                                        </template>
+                                        <template x-if="editMode">
+                                            <form method="post" action="{% url 'user_edit' user.id %}" class="space-y-2">
+                                                {% csrf_token %}
+                                                <input type="text" name="first_name" x-model="editFirstName" placeholder="First Name" class="w-full px-2 py-1 text-sm border rounded">
+                                                <input type="text" name="last_name" x-model="editLastName" placeholder="Last Name" class="w-full px-2 py-1 text-sm border rounded">
+                                                <input type="email" name="email" x-model="editEmail" placeholder="Email" class="w-full px-2 py-1 text-sm border rounded">
+                                                <div class="flex gap-2">
+                                                    <button type="submit" class="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700">
+                                                        <i class="fas fa-check mr-1"></i>Save
+                                                    </button>
+                                                    <button type="button" @click="editMode = false" class="px-3 py-1 text-xs bg-gray-400 text-white rounded hover:bg-gray-500">
+                                                        <i class="fas fa-times mr-1"></i>Cancel
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </template>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex flex-wrap gap-1">
+                                    {% if user.role %}
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-primary/10 text-primary border border-primary/30">
+                                        {{ user.role.name }}
+                                    </span>
+                                    {% else %}
+                                    <span class="px-2 py-1 text-xs text-gray-500 italic">No role</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if user.is_active %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                    <i class="fas fa-check-circle mr-1"></i>Active
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                                    <i class="fas fa-times-circle mr-1"></i>Inactive
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-600">
+                                {{ user.date_joined|date:"M d, Y" }}
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <!-- Edit Button -->
+                                    <button @click="editMode = !editMode" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Edit User">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+
+                                    <!-- Toggle Status -->
+                                    <form method="post" action="{% url 'user_toggle_status' user.id %}" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="p-2 {% if user.is_active %}text-orange-600 hover:bg-orange-50{% else %}text-green-600 hover:bg-green-50{% endif %} rounded-lg transition-all" 
+                                                title="{% if user.is_active %}Deactivate{% else %}Activate{% endif %}"
+                                                {% if user.id == request.user.id %}disabled onclick="alert('You cannot deactivate your own account!'); return false;"{% endif %}>
+                                            <i class="fas fa-{% if user.is_active %}ban{% else %}check-circle{% endif %}"></i>
+                                        </button>
+                                    </form>
+
+                                    <!-- Delete Button -->
+                                    <form method="post" action="{% url 'user_delete' user.id %}" class="inline" 
+                                          onsubmit="return confirm('Are you sure you want to permanently delete this user? This action cannot be undone!');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Delete User"
+                                                {% if user.id == request.user.id %}disabled onclick="alert('You cannot delete your own account!'); return false;"{% endif %}>
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center">
+                                <div class="text-gray-400">
+                                    <i class="fas fa-users text-5xl mb-4"></i>
+                                    <p class="text-lg font-semibold">No users found</p>
+                                    <p class="text-sm">Try adjusting your filters</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="mt-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-info-circle text-blue-500 text-xl"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-semibold text-blue-800">User Management Tips</h3>
+                    <div class="mt-2 text-sm text-blue-700">
+                        <ul class="list-disc list-inside space-y-1">
+                            <li><strong>Edit:</strong> Click the edit icon to modify user details inline</li>
+                            <li><strong>Deactivate:</strong> Temporarily disable user access without deleting their data</li>
+                            <li><strong>Delete:</strong> Permanently remove user and all associated data (use with caution)</li>
+                            <li><strong>Onboarding Toggle:</strong> Control whether new users can register on the platform</li>
+                            <li><strong>Safety:</strong> You cannot deactivate or delete your own account</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

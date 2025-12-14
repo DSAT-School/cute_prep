@@ -521,3 +521,162 @@ def instructor_question_toggle_status(request, question_id):
     status = "activated" if question.is_active else "deactivated"
     messages.success(request, f'Question "{question.identifier_id}" {status} successfully!')
     return redirect('instructor_question_list')
+
+
+# ====================
+# USER MANAGEMENT VIEWS
+# ====================
+
+@login_required
+@admin_required
+def user_management(request):
+    """
+    Comprehensive user management dashboard.
+    Shows all users with ability to edit, deactivate, delete, and manage onboarding settings.
+    """
+    # Get search and filter parameters
+    search_query = request.GET.get('search', '')
+    status_filter = request.GET.get('status', 'all')
+    role_filter = request.GET.get('role', 'all')
+    
+    # Base queryset
+    users = User.objects.all().select_related('role')
+    
+    # Apply search
+    if search_query:
+        users = users.filter(
+            Q(email__icontains=search_query) |
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
+            Q(username__icontains=search_query)
+        )
+    
+    # Apply status filter
+    if status_filter == 'active':
+        users = users.filter(is_active=True)
+    elif status_filter == 'inactive':
+        users = users.filter(is_active=False)
+    
+    # Apply role filter
+    if role_filter != 'all':
+        users = users.filter(role__name=role_filter)
+    
+    # Order by date joined (newest first)
+    users = users.order_by('-date_joined')
+    
+    # Get all roles for filter dropdown
+    roles = Role.objects.all().order_by('name')
+    
+    # Get onboarding status from cache
+    from django.core.cache import cache
+    onboarding_enabled = cache.get('user_onboarding_enabled', True)
+    
+    context = {
+        'users': users,
+        'roles': roles,
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'role_filter': role_filter,
+        'total_users': User.objects.count(),
+        'active_users': User.objects.filter(is_active=True).count(),
+        'inactive_users': User.objects.filter(is_active=False).count(),
+        'onboarding_enabled': onboarding_enabled,
+    }
+    
+    return render(request, 'admin/user_management.html', context)
+
+
+@login_required
+@admin_required
+def user_edit(request, user_id):
+    """
+    Edit user details.
+    """
+    user = get_object_or_404(User, id=user_id)
+    
+    if request.method == 'POST':
+        # Update user fields
+        user.first_name = request.POST.get('first_name', '')
+        user.last_name = request.POST.get('last_name', '')
+        user.email = request.POST.get('email', user.email)
+        user.username = request.POST.get('username', user.username)
+        
+        try:
+            user.save()
+            messages.success(request, f'User {user.email} updated successfully!')
+        except Exception as e:
+            messages.error(request, f'Error updating user: {str(e)}')
+        
+        return redirect('user_management')
+    
+    return redirect('user_management')
+
+
+@login_required
+@admin_required
+@require_http_methods(["POST"])
+def user_toggle_status(request, user_id):
+    """
+    Activate or deactivate a user.
+    """
+    user = get_object_or_404(User, id=user_id)
+    
+    # Prevent admin from deactivating themselves
+    if user.id == request.user.id:
+        messages.error(request, 'You cannot deactivate your own account!')
+        return redirect('user_management')
+    
+    user.is_active = not user.is_active
+    user.save()
+    
+    status = "activated" if user.is_active else "deactivated"
+    messages.success(request, f'User {user.email} has been {status}!')
+    
+    return redirect('user_management')
+
+
+@login_required
+@admin_required
+@require_http_methods(["POST"])
+def user_delete(request, user_id):
+    """
+    Delete a user permanently.
+    """
+    user = get_object_or_404(User, id=user_id)
+    
+    # Prevent admin from deleting themselves
+    if user.id == request.user.id:
+        messages.error(request, 'You cannot delete your own account!')
+        return redirect('user_management')
+    
+    email = user.email
+    user.delete()
+    messages.success(request, f'User {email} has been permanently deleted!')
+    
+    return redirect('user_management')
+
+
+@login_required
+@admin_required
+@require_http_methods(["POST"])
+def toggle_onboarding(request):
+    """
+    Toggle new user registration on/off.
+    Controls whether new users can sign up via regular signup or OAuth.
+    """
+    from django.core.cache import cache
+    
+    current_status = cache.get('user_onboarding_enabled', True)
+    new_status = not current_status
+    cache.set('user_onboarding_enabled', new_status, None)  # None means no expiry
+    
+    if new_status:
+        status_text = "enabled"
+        detail_text = "New users can now register and create accounts."
+    else:
+        status_text = "disabled"
+        detail_text = "New user registration has been blocked. Only existing users can log in."
+    
+    messages.success(request, f'User registration has been {status_text}! {detail_text}')
+    
+    return redirect('user_management')

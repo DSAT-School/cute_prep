@@ -261,7 +261,40 @@ class CustomSignupView(CreateView):
     form_class = CustomSignupForm
     success_url = reverse_lazy("dashboard")
     
+    def dispatch(self, request, *args, **kwargs):
+        """Check if registration is enabled before allowing access."""
+        from django.core.cache import cache
+        from django.contrib import messages
+        
+        # Check if user is already authenticated
+        if request.user.is_authenticated:
+            return redirect("dashboard")
+        
+        # Check if registration is enabled
+        registration_enabled = cache.get('user_onboarding_enabled', True)
+        if not registration_enabled:
+            messages.error(
+                request,
+                'New user registration is currently disabled. Please contact an administrator.'
+            )
+            return redirect('login')
+        
+        return super().dispatch(request, *args, **kwargs)
+    
     def form_valid(self, form):
+        """Validate form and register user if onboarding is enabled."""
+        from django.core.cache import cache
+        from django.contrib import messages
+        
+        # Double-check registration status before creating user
+        registration_enabled = cache.get('user_onboarding_enabled', True)
+        if not registration_enabled:
+            messages.error(
+                self.request,
+                'New user registration is currently disabled. Please contact an administrator.'
+            )
+            return redirect('login')
+        
         response = super().form_valid(form)
         # Log the user in after successful registration
         login(self.request, self.object)

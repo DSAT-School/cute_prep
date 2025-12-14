@@ -257,8 +257,10 @@ SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
 SOCIALACCOUNT_LOGIN_ON_GET = False  # Changed to False to prevent auto-redirect errors
 SOCIALACCOUNT_QUERY_EMAIL = True
-# Make social account providers optional - don't raise error if not configured
-SOCIALACCOUNT_ADAPTER = 'allauth.socialaccount.adapter.DefaultSocialAccountAdapter'
+
+# Custom adapters for registration control
+ACCOUNT_ADAPTER = 'apps.core.adapters.CustomAccountAdapter'
+SOCIALACCOUNT_ADAPTER = 'apps.core.adapters.CustomSocialAccountAdapter'
 SOCIALACCOUNT_STORE_TOKENS = True
 
 # Redirect URLs

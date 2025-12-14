@@ -188,11 +188,18 @@
                     <div style="height: 1px; background: linear-gradient(to right, transparent, #ef4444, transparent);"></div>
                 </div>
                 
-                <a href="/rbac/" class="flex items-center space-x-3 px-3 py-2.5 mb-1 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 hover:text-red-600 rounded-lg transition-all duration-200 group {% if '/rbac/' in request.path %}bg-gradient-to-r from-red-100 to-red-50 text-red-600 font-medium shadow-sm{% endif %}" :class="!sidebarOpen && 'justify-center px-0'">
+                <a href="/rbac/" class="flex items-center space-x-3 px-3 py-2.5 mb-1 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 hover:text-red-600 rounded-lg transition-all duration-200 group {% if '/rbac/' in request.path and '/rbac/users' not in request.path %}bg-gradient-to-r from-red-100 to-red-50 text-red-600 font-medium shadow-sm{% endif %}" :class="!sidebarOpen && 'justify-center px-0'">
                     <svg class="w-5 h-5 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                     </svg>
                     <span class="font-normal whitespace-nowrap" x-show="sidebarOpen">Admin Panel</span>
+                </a>
+                
+                <a href="/rbac/users/management/" class="flex items-center space-x-3 px-3 py-2.5 mb-1 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 hover:text-red-600 rounded-lg transition-all duration-200 group {% if '/rbac/users/management' in request.path %}bg-gradient-to-r from-red-100 to-red-50 text-red-600 font-medium shadow-sm{% endif %}" :class="!sidebarOpen && 'justify-center px-0'">
+                    <svg class="w-5 h-5 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                    <span class="font-normal whitespace-nowrap" x-show="sidebarOpen">User Management</span>
                 </a>
                 {% endif %}
 
@@ -386,11 +393,18 @@
                     <div style="height: 1px; background: linear-gradient(to right, transparent, #ef4444, transparent);"></div>
                 </div>
                 
-                <a href="/rbac/" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-1.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors {% if '/rbac/' in request.path %}bg-red-50 text-red-600 border-r-4 border-red-600{% endif %}">
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <a href="/rbac/" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-2.5 mb-1 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 hover:text-red-600 rounded-lg transition-all duration-200 group {% if '/rbac/' in request.path and '/rbac/users' not in request.path %}bg-gradient-to-r from-red-100 to-red-50 text-red-600 font-medium shadow-sm{% endif %}">
+                    <svg class="w-5 h-5 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                     </svg>
                     <span class="font-normal">Admin Panel</span>
+                </a>
+                
+                <a href="/rbac/users/management/" @click="mobileMenuOpen = false" class="flex items-center space-x-3 px-3 py-2.5 mb-1 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 hover:text-red-600 rounded-lg transition-all duration-200 group {% if '/rbac/users/management' in request.path %}bg-gradient-to-r from-red-100 to-red-50 text-red-600 font-medium shadow-sm{% endif %}">
+                    <svg class="w-5 h-5 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                    <span class="font-normal">User Management</span>
                 </a>
                 {% endif %}
             </nav>

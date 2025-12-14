@@ -4,6 +4,76 @@
 
 {% block extra_css %}
 <style>
+    /* Loading Overlay */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #f9fafb;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.3s ease-out;
+    }
+    
+    .loading-overlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
+    
+    .spinner {
+        width: 60px;
+        height: 60px;
+        border: 4px solid #e5e7eb;
+        border-top-color: #9967b9;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+        margin-top: 1.5rem;
+        color: #6b7280;
+        font-size: 1rem;
+        font-weight: 600;
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    /* Skeleton Loader */
+    .skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s ease-in-out infinite;
+        border-radius: 0.5rem;
+    }
+    
+    @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+    
+    /* Hide content initially */
+    .results-content {
+        opacity: 0;
+        transition: opacity 0.5s ease-in;
+    }
+    
+    .results-content.loaded {
+        opacity: 1;
+    }
+
     .score-circle {
         position: relative;
         width: 200px;
@@ -78,7 +148,13 @@
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading Your Results...</div>
+</div>
+
+<div class="min-h-screen bg-gray-50 results-content">
     <!-- Header -->
     <div class="bg-white border-b border-gray-200 shadow-sm">
         <div class="max-w-[1920px] mx-auto px-4 py-3">
@@ -324,6 +400,31 @@
 </div>
 
 <script>
+// Loading management
+window.addEventListener('load', function() {
+    // Wait a tiny bit to ensure all rendering is complete
+    setTimeout(function() {
+        const overlay = document.getElementById('loading-overlay');
+        const content = document.querySelector('.results-content');
+        
+        // Fade out overlay
+        overlay.classList.add('hidden');
+        
+        // Fade in content
+        content.classList.add('loaded');
+        
+        // Remove overlay from DOM after animation
+        setTimeout(function() {
+            overlay.remove();
+        }, 300);
+    }, 100);
+});
+
+// Prevent jitter by hiding body until loaded
+document.addEventListener('DOMContentLoaded', function() {
+    document.body.style.visibility = 'visible';
+});
+
 function filterQuestions(type) {
     const questions = document.querySelectorAll('.question-item');
     const buttons = document.querySelectorAll('.filter-btn');
