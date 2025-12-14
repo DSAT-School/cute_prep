@@ -30,9 +30,9 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ['Montserrat', 'system-ui', 'sans-serif'],
-        heading: ['Montserrat', 'sans-serif'],
-        title: ['Built Titling', 'Montserrat', 'sans-serif'],
+        sans: ['Space Grotesk', 'system-ui', 'sans-serif'],
+        heading: ['Space Grotesk', 'sans-serif'],
+        title: ['Built Titling', 'Space Grotesk', 'sans-serif'],
       },
       fontWeight: {
         'extra-bold': '800',
